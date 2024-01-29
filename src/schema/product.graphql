@@ -1,0 +1,49 @@
+enum ProductStatus {
+  PENDING
+  APPROVED
+  NOT_AVAILABLE
+  DISAPPROVED
+}
+
+type Product {
+  _id: ObjectId
+  slug: String
+  author: User
+  category: Category
+  price: Int
+  media: [String]
+  type: Type
+  status: ProductStatus
+  tags: [Tag]
+  auction: Auction
+  create_at: Date
+  update_at: Date
+}
+
+type Type {
+  _id: ObjectId
+  name: String
+  slug: String
+  create_at: Date
+  update_at: Date
+}
+
+type Tag {
+  _id: ObjectId
+  name: String
+  slug: String
+  create_at: Date
+  update_at: Date
+  values: [String]
+}
+
+type Category {
+  _id: ObjectId
+  name: String
+  slug: String
+  create_at: Date
+  update_at: Date
+}
+
+scalar ObjectId
+scalar Date

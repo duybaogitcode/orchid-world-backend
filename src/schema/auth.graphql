@@ -1,0 +1,29 @@
+type Session {
+  _id: String
+  user_id: String
+  private_key: String
+  public_key: String
+  backlist: [String]
+  create_at: Date
+  update_at: Date
+}
+
+type Role {
+  _id: String
+  name: String
+  create_at: Date
+  update_at: Date
+  permissions: [Permission]
+}
+
+type Permission {
+  _id: String
+  name: String
+  view_list: Boolean
+  view_detail: Boolean
+  create: Boolean
+  update: Boolean
+  delete: Boolean
+  create_at: Date
+  update_at: Date
+}

@@ -1,0 +1,41 @@
+type User {
+  _id: String
+  information: Information
+  attendance_dates: [Date]
+  role: Role
+  create_at: Date
+  update_at: Date
+  notifications: [Notification]
+  conversations: [Conversation]
+  rating_as_customer: Float
+  rating_as_shopowner: Float
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+type Information {
+  first_name: String
+  last_name: String
+  email: String
+  phone_number: String
+  avatar: String
+  addresses: [Address]
+  create_at: Date
+  update_at: Date
+}
+
+type Address {
+  _id: String
+  user_id: String
+  province: String
+  district: String
+  ward: String
+  street: String
+  create_at: Date
+  update_at: Date
+}
+
+scalar Date

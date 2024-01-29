@@ -1,0 +1,25 @@
+type Notification {
+  _id: ObjectId
+  content: String
+  target_id: String
+  target_url: String
+  type: NotificationType
+  actor: User
+  receivers: [User]
+  create_at: Date
+  update_at: Date
+  is_read: Boolean
+}
+
+enum NotificationType {
+  AUCTION
+  PRODUCT
+  ORDER
+  TRANSACTION
+  USER
+  SYSTEM
+  OTHER
+}
+
+scalar ObjectId
+scalar Date

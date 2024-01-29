@@ -1,0 +1,18 @@
+type Order {
+  _id: ObjectId
+  order_code: String
+  order_product: Product
+  order_status: OrderEnum
+  product_owner: User
+  customer: User
+  create_at: Date
+  update_at: Date
+}
+
+enum OrderEnum {
+  PENDING
+  PROCESSING
+  SHIPPING
+  COMPLETED
+  CANCELLED
+}

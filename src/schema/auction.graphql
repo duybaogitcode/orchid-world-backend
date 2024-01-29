@@ -1,0 +1,36 @@
+type Auction {
+  _id: String
+  product: Product
+  initial_price: Int
+  current_price: Int
+  step_price: Int
+  created_at: Date
+  updated_at: Date
+  start_at: Date
+  end_at: Date
+  start_automatically: Boolean
+  staff: User
+  winner: User
+  backup_winners: [User]
+  deposit: Int
+  status: AuctionStatus
+  bidding_histories: [BiddingHistory]
+}
+
+enum AuctionStatus {
+  PENDING
+  APPROVED
+  NOT_AVAILABLE
+  DISAPPROVED
+}
+
+type BiddingHistory {
+  _id: ObjectId
+  auction_id: String
+  auction: Auction
+  author: User
+  bid_price: Int
+  create_at: Date
+  update_at: Date
+  is_valid_price: Boolean
+}

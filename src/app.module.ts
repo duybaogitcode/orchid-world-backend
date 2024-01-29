@@ -5,7 +5,9 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { MongooseModule } from '@nestjs/mongoose';
 import { DryerModule } from 'dryerjs';
-import { User } from './user/model';
+import { Product } from './product/product.definition';
+import { Media } from './media/media.definition';
+import { Category, Tag } from './base/base.definition';
 
 @Module({
   imports: [
@@ -17,7 +19,7 @@ import { User } from './user/model';
     MongooseModule.forRoot(
       'mongodb+srv://admin:fng8LrZdG2BqKbh2@clusterqueue.knjjwp9.mongodb.net/?retryWrites=true&w=majority',
     ),
-    DryerModule.register({ definitions: [User] }),
+    DryerModule.register({ definitions: [Product, Media, Tag, Category] }),
   ],
   controllers: [AppController],
   providers: [AppService],
