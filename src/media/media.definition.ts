@@ -1,8 +1,8 @@
 import { Definition, Property } from 'dryerjs';
-import { BaseModel } from 'src/base/base.definition';
+import { BaseModelHasOwner } from 'src/product/product.definition';
 
 @Definition()
-export class Media extends BaseModel() {
+export class Media extends BaseModelHasOwner() {
   @Property({ db: { unique: true } })
   name: string;
   mime: string;
@@ -13,5 +13,4 @@ export class Media extends BaseModel() {
   size: number;
   width: number;
   height: number;
-  authorId: string;
 }

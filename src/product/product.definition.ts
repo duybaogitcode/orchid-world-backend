@@ -2,19 +2,28 @@ import { registerEnumType } from '@nestjs/graphql';
 import {
   BelongsTo,
   Definition,
-  HasMany,
+  Embedded,
+  GraphQLObjectId,
   HasOne,
+  ObjectId,
   Property,
   ReferencesMany,
 } from 'dryerjs';
-import { GraphQLEnumType } from 'graphql';
 import { BaseModel, Category, Tag } from 'src/base/base.definition';
+import { User } from 'src/user/user.definition';
 
-type ProductStatusType =
-  | 'PENDING'
-  | 'APPROVED'
-  | 'NOT_AVAILABLE'
-  | 'DISAPPROVED';
+export const BaseModelHasOwner = () => {
+  class BaseModelHasOwnerClass extends BaseModel() {
+    @Property({
+      type: () => GraphQLObjectId,
+    })
+    authorId: ObjectId;
+
+    @BelongsTo(() => User, { from: 'authorId' })
+    author: User;
+  }
+  return BaseModelHasOwnerClass;
+};
 
 enum ProductStatus {
   PENDING = 'PENDING',
@@ -22,15 +31,8 @@ enum ProductStatus {
   NOT_AVAILABLE = 'NOT_AVAILABLE',
   DISAPPROVED = 'DISAPPROVED',
 }
-
-const ProductStatusEnum = new GraphQLEnumType({
+registerEnumType(ProductStatus, {
   name: 'ProductStatus',
-  values: {
-    PENDING: { value: ProductStatus.PENDING },
-    APPROVED: { value: ProductStatus.APPROVED },
-    NOT_AVAILABLE: { value: ProductStatus.NOT_AVAILABLE },
-    DISAPPROVED: { value: ProductStatus.DISAPPROVED },
-  },
 });
 
 @Definition({ timestamps: true })
@@ -43,13 +45,11 @@ export class ProductType extends BaseModel() {
 }
 
 @Definition({ timestamps: true })
-export class Product extends BaseModel() {
+export class Product extends BaseModelHasOwner() {
   name: string;
 
   @Property({ db: { unique: true } })
   slug: string;
-
-  authorId: string;
 
   price: number;
 
@@ -62,6 +62,9 @@ export class Product extends BaseModel() {
     nullable: true,
   })
   longDescription: string;
+
+  @Embedded(() => ProductType)
+  productType: ProductType;
 
   @ReferencesMany(() => Tag, { from: 'tagIds', allowCreateWithin: true })
   tags: Tag[];
@@ -78,10 +81,7 @@ export class Product extends BaseModel() {
   media: string[];
 
   @Property({
-    db: {
-      type: 'string',
-      enum: ProductStatus,
-    },
+    type: () => ProductStatus,
   })
-  status: string;
+  status: ProductStatus;
 }

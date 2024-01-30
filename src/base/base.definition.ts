@@ -1,5 +1,6 @@
-import { GraphQLISODateTime } from '@nestjs/graphql';
+import { GraphQLISODateTime, registerEnumType } from '@nestjs/graphql';
 import {
+  BelongsTo,
   Definition,
   GraphQLObjectId,
   Id,
@@ -7,6 +8,17 @@ import {
   Property,
   Skip,
 } from 'dryerjs';
+import { User } from 'src/user/user.definition';
+export enum BaseStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  NOT_AVAILABLE = 'NOT_AVAILABLE',
+  DISAPPROVED = 'DISAPPROVED',
+}
+
+registerEnumType(BaseStatus, {
+  name: 'Status',
+});
 
 export const BaseModel = () => {
   class BaseModelAsClass {
