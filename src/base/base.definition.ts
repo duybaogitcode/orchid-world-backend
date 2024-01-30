@@ -27,15 +27,11 @@ export const BaseModel = () => {
 
     @Property({
       output: { type: () => GraphQLISODateTime },
-      create: Skip,
-      update: Skip,
     })
     createdAt: Date;
 
     @Property({
       output: { type: () => GraphQLISODateTime },
-      create: Skip,
-      update: Skip,
     })
     updatedAt: Date;
   }
