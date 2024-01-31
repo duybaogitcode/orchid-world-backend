@@ -9,13 +9,17 @@ import {
 } from 'dryerjs';
 import { BaseModel } from 'src/base/base.definition';
 
-@Definition()
+@Definition({
+  timestamps: true,
+})
 export class Permission extends BaseModel() {
   @Property({ type: () => String })
   pattern: string;
 }
 
-@Definition()
+@Definition({
+  timestamps: true,
+})
 export class Role extends BaseModel() {
   name: string;
 
@@ -32,8 +36,9 @@ export class Role extends BaseModel() {
   })
   permissions: Permission[];
 }
-
-@Definition()
+@Definition({
+  timestamps: true,
+})
 export class Session extends BaseModel() {
   @Property({ type: () => GraphQLObjectId })
   userId: ObjectId;

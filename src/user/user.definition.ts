@@ -9,7 +9,9 @@ import {
 import { Role } from 'src/auth/auth.definition';
 import { BaseModel } from 'src/base/base.definition';
 
-@Definition()
+@Definition({
+  timestamps: true,
+})
 export class User extends BaseModel() {
   firstName: string;
   lastName: string;

@@ -10,7 +10,9 @@ import {
 import { BaseModel, BaseStatus } from 'src/base/base.definition';
 import { Product } from 'src/product/product.definition';
 
-@Definition()
+@Definition({
+  timestamps: true,
+})
 export class Auction extends BaseModel() {
   @Property({
     type: () => GraphQLObjectId,
@@ -50,7 +52,9 @@ export class Auction extends BaseModel() {
   deposit: number;
 }
 
-@Definition()
+@Definition({
+  timestamps: true,
+})
 export class AuctionBiddingHistory extends BaseModel() {
   @Property({
     type: () => GraphQLObjectId,
