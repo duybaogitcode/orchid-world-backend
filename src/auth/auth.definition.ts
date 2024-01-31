@@ -13,7 +13,7 @@ import { BaseModel } from 'src/base/base.definition';
   timestamps: true,
 })
 export class Permission extends BaseModel() {
-  @Property({ type: () => String })
+  @Property({ type: () => String, db: { unique: true } })
   pattern: string;
 }
 
@@ -21,6 +21,11 @@ export class Permission extends BaseModel() {
   timestamps: true,
 })
 export class Role extends BaseModel() {
+  @Property({
+    db: {
+      unique: true,
+    },
+  })
   name: string;
 
   @Property({
@@ -40,11 +45,13 @@ export class Role extends BaseModel() {
   timestamps: true,
 })
 export class Session extends BaseModel() {
-  @Property({ type: () => GraphQLObjectId })
+  @Property({ type: () => GraphQLObjectId, db: { unique: true } })
   userId: ObjectId;
 
+  @Property({ type: () => GraphQLObjectId, db: { unique: true } })
   private_key: string;
 
+  @Property({ type: () => GraphQLObjectId, db: { unique: true } })
   public_key: string;
 
   blacklist: string[];
