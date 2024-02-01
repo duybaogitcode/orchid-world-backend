@@ -11,12 +11,14 @@ import { Category, Tag } from './base/base.definition';
 import { Auction, AuctionBiddingHistory } from './auction/auction.definition';
 import { User } from './user/user.definition';
 import { Permission, Role } from './auth/auth.definition';
+import { configuration } from './config';
 
+console.log({ nod: configuration().NODE_ENV });
 @Module({
   imports: [
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
-      autoSchemaFile: true,
+      autoSchemaFile: configuration().NODE_ENV === 'dev' ? 'schema.gql' : true,
       playground: true,
     }),
     MongooseModule.forRoot(

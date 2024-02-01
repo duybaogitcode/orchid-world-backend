@@ -13,8 +13,19 @@ import { BaseModel } from 'src/base/base.definition';
   timestamps: true,
 })
 export class User extends BaseModel() {
+  @Property({
+    type: () => String,
+  })
   firstName: string;
+
+  @Property({
+    type: () => String,
+  })
   lastName: string;
+
+  @Property({
+    type: () => String,
+  })
   avatar: string;
 
   @Property({

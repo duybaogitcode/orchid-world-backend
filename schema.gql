@@ -1,0 +1,426 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type SuccessResponse {
+  success: Boolean!
+}
+
+type Category {
+  id: ObjectId!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  name: String!
+  slug: String!
+  description: String
+  media: [String!]
+  productId: ObjectId!
+}
+
+"""ObjectId is a mongodb ObjectId. String of 12 or 24 hex chars"""
+scalar ObjectId
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type PaginatedCategories {
+  docs: [Category!]!
+  totalDocs: Int!
+  page: Int!
+  limit: Int!
+  totalPages: Int!
+  hasNextPage: Boolean!
+  hasPrevPage: Boolean!
+  pagingCounter: Int!
+}
+
+type Tag {
+  id: ObjectId!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  name: String!
+  slug: String!
+  productId: ObjectId!
+}
+
+type PaginatedTags {
+  docs: [Tag!]!
+  totalDocs: Int!
+  page: Int!
+  limit: Int!
+  totalPages: Int!
+  hasNextPage: Boolean!
+  hasPrevPage: Boolean!
+  pagingCounter: Int!
+}
+
+type Permission {
+  id: ObjectId!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  pattern: String!
+}
+
+type PaginatedPermissions {
+  docs: [Permission!]!
+  totalDocs: Int!
+  page: Int!
+  limit: Int!
+  totalPages: Int!
+  hasNextPage: Boolean!
+  hasPrevPage: Boolean!
+  pagingCounter: Int!
+}
+
+type Role {
+  id: ObjectId!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  name: String!
+  permissionIds: [ObjectId!]
+  permissions: [Permission!]!
+}
+
+type PaginatedRoles {
+  docs: [Role!]!
+  totalDocs: Int!
+  page: Int!
+  limit: Int!
+  totalPages: Int!
+  hasNextPage: Boolean!
+  hasPrevPage: Boolean!
+  pagingCounter: Int!
+}
+
+type Session {
+  id: ObjectId!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  userId: ObjectId!
+  private_key: ObjectId!
+  public_key: ObjectId!
+}
+
+type User {
+  id: ObjectId!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  firstName: String!
+  lastName: String!
+  avatar: String!
+  roleId: ObjectId!
+  role: Role!
+}
+
+type PaginatedUsers {
+  docs: [User!]!
+  totalDocs: Int!
+  page: Int!
+  limit: Int!
+  totalPages: Int!
+  hasNextPage: Boolean!
+  hasPrevPage: Boolean!
+  pagingCounter: Int!
+}
+
+type ProductType {
+  id: ObjectId!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  name: String!
+  slug: String!
+}
+
+type Product {
+  id: ObjectId!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  authorId: ObjectId!
+  name: String!
+  slug: String!
+  shortDescription: String
+  longDescription: String
+  media: [String!]
+  status: ProductStatus
+  tags: [Tag!]!
+  author: User!
+  category: Category
+}
+
+enum ProductStatus {
+  PENDING
+  APPROVED
+  NOT_AVAILABLE
+  DISAPPROVED
+}
+
+type PaginatedProducts {
+  docs: [Product!]!
+  totalDocs: Int!
+  page: Int!
+  limit: Int!
+  totalPages: Int!
+  hasNextPage: Boolean!
+  hasPrevPage: Boolean!
+  pagingCounter: Int!
+}
+
+type Media {
+  id: ObjectId!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  authorId: ObjectId!
+  name: String!
+  url: String!
+  author: User!
+}
+
+type PaginatedMedia {
+  docs: [Media!]!
+  totalDocs: Int!
+  page: Int!
+  limit: Int!
+  totalPages: Int!
+  hasNextPage: Boolean!
+  hasPrevPage: Boolean!
+  pagingCounter: Int!
+}
+
+type Auction {
+  id: ObjectId!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  productId: ObjectId!
+  expireAt: DateTime!
+  startAt: DateTime!
+  status: Status!
+  product: Product!
+}
+
+enum Status {
+  PENDING
+  APPROVED
+  NOT_AVAILABLE
+  DISAPPROVED
+}
+
+type PaginatedAuctions {
+  docs: [Auction!]!
+  totalDocs: Int!
+  page: Int!
+  limit: Int!
+  totalPages: Int!
+  hasNextPage: Boolean!
+  hasPrevPage: Boolean!
+  pagingCounter: Int!
+}
+
+type AuctionBiddingHistory {
+  id: ObjectId!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  auctionId: ObjectId!
+  bidPrice: Float!
+  auction: Auction!
+}
+
+type PaginatedAuctionBiddingHistories {
+  docs: [AuctionBiddingHistory!]!
+  totalDocs: Int!
+  page: Int!
+  limit: Int!
+  totalPages: Int!
+  hasNextPage: Boolean!
+  hasPrevPage: Boolean!
+  pagingCounter: Int!
+}
+
+type Query {
+  product(id: ObjectId!): Product!
+  paginateProducts(page: Int! = 1, limit: Int! = 10): PaginatedProducts!
+  user(id: ObjectId!): User!
+  paginateUsers(page: Int! = 1, limit: Int! = 10): PaginatedUsers!
+  role(id: ObjectId!): Role!
+  paginateRoles(page: Int! = 1, limit: Int! = 10): PaginatedRoles!
+  permission(id: ObjectId!): Permission!
+  paginatePermissions(page: Int! = 1, limit: Int! = 10): PaginatedPermissions!
+  media(id: ObjectId!): Media!
+  paginateMedia(page: Int! = 1, limit: Int! = 10): PaginatedMedia!
+  tag(id: ObjectId!): Tag!
+  paginateTags(page: Int! = 1, limit: Int! = 10): PaginatedTags!
+  category(id: ObjectId!): Category!
+  paginateCategories(page: Int! = 1, limit: Int! = 10): PaginatedCategories!
+  auction(id: ObjectId!): Auction!
+  paginateAuctions(page: Int! = 1, limit: Int! = 10): PaginatedAuctions!
+  auctionbiddinghistory(id: ObjectId!): AuctionBiddingHistory!
+  paginateAuctionBiddingHistories(page: Int! = 1, limit: Int! = 10): PaginatedAuctionBiddingHistories!
+}
+
+type Mutation {
+  createProduct(input: CreateProductInput!): Product!
+  updateProduct(input: UpdateProductInput!): Product!
+  removeProduct(id: ObjectId!, options: RemoveOptions): SuccessResponse!
+  createUser(input: CreateUserInput!): User!
+  updateUser(input: UpdateUserInput!): User!
+  removeUser(id: ObjectId!, options: RemoveOptions): SuccessResponse!
+  createRole(input: CreateRoleInput!): Role!
+  updateRole(input: UpdateRoleInput!): Role!
+  removeRole(id: ObjectId!, options: RemoveOptions): SuccessResponse!
+  createPermission(input: CreatePermissionInput!): Permission!
+  updatePermission(input: UpdatePermissionInput!): Permission!
+  removePermission(id: ObjectId!, options: RemoveOptions): SuccessResponse!
+  createMedia(input: CreateMediaInput!): Media!
+  updateMedia(input: UpdateMediaInput!): Media!
+  removeMedia(id: ObjectId!, options: RemoveOptions): SuccessResponse!
+  createTag(input: CreateTagInput!): Tag!
+  updateTag(input: UpdateTagInput!): Tag!
+  removeTag(id: ObjectId!, options: RemoveOptions): SuccessResponse!
+  createCategory(input: CreateCategoryInput!): Category!
+  updateCategory(input: UpdateCategoryInput!): Category!
+  removeCategory(id: ObjectId!, options: RemoveOptions): SuccessResponse!
+  createAuction(input: CreateAuctionInput!): Auction!
+  updateAuction(input: UpdateAuctionInput!): Auction!
+  removeAuction(id: ObjectId!, options: RemoveOptions): SuccessResponse!
+  createAuctionBiddingHistory(input: CreateAuctionBiddingHistoryInput!): AuctionBiddingHistory!
+  updateAuctionBiddingHistory(input: UpdateAuctionBiddingHistoryInput!): AuctionBiddingHistory!
+  removeAuctionBiddingHistory(id: ObjectId!, options: RemoveOptions): SuccessResponse!
+}
+
+input CreateProductInput {
+  authorId: ObjectId!
+  name: String!
+  slug: String!
+  shortDescription: String
+  longDescription: String
+  tags: [CreateTagInput!]
+  media: [String!]
+  status: ProductStatus = PENDING
+}
+
+input CreateTagInput {
+  name: String!
+  slug: String!
+  productId: ObjectId!
+}
+
+input UpdateProductInput {
+  id: ObjectId
+  authorId: ObjectId
+  name: String
+  slug: String
+  shortDescription: String
+  longDescription: String
+  media: [String!]
+  status: ProductStatus = PENDING
+}
+
+input RemoveOptions {
+  mode: RemoveMode! = RequiredCleanRelations
+}
+
+enum RemoveMode {
+  RequiredCleanRelations
+  IgnoreRelations
+  CleanUpRelationsAfterRemoved
+}
+
+input CreateUserInput {
+  firstName: String!
+  lastName: String!
+  avatar: String!
+  roleId: ObjectId!
+}
+
+input UpdateUserInput {
+  id: ObjectId
+  firstName: String
+  lastName: String
+  avatar: String
+  roleId: ObjectId
+}
+
+input CreateRoleInput {
+  name: String!
+  permissionIds: [ObjectId!]
+  permissions: [CreatePermissionInput!]
+}
+
+input CreatePermissionInput {
+  pattern: String!
+}
+
+input UpdateRoleInput {
+  id: ObjectId
+  name: String
+  permissionIds: [ObjectId!]
+}
+
+input UpdatePermissionInput {
+  id: ObjectId
+  pattern: String
+}
+
+input CreateMediaInput {
+  authorId: ObjectId!
+  name: String!
+  url: String!
+}
+
+input UpdateMediaInput {
+  id: ObjectId
+  authorId: ObjectId
+  name: String
+  url: String
+}
+
+input UpdateTagInput {
+  id: ObjectId
+  name: String
+  slug: String
+  productId: ObjectId
+}
+
+input CreateCategoryInput {
+  name: String!
+  slug: String!
+  description: String
+  media: [String!]
+  productId: ObjectId!
+}
+
+input UpdateCategoryInput {
+  id: ObjectId
+  name: String
+  slug: String
+  description: String
+  media: [String!]
+  productId: ObjectId
+}
+
+input CreateAuctionInput {
+  productId: ObjectId!
+  expireAt: DateTime!
+  startAt: DateTime!
+  status: String!
+}
+
+input UpdateAuctionInput {
+  id: ObjectId
+  productId: ObjectId
+  expireAt: DateTime
+  startAt: DateTime
+  status: String
+}
+
+input CreateAuctionBiddingHistoryInput {
+  auctionId: ObjectId!
+  bidPrice: Float!
+}
+
+input UpdateAuctionBiddingHistoryInput {
+  id: ObjectId
+  auctionId: ObjectId
+  bidPrice: Float
+}

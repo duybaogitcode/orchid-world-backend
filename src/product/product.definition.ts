@@ -46,6 +46,7 @@ export class ProductType extends BaseModel() {
 
 @Definition({ timestamps: true })
 export class Product extends BaseModelHasOwner() {
+  @Property({ db: { unique: true } })
   name: string;
 
   @Property({ db: { unique: true } })
@@ -63,8 +64,8 @@ export class Product extends BaseModelHasOwner() {
   })
   longDescription: string;
 
-  @Embedded(() => ProductType)
-  productType: ProductType;
+  // @Embedded(() => ProductType)
+  // productType: ProductType;
 
   @ReferencesMany(() => Tag, { from: 'tagIds', allowCreateWithin: true })
   tags: Tag[];
@@ -82,6 +83,8 @@ export class Product extends BaseModelHasOwner() {
 
   @Property({
     type: () => ProductStatus,
+    nullable: true,
+    defaultValue: ProductStatus.PENDING,
   })
   status: ProductStatus;
 }
