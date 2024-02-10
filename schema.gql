@@ -239,6 +239,7 @@ type PaginatedAuctionBiddingHistories {
 
 type Query {
   product(id: ObjectId!): Product!
+  allProducts: [Product!]!
   paginateProducts(page: Int! = 1, limit: Int! = 10): PaginatedProducts!
   user(id: ObjectId!): User!
   paginateUsers(page: Int! = 1, limit: Int! = 10): PaginatedUsers!
@@ -259,9 +260,6 @@ type Query {
 }
 
 type Mutation {
-  createProduct(input: CreateProductInput!): Product!
-  updateProduct(input: UpdateProductInput!): Product!
-  removeProduct(id: ObjectId!, options: RemoveOptions): SuccessResponse!
   createUser(input: CreateUserInput!): User!
   updateUser(input: UpdateUserInput!): User!
   removeUser(id: ObjectId!, options: RemoveOptions): SuccessResponse!
@@ -286,44 +284,7 @@ type Mutation {
   createAuctionBiddingHistory(input: CreateAuctionBiddingHistoryInput!): AuctionBiddingHistory!
   updateAuctionBiddingHistory(input: UpdateAuctionBiddingHistoryInput!): AuctionBiddingHistory!
   removeAuctionBiddingHistory(id: ObjectId!, options: RemoveOptions): SuccessResponse!
-}
-
-input CreateProductInput {
-  authorId: ObjectId!
-  name: String!
-  slug: String!
-  shortDescription: String
-  longDescription: String
-  tags: [CreateTagInput!]
-  media: [String!]
-  status: ProductStatus = PENDING
-}
-
-input CreateTagInput {
-  name: String!
-  slug: String!
-  productId: ObjectId!
-}
-
-input UpdateProductInput {
-  id: ObjectId
-  authorId: ObjectId
-  name: String
-  slug: String
-  shortDescription: String
-  longDescription: String
-  media: [String!]
-  status: ProductStatus = PENDING
-}
-
-input RemoveOptions {
-  mode: RemoveMode! = RequiredCleanRelations
-}
-
-enum RemoveMode {
-  RequiredCleanRelations
-  IgnoreRelations
-  CleanUpRelationsAfterRemoved
+  createProductTest(input: CreateProductInput!): String!
 }
 
 input CreateUserInput {
@@ -339,6 +300,16 @@ input UpdateUserInput {
   lastName: String
   avatar: String
   roleId: ObjectId
+}
+
+input RemoveOptions {
+  mode: RemoveMode! = RequiredCleanRelations
+}
+
+enum RemoveMode {
+  RequiredCleanRelations
+  IgnoreRelations
+  CleanUpRelationsAfterRemoved
 }
 
 input CreateRoleInput {
@@ -373,6 +344,12 @@ input UpdateMediaInput {
   authorId: ObjectId
   name: String
   url: String
+}
+
+input CreateTagInput {
+  name: String!
+  slug: String!
+  productId: ObjectId!
 }
 
 input UpdateTagInput {
@@ -423,4 +400,8 @@ input UpdateAuctionBiddingHistoryInput {
   id: ObjectId
   auctionId: ObjectId
   bidPrice: Float
+}
+
+input CreateProductInput {
+  name: String!
 }

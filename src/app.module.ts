@@ -12,6 +12,8 @@ import { Auction, AuctionBiddingHistory } from './auction/auction.definition';
 import { User } from './user/user.definition';
 import { Permission, Role } from './auth/auth.definition';
 import { configuration } from './config';
+import { ProductResolver } from './product/product.resolver';
+import { FirebaseModule } from 'nestjs-firebase';
 
 console.log({ nod: configuration().NODE_ENV });
 @Module({
@@ -24,6 +26,10 @@ console.log({ nod: configuration().NODE_ENV });
     MongooseModule.forRoot(
       'mongodb+srv://admin:fng8LrZdG2BqKbh2@clusterqueue.knjjwp9.mongodb.net/?retryWrites=true&w=majority',
     ),
+    FirebaseModule.forRoot({
+      googleApplicationCredential:
+        './src/firebase/orchid-fer-firebase-adminsdk-abbv0-f4ab971f7d.json',
+    }),
     DryerModule.register({
       definitions: [
         {
@@ -31,9 +37,10 @@ console.log({ nod: configuration().NODE_ENV });
           embeddedConfigs: [
             {
               property: 'type',
-              allowedApis: ['create', 'findAll', 'findOne', 'remove', 'update'],
+              allowedApis: ['findAll', 'findOne', 'create', 'update', 'remove'],
             },
           ],
+          allowedApis: ['findAll', 'findOne', 'paginate'],
         },
         User,
         Role,
@@ -44,6 +51,7 @@ console.log({ nod: configuration().NODE_ENV });
         Auction,
         AuctionBiddingHistory,
       ],
+      providers: [ProductResolver],
     }),
   ],
   controllers: [AppController],

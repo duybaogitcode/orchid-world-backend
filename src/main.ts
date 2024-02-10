@@ -9,6 +9,8 @@ async function bootstrap() {
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
+
+  console.log('port', configuration().port);
   await app.listen(configuration().port || 3000);
 }
 bootstrap();

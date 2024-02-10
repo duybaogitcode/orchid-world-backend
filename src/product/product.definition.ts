@@ -1,4 +1,4 @@
-import { registerEnumType } from '@nestjs/graphql';
+import { Field, registerEnumType } from '@nestjs/graphql';
 import {
   BelongsTo,
   Definition,
@@ -8,7 +8,9 @@ import {
   ObjectId,
   Property,
   ReferencesMany,
+  Skip,
 } from 'dryerjs';
+import { GraphQLUpload } from 'graphql-upload-ts';
 import { BaseModel, Category, Tag } from 'src/base/base.definition';
 import { User } from 'src/user/user.definition';
 
@@ -78,6 +80,8 @@ export class Product extends BaseModelHasOwner() {
   @Property({
     nullable: true,
     type: () => [String],
+    create: Skip,
+    update: Skip,
   })
   media: string[];
 
@@ -87,4 +91,7 @@ export class Product extends BaseModelHasOwner() {
     defaultValue: ProductStatus.PENDING,
   })
   status: ProductStatus;
+
+  @Field(() => GraphQLUpload)
+  file: File;
 }
