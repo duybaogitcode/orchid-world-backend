@@ -3,8 +3,10 @@ import { Product } from './product.definition';
 import { CreateProductInput } from './dto/create-product.input';
 import { OutputType } from 'dryerjs';
 import { FirebaseAdmin, InjectFirebaseAdmin } from 'nestjs-firebase';
-import * as fs from 'fs';
-import * as path from 'path';
+import * as stream from 'stream';
+import { v4 as uuidv4 } from 'uuid';
+import * as sharp from 'sharp';
+
 @Resolver()
 export class ProductResolver {
   constructor(
@@ -14,40 +16,52 @@ export class ProductResolver {
   @Mutation(() => String, { name: 'createProductTest' })
   async create(@Args('input') input: CreateProductInput) {
     try {
-      // Define the absolute path to the file
-      const filePath = path.resolve(
-        __dirname,
-        '..',
-        '..',
-        'src',
-        'firebase',
-        'test.txt',
-      );
+      const fileUpload = await input.file[0];
+      const { createReadStream } = fileUpload;
 
-      // Read the file from the local file system
-      const fileBuffer = fs.readFileSync(filePath);
-
-      // Get the specific bucket and create a new blob in the bucket and upload the file data
       const bucket = this.firebase.storage.bucket('orchid-fer.appspot.com');
-      const fileName = path.basename(filePath);
+
+      const fileName = uuidv4() + '.webp';
       const file = bucket.file(fileName);
       const writeStream = file.createWriteStream({
         metadata: {
-          contentType: 'text/plain',
+          contentType: 'image/webp',
         },
       });
 
-      writeStream.on('error', (err) => {
-        console.error('Firebase Storage error:', err);
+      const fileBuffer = await new Promise((resolve, reject) => {
+        const chunks = [];
+        createReadStream()
+          .on('data', (chunk) => chunks.push(chunk))
+          .on('error', reject)
+          .on('end', () => resolve(Buffer.concat(chunks)));
       });
 
-      writeStream.on('finish', () => {
-        console.log('File uploaded successfully');
+      const convertedImageBuffer = await sharp(fileBuffer)
+        .toFormat('webp')
+        .toBuffer();
+
+      return new Promise((resolve, reject) => {
+        const bufferStream = new stream.PassThrough();
+        bufferStream.end(convertedImageBuffer);
+        bufferStream
+          .pipe(writeStream)
+          .on('error', (error) => {
+            console.error('Error uploading file:', error);
+            reject('Error uploading file');
+          })
+          .on('finish', async () => {
+            console.log('File uploaded successfully');
+
+            const [url] = await file.getSignedUrl({
+              action: 'read',
+              expires: '03-09-2491',
+            });
+
+            console.log('File URL:', url);
+            resolve(url);
+          });
       });
-
-      writeStream.end(fileBuffer);
-
-      return 'File uploaded successfully';
     } catch (error) {
       console.error('Error uploading file:', error);
       return 'Error uploading file';

@@ -80,8 +80,6 @@ export class Product extends BaseModelHasOwner() {
   @Property({
     nullable: true,
     type: () => [String],
-    create: Skip,
-    update: Skip,
   })
   media: string[];
 
@@ -91,7 +89,4 @@ export class Product extends BaseModelHasOwner() {
     defaultValue: ProductStatus.PENDING,
   })
   status: ProductStatus;
-
-  @Field(() => GraphQLUpload)
-  file: File;
 }
