@@ -6,15 +6,14 @@ type SuccessResponse {
   success: Boolean!
 }
 
-type Category {
+type Categories {
   id: ObjectId!
   createdAt: DateTime!
   updatedAt: DateTime!
   name: String!
   slug: String!
-  description: String
-  media: [String!]
-  productId: ObjectId!
+  product: [Product!]!
+  paginateProduct(page: Int! = 1, limit: Int! = 10): PaginatedProducts
 }
 
 """ObjectId is a mongodb ObjectId. String of 12 or 24 hex chars"""
@@ -25,35 +24,25 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
-type PaginatedCategories {
-  docs: [Category!]!
-  totalDocs: Int!
-  page: Int!
-  limit: Int!
-  totalPages: Int!
-  hasNextPage: Boolean!
-  hasPrevPage: Boolean!
-  pagingCounter: Int!
-}
-
-type Tag {
+type Tags {
   id: ObjectId!
   createdAt: DateTime!
   updatedAt: DateTime!
   name: String!
   slug: String!
-  productId: ObjectId!
+  values: [String!]!
 }
 
-type PaginatedTags {
-  docs: [Tag!]!
-  totalDocs: Int!
-  page: Int!
-  limit: Int!
-  totalPages: Int!
-  hasNextPage: Boolean!
-  hasPrevPage: Boolean!
-  pagingCounter: Int!
+type TagWithValues {
+  id: ObjectId!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  name: String!
+  tag_slug: String!
+  values: String!
+  product_id: ObjectId!
+  tags: Tags!
+  product: Product!
 }
 
 type Permission {
@@ -107,22 +96,8 @@ type User {
   id: ObjectId!
   createdAt: DateTime!
   updatedAt: DateTime!
-  firstName: String!
-  lastName: String!
-  avatar: String!
   roleId: ObjectId!
   role: Role!
-}
-
-type PaginatedUsers {
-  docs: [User!]!
-  totalDocs: Int!
-  page: Int!
-  limit: Int!
-  totalPages: Int!
-  hasNextPage: Boolean!
-  hasPrevPage: Boolean!
-  pagingCounter: Int!
 }
 
 type ProductType {
@@ -144,9 +119,9 @@ type Product {
   longDescription: String
   media: [String!]
   status: ProductStatus
-  tags: [Tag!]!
+  category_id: ObjectId!
   author: User!
-  category: Category
+  category: Categories!
 }
 
 enum ProductStatus {
@@ -238,21 +213,24 @@ type PaginatedAuctionBiddingHistories {
 }
 
 type Query {
+  whoAmI: User!
   product(id: ObjectId!): Product!
   allProducts: [Product!]!
   paginateProducts(page: Int! = 1, limit: Int! = 10): PaginatedProducts!
+  tags(id: ObjectId!): Tags!
+  allTags: [Tags!]!
+  tagwithvalues(id: ObjectId!): TagWithValues!
+  allTagWithValues: [TagWithValues!]!
+  categories(id: ObjectId!): Categories!
+  allCategories: [Categories!]!
   user(id: ObjectId!): User!
-  paginateUsers(page: Int! = 1, limit: Int! = 10): PaginatedUsers!
+  allUsers: [User!]!
   role(id: ObjectId!): Role!
   paginateRoles(page: Int! = 1, limit: Int! = 10): PaginatedRoles!
   permission(id: ObjectId!): Permission!
   paginatePermissions(page: Int! = 1, limit: Int! = 10): PaginatedPermissions!
   media(id: ObjectId!): Media!
   paginateMedia(page: Int! = 1, limit: Int! = 10): PaginatedMedia!
-  tag(id: ObjectId!): Tag!
-  paginateTags(page: Int! = 1, limit: Int! = 10): PaginatedTags!
-  category(id: ObjectId!): Category!
-  paginateCategories(page: Int! = 1, limit: Int! = 10): PaginatedCategories!
   auction(id: ObjectId!): Auction!
   paginateAuctions(page: Int! = 1, limit: Int! = 10): PaginatedAuctions!
   auctionbiddinghistory(id: ObjectId!): AuctionBiddingHistory!
@@ -260,9 +238,14 @@ type Query {
 }
 
 type Mutation {
-  createUser(input: CreateUserInput!): User!
+  signIn(input: String!): String!
+  createTags(input: CreateTagsInput!): Tags!
+  updateTags(input: UpdateTagsInput!): Tags!
+  removeTags(id: ObjectId!, options: RemoveOptions): SuccessResponse!
+  createCategories(input: CreateCategoriesInput!): Categories!
+  updateCategories(input: UpdateCategoriesInput!): Categories!
+  removeCategories(id: ObjectId!, options: RemoveOptions): SuccessResponse!
   updateUser(input: UpdateUserInput!): User!
-  removeUser(id: ObjectId!, options: RemoveOptions): SuccessResponse!
   createRole(input: CreateRoleInput!): Role!
   updateRole(input: UpdateRoleInput!): Role!
   removeRole(id: ObjectId!, options: RemoveOptions): SuccessResponse!
@@ -272,34 +255,25 @@ type Mutation {
   createMedia(input: CreateMediaInput!): Media!
   updateMedia(input: UpdateMediaInput!): Media!
   removeMedia(id: ObjectId!, options: RemoveOptions): SuccessResponse!
-  createTag(input: CreateTagInput!): Tag!
-  updateTag(input: UpdateTagInput!): Tag!
-  removeTag(id: ObjectId!, options: RemoveOptions): SuccessResponse!
-  createCategory(input: CreateCategoryInput!): Category!
-  updateCategory(input: UpdateCategoryInput!): Category!
-  removeCategory(id: ObjectId!, options: RemoveOptions): SuccessResponse!
   createAuction(input: CreateAuctionInput!): Auction!
   updateAuction(input: UpdateAuctionInput!): Auction!
   removeAuction(id: ObjectId!, options: RemoveOptions): SuccessResponse!
   createAuctionBiddingHistory(input: CreateAuctionBiddingHistoryInput!): AuctionBiddingHistory!
   updateAuctionBiddingHistory(input: UpdateAuctionBiddingHistoryInput!): AuctionBiddingHistory!
   removeAuctionBiddingHistory(id: ObjectId!, options: RemoveOptions): SuccessResponse!
-  createProductTest(input: CreateProductInput!): String!
 }
 
-input CreateUserInput {
-  firstName: String!
-  lastName: String!
-  avatar: String!
-  roleId: ObjectId!
+input CreateTagsInput {
+  name: String!
+  slug: String!
+  values: [String!]!
 }
 
-input UpdateUserInput {
+input UpdateTagsInput {
   id: ObjectId
-  firstName: String
-  lastName: String
-  avatar: String
-  roleId: ObjectId
+  name: String
+  slug: String
+  values: [String!]
 }
 
 input RemoveOptions {
@@ -310,6 +284,22 @@ enum RemoveMode {
   RequiredCleanRelations
   IgnoreRelations
   CleanUpRelationsAfterRemoved
+}
+
+input CreateCategoriesInput {
+  name: String!
+  slug: String!
+}
+
+input UpdateCategoriesInput {
+  id: ObjectId
+  name: String
+  slug: String
+}
+
+input UpdateUserInput {
+  id: ObjectId
+  roleId: ObjectId
 }
 
 input CreateRoleInput {
@@ -334,46 +324,14 @@ input UpdatePermissionInput {
 }
 
 input CreateMediaInput {
-  authorId: ObjectId!
   name: String!
   url: String!
 }
 
 input UpdateMediaInput {
   id: ObjectId
-  authorId: ObjectId
   name: String
   url: String
-}
-
-input CreateTagInput {
-  name: String!
-  slug: String!
-  productId: ObjectId!
-}
-
-input UpdateTagInput {
-  id: ObjectId
-  name: String
-  slug: String
-  productId: ObjectId
-}
-
-input CreateCategoryInput {
-  name: String!
-  slug: String!
-  description: String
-  media: [String!]
-  productId: ObjectId!
-}
-
-input UpdateCategoryInput {
-  id: ObjectId
-  name: String
-  slug: String
-  description: String
-  media: [String!]
-  productId: ObjectId
 }
 
 input CreateAuctionInput {
@@ -401,11 +359,3 @@ input UpdateAuctionBiddingHistoryInput {
   auctionId: ObjectId
   bidPrice: Float
 }
-
-input CreateProductInput {
-  name: String!
-  file: [Upload!]!
-}
-
-"""The `Upload` scalar type represents a file upload."""
-scalar Upload

@@ -1,3 +1,4 @@
+import { Field, ObjectType } from '@nestjs/graphql';
 import {
   Definition,
   Embedded,
@@ -55,4 +56,10 @@ export class Session extends BaseModel() {
   public_key: string;
 
   blacklist: string[];
+}
+
+@ObjectType()
+export class AccessTokenResponse {
+  @Field()
+  accessToken: string;
 }

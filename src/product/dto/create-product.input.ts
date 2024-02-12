@@ -16,23 +16,20 @@ export class CreateProductInput {
   @Field()
   name: string;
 
-  // @Field()
-  // slug: string;
+  @Field()
+  price: number;
 
-  // @Field()
-  // price: number;
+  @Field({ nullable: true })
+  shortDescription: string;
 
-  // @Field({ nullable: true })
-  // shortDescription: string;
+  @Field({ nullable: true })
+  longDescription: string;
 
-  // @Field({ nullable: true })
-  // longDescription: string;
+  @Field(() => [String], { nullable: true })
+  tagIds: string[];
 
-  // @Field(() => [String], { nullable: true })
-  // tagIds: string[];
-
-  // @Field({ nullable: true })
-  // categoryId: string;
+  @Field({ nullable: true })
+  categoryId: string;
 
   @Field(() => [GraphQLUpload])
   file: Array<Promise<FileUpload>>;
