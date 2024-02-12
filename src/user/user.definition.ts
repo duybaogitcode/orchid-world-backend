@@ -1,3 +1,4 @@
+import { Field, ObjectType, registerEnumType } from '@nestjs/graphql';
 import {
   BelongsTo,
   Definition,
@@ -9,25 +10,27 @@ import {
 import { Role } from 'src/auth/auth.definition';
 import { BaseModel } from 'src/base/base.definition';
 
+@ObjectType()
+export class Information {
+  @Field()
+  name: string;
+
+  @Field()
+  address: string;
+
+  @Field()
+  phone: string;
+
+  @Field()
+  email: string;
+
+  @Field()
+  avatar: string;
+}
 @Definition({
   timestamps: true,
 })
 export class User extends BaseModel() {
-  @Property({
-    type: () => String,
-  })
-  firstName: string;
-
-  @Property({
-    type: () => String,
-  })
-  lastName: string;
-
-  @Property({
-    type: () => String,
-  })
-  avatar: string;
-
   @Property({
     type: () => GraphQLObjectId,
   })
@@ -37,4 +40,7 @@ export class User extends BaseModel() {
     from: 'roleId',
   })
   role: Role;
+
+  @Field(() => Information)
+  information: Information;
 }

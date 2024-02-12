@@ -2,20 +2,23 @@ import { registerEnumType } from '@nestjs/graphql';
 import {
   BelongsTo,
   Definition,
-  Embedded,
   GraphQLObjectId,
-  HasOne,
+  HasMany,
   ObjectId,
   Property,
-  ReferencesMany,
+  Skip,
 } from 'dryerjs';
-import { BaseModel, Category, Tag } from 'src/base/base.definition';
+import { BaseModel } from 'src/base/base.definition';
+import { Categories } from 'src/orthersDef/categories.definition';
+import { TagWithValues } from 'src/orthersDef/tagValues.definition';
 import { User } from 'src/user/user.definition';
 
 export const BaseModelHasOwner = () => {
   class BaseModelHasOwnerClass extends BaseModel() {
     @Property({
       type: () => GraphQLObjectId,
+      create: Skip,
+      update: Skip,
     })
     authorId: ObjectId;
 
@@ -67,14 +70,6 @@ export class Product extends BaseModelHasOwner() {
   // @Embedded(() => ProductType)
   // productType: ProductType;
 
-  @ReferencesMany(() => Tag, { from: 'tagIds', allowCreateWithin: true })
-  tags: Tag[];
-
-  @HasOne(() => Category, {
-    to: 'productId',
-  })
-  category: Category;
-
   @Property({
     nullable: true,
     type: () => [String],
@@ -87,4 +82,16 @@ export class Product extends BaseModelHasOwner() {
     defaultValue: ProductStatus.PENDING,
   })
   status: ProductStatus;
+
+  @HasMany(() => TagWithValues, {
+    to: 'product_id',
+    allowCreateWithin: false,
+  })
+  tags: TagWithValues[];
+
+  @Property({ type: () => GraphQLObjectId })
+  category_id: ObjectId;
+
+  @BelongsTo(() => Categories, { from: 'category_id' })
+  category: Categories;
 }

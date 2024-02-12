@@ -7,11 +7,19 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { DryerModule } from 'dryerjs';
 import { Product } from './product/product.definition';
 import { Media } from './media/media.definition';
-import { Category, Tag } from './base/base.definition';
 import { Auction, AuctionBiddingHistory } from './auction/auction.definition';
 import { User } from './user/user.definition';
 import { Permission, Role } from './auth/auth.definition';
 import { configuration } from './config';
+import { ProductResolver } from './product/product.resolver';
+import { FirebaseModule } from 'nestjs-firebase';
+import { Tags } from './orthersDef/tags.definition';
+import { TagWithValues } from './orthersDef/tagValues.definition';
+import { Categories } from './orthersDef/categories.definition';
+import { AuthResolver } from './auth/auth.resolver';
+import { JwtModule } from '@nestjs/jwt';
+import { Ctx } from './auth/ctx';
+import { RoleGuard } from './auth/role.guard';
 
 console.log({ nod: configuration().NODE_ENV });
 @Module({
@@ -22,31 +30,57 @@ console.log({ nod: configuration().NODE_ENV });
       playground: true,
     }),
     MongooseModule.forRoot(
-      'mongodb+srv://admin:fng8LrZdG2BqKbh2@clusterqueue.knjjwp9.mongodb.net/?retryWrites=true&w=majority',
+      'mongodb+srv://admin:fng8LrZdG2BqKbh2@clusterqueue.knjjwp9.mongodb.net/OrchidSample?retryWrites=true&w=majority',
     ),
+    FirebaseModule.forRoot({
+      googleApplicationCredential:
+        './src/firebase/orchid-fer-firebase-adminsdk-abbv0-f4ab971f7d.json',
+    }),
     DryerModule.register({
       definitions: [
         {
           definition: Product,
-          embeddedConfigs: [
-            {
-              property: 'type',
-              allowedApis: ['create', 'findAll', 'findOne', 'remove', 'update'],
-            },
-          ],
+          // embeddedConfigs: [
+          //   {
+          //     property: 'type',
+          //     allowedApis: ['findAll', 'findOne', 'create', 'update', 'remove'],
+          //   },
+          // ],
+          allowedApis: ['findAll', 'findOne', 'paginate'],
         },
-        User,
+
+        {
+          definition: Tags,
+          allowedApis: ['findAll', 'findOne', 'create', 'update', 'remove'],
+        },
+        {
+          definition: TagWithValues,
+          allowedApis: ['findAll', 'findOne'],
+        },
+        {
+          definition: Categories,
+          allowedApis: ['findAll', 'findOne', 'create', 'update', 'remove'],
+        },
+        {
+          definition: User,
+          allowedApis: ['findAll', 'findOne', 'update'],
+        },
         Role,
         Permission,
         Media,
-        Tag,
-        Category,
         Auction,
         AuctionBiddingHistory,
       ],
+      providers: [],
+      contextDecorator: Ctx,
+    }),
+    JwtModule.register({
+      global: true,
+      secret: 'rvGx7efcLKUVL6uK8MgR7X6cpFLUP9vg',
+      signOptions: { expiresIn: '7d' },
     }),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, AuthResolver, RoleGuard],
 })
 export class AppModule {}
