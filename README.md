@@ -33,3 +33,7 @@ Information about the project's license and any relevant terms.
 ## Contact
 
 How to contact the project maintainer or team.
+
+## Note for Developers
+
+- Properties in definitions need @Property, if not it will not appear in Front End (FE)

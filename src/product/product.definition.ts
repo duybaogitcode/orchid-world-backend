@@ -63,6 +63,7 @@ export class Product extends BaseModelHasOwner() {
   @Property({ db: { unique: true } })
   slug: string;
 
+  @Property({ type: () => Number })
   price: number;
 
   @Property({
