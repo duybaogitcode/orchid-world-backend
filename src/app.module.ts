@@ -20,6 +20,9 @@ import { AuthResolver } from './auth/auth.resolver';
 import { JwtModule } from '@nestjs/jwt';
 import { Ctx } from './auth/ctx';
 import { RoleGuard } from './auth/role.guard';
+import { create } from 'domain';
+import { ProductHook } from './product/product.hooks';
+import { FirebaseService } from './firebase/firebase.serivce';
 
 console.log({ nod: configuration().NODE_ENV });
 @Module({
@@ -55,7 +58,7 @@ console.log({ nod: configuration().NODE_ENV });
         },
         {
           definition: TagWithValues,
-          allowedApis: ['findAll', 'findOne'],
+          allowedApis: [],
         },
         {
           definition: Categories,
@@ -65,13 +68,20 @@ console.log({ nod: configuration().NODE_ENV });
           definition: User,
           allowedApis: ['findAll', 'findOne', 'update'],
         },
-        Role,
-        Permission,
-        Media,
-        Auction,
-        AuctionBiddingHistory,
+        {
+          definition: Role,
+          allowedApis: [],
+        },
+        {
+          definition: Permission,
+          allowedApis: [],
+        },
+
+        // Media,
+        // Auction,
+        // AuctionBiddingHistory,
       ],
-      providers: [],
+      providers: [ProductHook, FirebaseService, ProductResolver],
       contextDecorator: Ctx,
     }),
     JwtModule.register({
