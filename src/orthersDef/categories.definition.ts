@@ -20,7 +20,7 @@ export class Categories extends BaseModel() {
   slug: string;
 
   @HasMany(() => Product, {
-    to: 'tag_slug',
+    to: 'category_id',
     allowCreateWithin: false,
     allowFindAll: true,
     allowPaginate: true,

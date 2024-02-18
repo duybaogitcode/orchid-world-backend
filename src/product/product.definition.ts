@@ -8,6 +8,7 @@ import {
   Property,
   Skip,
 } from 'dryerjs';
+import { FileUpload, GraphQLUpload } from 'graphql-upload-ts';
 import { BaseModel } from 'src/base/base.definition';
 import { Categories } from 'src/orthersDef/categories.definition';
 import { TagWithValues } from 'src/orthersDef/tagValues.definition';
@@ -38,19 +39,26 @@ registerEnumType(ProductStatus, {
   name: 'ProductStatus',
 });
 
-@Definition({ timestamps: true })
-export class ProductType extends BaseModel() {
-  @Property()
-  name: string;
+// @Definition({ timestamps: true })
+// export class ProductType extends BaseModel() {
+//   @Property()
+//   name: string;
 
-  @Property({ db: { unique: true } })
-  slug: string;
-}
+//   @Property({ db: { unique: true } })
+//   slug: string;
+// }
 
 @Definition({ timestamps: true })
 export class Product extends BaseModelHasOwner() {
-  @Property({ db: { unique: true } })
+  @Property()
   name: string;
+  @Property({
+    type: () => [String],
+    nullable: true,
+  })
+  media: string[];
+  @Property({ type: () => [GraphQLUpload], db: Skip, output: Skip })
+  file: Array<Promise<FileUpload>>;
 
   @Property({ db: { unique: true } })
   slug: string;
@@ -71,12 +79,6 @@ export class Product extends BaseModelHasOwner() {
   // productType: ProductType;
 
   @Property({
-    nullable: true,
-    type: () => [String],
-  })
-  media: string[];
-
-  @Property({
     type: () => ProductStatus,
     nullable: true,
     defaultValue: ProductStatus.PENDING,
@@ -85,7 +87,8 @@ export class Product extends BaseModelHasOwner() {
 
   @HasMany(() => TagWithValues, {
     to: 'product_id',
-    allowCreateWithin: false,
+    allowCreateWithin: true,
+    allowFindAll: true,
   })
   tags: TagWithValues[];
 

@@ -1,29 +1,23 @@
-import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
-import { Product } from './product.definition';
-import { OutputType } from 'dryerjs';
+import { Injectable } from '@nestjs/common';
 import { FirebaseAdmin, InjectFirebaseAdmin } from 'nestjs-firebase';
 import * as stream from 'stream';
 import { v4 as uuidv4 } from 'uuid';
 import * as sharp from 'sharp';
-import { CreateProductInput } from './dto/create-product.input';
+import { FileUpload } from 'graphql-upload-ts';
 
-@Resolver()
-export class ProductResolver {
+@Injectable()
+export class FirebaseService {
   constructor(
     @InjectFirebaseAdmin() private readonly firebase: FirebaseAdmin,
   ) {}
 
-  @Mutation(() => String, { name: 'createProductTest' })
-  async create(@Args('input') input: CreateProductInput) {
+  async uploadFile(fileUpload: FileUpload, path: string): Promise<string> {
     try {
-      const fileUpload = await input.file[0];
-      const listUser = await this.firebase.auth.listUsers();
-      console.log('listUser', listUser);
       const { createReadStream } = fileUpload;
 
       const bucket = this.firebase.storage.bucket('orchid-fer.appspot.com');
 
-      const fileName = uuidv4() + '.webp';
+      const fileName = path + '/' + uuidv4() + '.webp';
       const file = bucket.file(fileName);
       const writeStream = file.createWriteStream({
         metadata: {
@@ -66,7 +60,7 @@ export class ProductResolver {
       });
     } catch (error) {
       console.error('Error uploading file:', error);
-      return 'Error uploading file';
+      throw new Error('Error uploading file');
     }
   }
 }
