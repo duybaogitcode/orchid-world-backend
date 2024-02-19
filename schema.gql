@@ -15,9 +15,7 @@ type Categories {
   paginateProduct(page: Int! = 1, limit: Int! = 10): PaginatedProducts
 }
 
-"""
-ObjectId is a mongodb ObjectId. String of 12 or 24 hex chars
-"""
+"""ObjectId is a mongodb ObjectId. String of 12 or 24 hex chars"""
 scalar ObjectId
 
 """
@@ -184,9 +182,7 @@ input CreateProductInput {
   category_id: ObjectId!
 }
 
-"""
-The `Upload` scalar type represents a file upload.
-"""
+"""The `Upload` scalar type represents a file upload."""
 scalar Upload
 
 input CreateTagWithValuesWithinProductInput {
