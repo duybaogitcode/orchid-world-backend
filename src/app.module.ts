@@ -22,6 +22,8 @@ import { CartItem } from './cart/definition/cartItem.definiton';
 import { CartShopItem } from './cart/definition/cartShopItem.definition';
 import { Cart } from './cart/definition/cart.definition';
 import { User } from './user/user.definition';
+import { UserService } from './user/user.service';
+import { UserResolver } from './user/user.resolver';
 
 console.log({ nod: configuration().NODE_ENV });
 @Module({
@@ -41,12 +43,6 @@ console.log({ nod: configuration().NODE_ENV });
       definitions: [
         {
           definition: Product,
-          // embeddedConfigs: [
-          //   {
-          //     property: 'type',
-          //     allowedApis: ['findAll', 'findOne', 'create', 'update', 'remove'],
-          //   },
-          // ],
           allowedApis: ['findAll', 'findOne', 'paginate'],
         },
 
@@ -64,7 +60,7 @@ console.log({ nod: configuration().NODE_ENV });
         },
         {
           definition: User,
-          allowedApis: ['findAll', 'findOne', 'update'],
+          allowedApis: ['findAll', 'findOne', 'update', 'bulkRemove'],
         },
         {
           definition: Role,
@@ -95,12 +91,12 @@ console.log({ nod: configuration().NODE_ENV });
         // Auction,
         // AuctionBiddingHistory,
       ],
-
       providers: [
         FirebaseService,
         ProductResolver,
         ProductService,
-        // ProductHook,
+        UserService,
+        UserResolver,
       ],
       contextDecorator: Ctx,
     }),

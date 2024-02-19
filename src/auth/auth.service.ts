@@ -36,7 +36,8 @@ export class AuthService {
       const { idToken } = loginInput;
       const result = await this.firebaseService.auth.verifyIdToken(idToken);
 
-      let existUser = await this.userModel.findOne({ google_id: result.uid });
+      let existUser = await this.userModel.findOne({ googleId: result.uid });
+      console.log('🚀 ~ AuthService ~ create ~ existUser:', existUser);
 
       if (!existUser) {
         const userRole = await this.roleModel.findOne({ name: roleName });
@@ -46,8 +47,9 @@ export class AuthService {
           avatar: result.picture,
           firstName,
           email: result.email,
-          google_id: result.uid,
+          googleId: result.uid,
           lastName,
+
           roleId: userRole._id,
         });
       }

@@ -62,7 +62,7 @@ type User {
   id: ObjectId!
   createdAt: DateTime!
   updatedAt: DateTime!
-  google_id: String!
+  googleId: String!
   firstName: String!
   lastName: String!
   address: [String!]
@@ -72,6 +72,13 @@ type User {
   avatar: String
   roleId: ObjectId!
   role: Role!
+}
+
+type BulkRemoveUsersResult {
+  id: ObjectId!
+  result: User
+  success: Boolean!
+  errorMessage: String
 }
 
 type Tags {
@@ -168,6 +175,7 @@ type PaginatedCarts {
   hasNextPage: Boolean!
   hasPrevPage: Boolean!
   pagingCounter: Int!
+}
 type Categories {
   id: ObjectId!
   createdAt: DateTime!
@@ -195,6 +203,11 @@ type Query {
   allPermissions: [Permission!]!
   session(id: ObjectId!): Session!
   allSessions: [Session!]!
+  userByGoogleId(input: GetByUidInput!): User!
+}
+
+input GetByUidInput {
+  googleId: String!
 }
 
 type Mutation {
@@ -204,6 +217,7 @@ type Mutation {
   createCategories(input: CreateCategoriesInput!): Categories!
   updateCategories(input: UpdateCategoriesInput!): Categories!
   removeCategories(id: ObjectId!, options: RemoveOptions): SuccessResponse!
+  bulkRemoveUsers(ids: [ObjectId!]!, options: RemoveOptions): [BulkRemoveUsersResult!]!
   updateUser(input: UpdateUserInput!): User!
   removeCartItem(id: ObjectId!, options: RemoveOptions): SuccessResponse!
   createProduct(input: CreateProductInput!): Product!
@@ -264,7 +278,7 @@ input UpdateUserInput {
   address: [String!]
   email: String
   phone: String
-  isPhoneVerified: Boolean
+  isPhoneVerified: Boolean = false
   avatar: String
   roleId: ObjectId
 }

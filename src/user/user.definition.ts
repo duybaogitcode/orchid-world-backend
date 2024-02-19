@@ -19,7 +19,7 @@ export class User extends BaseModel() {
     },
     // update: Skip,
   })
-  google_id: String;
+  googleId: String;
 
   @Property()
   firstName: String;
@@ -33,15 +33,24 @@ export class User extends BaseModel() {
   })
   address: String[];
 
-  @Property({})
+  @Property({
+    db: {
+      unique: true,
+    },
+  })
   email: String;
 
   @Property({
     nullable: true,
+    db: {
+      unique: true,
+    },
   })
   phone: String;
 
-  @Property()
+  @Property({
+    defaultValue: false,
+  })
   isPhoneVerified: Boolean;
 
   @Property({
