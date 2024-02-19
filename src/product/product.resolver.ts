@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import * as sharp from 'sharp';
 import { CreateProductInput } from './dto/create-product.input';
 import { ProductService } from './product.service';
+import { UpdateProductInput } from './dto/update-product.input';
 
 @Resolver()
 export class ProductResolver {
@@ -20,7 +21,19 @@ export class ProductResolver {
       return newProduct;
     } catch (error) {
       console.error('Failed create new product:', error);
-      throw new Error('Failed create new product');
+      throw error;
+    }
+  }
+
+  @Mutation(() => OutputType(Product), { name: 'updateProduct' })
+  async update(@Args('input') input: UpdateProductInput) {
+    try {
+      const updatedProduct = await this.productService.update(input);
+
+      return updatedProduct;
+    } catch (error) {
+      console.error('Failed create new product:', error);
+      throw error;
     }
   }
 }

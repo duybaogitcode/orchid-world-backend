@@ -30,6 +30,9 @@ export class TagWithValues extends BaseModel() {
   })
   product_id: ObjectId;
 
-  @BelongsTo(() => Product, { from: 'product_id', noPopulation: true })
+  @BelongsTo(() => Product, {
+    from: 'product_id',
+    noPopulation: true,
+  })
   product: Product;
 }
