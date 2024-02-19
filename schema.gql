@@ -131,6 +131,7 @@ type Mutation {
   removeCategories(id: ObjectId!, options: RemoveOptions): SuccessResponse!
   updateUser(input: UpdateUserInput!): User!
   createProduct(input: CreateProductInput!): Product!
+  updateProduct(input: UpdateProductInput!): Product!
 }
 
 input CreateTagsInput {
@@ -186,6 +187,24 @@ input CreateProductInput {
 scalar Upload
 
 input CreateTagWithValuesWithinProductInput {
+  tag_id: ObjectId!
+  values: String!
+}
+
+input UpdateProductInput {
+  id: ObjectId
+  name: String
+  price: Float
+  quantity: Float
+  description: String
+  status: ProductStatus = PENDING
+  category_id: ObjectId
+  deleteUrl: [String!]
+  fileUpdate: [Upload!]
+  tagsUpdate: [InputTags!]
+}
+
+input InputTags {
   tag_id: ObjectId!
   values: String!
 }

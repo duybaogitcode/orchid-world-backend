@@ -62,4 +62,29 @@ export class FirebaseService {
       throw new Error('Error uploading file');
     }
   }
+
+  async deleteFile(url: string): Promise<void> {
+    try {
+      const bucket = this.firebase.storage.bucket('orchid-fer.appspot.com');
+      const filePath = this.convertToRelativePath(url);
+      await bucket.file(filePath).delete();
+      console.log('File path' + filePath);
+      console.log('File removed successfully.');
+    } catch (error) {
+      console.error('Error removing file:', error.message);
+      throw new Error('Failed to remove file.');
+    }
+  }
+
+  private convertToRelativePath(url: string): string {
+    const firebaseUrl =
+      'https://storage.googleapis.com/orchid-fer.appspot.com/';
+    const startIndex = url.indexOf(firebaseUrl);
+    if (startIndex !== -1) {
+      const filePath = url.substring(startIndex + firebaseUrl.length);
+      return filePath.split('?')[0];
+    } else {
+      throw new Error('Invalid URL format');
+    }
+  }
 }

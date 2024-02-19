@@ -1,7 +1,8 @@
-import { registerEnumType } from '@nestjs/graphql';
+import { InputType, OmitType, registerEnumType } from '@nestjs/graphql';
 import { Prop } from '@nestjs/mongoose';
 import {
   BelongsTo,
+  CreateInputType,
   Definition,
   GraphQLObjectId,
   HasMany,
@@ -50,6 +51,9 @@ registerEnumType(ProductStatus, {
 //   slug: string;
 // }
 
+const inputTags = CreateInputType(TagWithValues);
+@InputType()
+export class InputTags extends OmitType(inputTags, ['product_id'] as const) {}
 @Definition({ timestamps: true })
 export class Product extends BaseModelHasOwner() {
   @Property()
@@ -105,4 +109,31 @@ export class Product extends BaseModelHasOwner() {
 
   @BelongsTo(() => Categories, { from: 'category_id' })
   category: Categories;
+
+  @Property({
+    type: () => [String],
+    nullable: true,
+    output: Skip,
+    db: Skip,
+    create: Skip,
+  })
+  deleteUrl: [string];
+
+  @Property({
+    type: () => [GraphQLUpload],
+    db: Skip,
+    output: Skip,
+    create: Skip,
+    nullable: true,
+  })
+  fileUpdate: Array<Promise<FileUpload>>;
+
+  @Property({
+    type: () => [InputTags],
+    nullable: true,
+    output: Skip,
+    db: Skip,
+    create: Skip,
+  })
+  tagsUpdate: TagWithValues[];
 }
