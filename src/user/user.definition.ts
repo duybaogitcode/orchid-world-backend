@@ -1,36 +1,54 @@
-import { Field, ObjectType, registerEnumType } from '@nestjs/graphql';
 import {
   BelongsTo,
   Definition,
   GraphQLObjectId,
-  HasOne,
   ObjectId,
   Property,
+  Skip,
 } from 'dryerjs';
 import { Role } from 'src/auth/auth.definition';
 import { BaseModel } from 'src/base/base.definition';
 
-@ObjectType()
-export class Information {
-  @Field()
-  name: string;
-
-  @Field()
-  address: string;
-
-  @Field()
-  phone: string;
-
-  @Field()
-  email: string;
-
-  @Field()
-  avatar: string;
-}
 @Definition({
   timestamps: true,
 })
 export class User extends BaseModel() {
+  @Property({
+    db: {
+      unique: true,
+    },
+    // update: Skip,
+  })
+  google_id: String;
+
+  @Property()
+  firstName: String;
+
+  @Property()
+  lastName: String;
+
+  @Property({
+    type: () => [String],
+    nullable: true,
+  })
+  address: String[];
+
+  @Property({})
+  email: String;
+
+  @Property({
+    nullable: true,
+  })
+  phone: String;
+
+  @Property()
+  isPhoneVerified: Boolean;
+
+  @Property({
+    nullable: true,
+  })
+  avatar: String;
+
   @Property({
     type: () => GraphQLObjectId,
   })
@@ -40,7 +58,4 @@ export class User extends BaseModel() {
     from: 'roleId',
   })
   role: Role;
-
-  @Field(() => Information)
-  information: Information;
 }

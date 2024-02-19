@@ -6,13 +6,14 @@ type SuccessResponse {
   success: Boolean!
 }
 
-type Categories {
+type Permission {
   id: ObjectId!
   createdAt: DateTime!
   updatedAt: DateTime!
   name: String!
   slug: String!
   paginateProduct(page: Int! = 1, limit: Int! = 10, filter: ProductFilter, sort: ProductSort): PaginatedProducts
+  pattern: String!
 }
 
 """ObjectId is a mongodb ObjectId. String of 12 or 24 hex chars"""
@@ -39,6 +40,38 @@ input ProductSort {
 enum SortDirection {
   ASC
   DESC
+type Role {
+  id: ObjectId!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  name: String!
+  permissionIds: [ObjectId!]
+  permissions: [Permission!]!
+}
+
+type Session {
+  id: ObjectId!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  userId: ObjectId!
+  refreshToken: String!
+  accessToken: String!
+}
+
+type User {
+  id: ObjectId!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  google_id: String!
+  firstName: String!
+  lastName: String!
+  address: [String!]
+  email: String!
+  phone: String
+  isPhoneVerified: Boolean!
+  avatar: String
+  roleId: ObjectId!
+  role: Role!
 }
 
 type Tags {
@@ -57,39 +90,6 @@ type TagWithValues {
   tag_id: ObjectId!
   values: String!
   tag: Tags!
-}
-
-type Permission {
-  id: ObjectId!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  pattern: String!
-}
-
-type Role {
-  id: ObjectId!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  name: String!
-  permissionIds: [ObjectId!]
-  permissions: [Permission!]!
-}
-
-type Session {
-  id: ObjectId!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  userId: ObjectId!
-  private_key: ObjectId!
-  public_key: ObjectId!
-}
-
-type User {
-  id: ObjectId!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  roleId: ObjectId!
-  role: Role!
 }
 
 type Product {
@@ -168,10 +168,16 @@ type PaginatedCarts {
   hasNextPage: Boolean!
   hasPrevPage: Boolean!
   pagingCounter: Int!
+type Categories {
+  id: ObjectId!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  name: String!
+  slug: String!
+  paginateProduct(page: Int! = 1, limit: Int! = 10): PaginatedProducts
 }
 
 type Query {
-  whoAmI: User!
   product(id: ObjectId!): Product!
   allProducts(filter: ProductFilter, sort: ProductSort): [Product!]!
   paginateProducts(page: Int! = 1, limit: Int! = 10, filter: ProductFilter, sort: ProductSort): PaginatedProducts!
@@ -183,10 +189,15 @@ type Query {
   allUsers: [User!]!
   allCarts: [Cart!]!
   paginateCarts(page: Int! = 1, limit: Int! = 10): PaginatedCarts!
+  role(id: ObjectId!): Role!
+  allRoles: [Role!]!
+  permission(id: ObjectId!): Permission!
+  allPermissions: [Permission!]!
+  session(id: ObjectId!): Session!
+  allSessions: [Session!]!
 }
 
 type Mutation {
-  signIn(input: String!): String!
   createTags(input: CreateTagsInput!): Tags!
   updateTags(input: UpdateTagsInput!): Tags!
   removeTags(id: ObjectId!, options: RemoveOptions): SuccessResponse!
@@ -198,6 +209,17 @@ type Mutation {
   createProduct(input: CreateProductInput!): Product!
   updateProduct(input: UpdateProductInput!): Product!
   removeProduct(id: String!): Boolean!
+  createRole(input: CreateRoleInput!): Role!
+  updateRole(input: UpdateRoleInput!): Role!
+  removeRole(id: ObjectId!, options: RemoveOptions): SuccessResponse!
+  createPermission(input: CreatePermissionInput!): Permission!
+  updatePermission(input: UpdatePermissionInput!): Permission!
+  removePermission(id: ObjectId!, options: RemoveOptions): SuccessResponse!
+  createSession(input: CreateSessionInput!): Session!
+  updateSession(input: UpdateSessionInput!): Session!
+  removeSession(id: ObjectId!, options: RemoveOptions): SuccessResponse!
+  createProduct(input: CreateProductInput!): Product!
+  login(loginInput: LoginInput!): Session!
 }
 
 input CreateTagsInput {
@@ -236,7 +258,49 @@ input UpdateCategoriesInput {
 
 input UpdateUserInput {
   id: ObjectId!
+  google_id: String
+  firstName: String
+  lastName: String
+  address: [String!]
+  email: String
+  phone: String
+  isPhoneVerified: Boolean
+  avatar: String
   roleId: ObjectId
+}
+
+input CreateRoleInput {
+  name: String!
+  permissionIds: [ObjectId!]
+  permissions: [CreatePermissionInput!]
+}
+
+input CreatePermissionInput {
+  pattern: String!
+}
+
+input UpdateRoleInput {
+  id: ObjectId
+  name: String
+  permissionIds: [ObjectId!]
+}
+
+input UpdatePermissionInput {
+  id: ObjectId
+  pattern: String
+}
+
+input CreateSessionInput {
+  userId: ObjectId!
+  refreshToken: String!
+  accessToken: String!
+}
+
+input UpdateSessionInput {
+  id: ObjectId
+  userId: ObjectId
+  refreshToken: String
+  accessToken: String
 }
 
 input CreateProductInput {
@@ -273,4 +337,7 @@ input UpdateProductInput {
 input InputTags {
   tag_id: ObjectId!
   values: String!
+input LoginInput {
+  """Firebase Id Token"""
+  idToken: String!
 }

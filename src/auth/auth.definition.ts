@@ -1,9 +1,7 @@
 import { Field, ObjectType } from '@nestjs/graphql';
 import {
   Definition,
-  Embedded,
   GraphQLObjectId,
-  HasMany,
   ObjectId,
   Property,
   ReferencesMany,
@@ -49,11 +47,11 @@ export class Session extends BaseModel() {
   @Property({ type: () => GraphQLObjectId, db: { unique: true } })
   userId: ObjectId;
 
-  @Property({ type: () => GraphQLObjectId, db: { unique: true } })
-  private_key: string;
+  @Property({ type: () => String, db: { unique: true } })
+  refreshToken: string;
 
-  @Property({ type: () => GraphQLObjectId, db: { unique: true } })
-  public_key: string;
+  @Property({ type: () => String, db: { unique: true } })
+  accessToken: string;
 
   blacklist: string[];
 }
