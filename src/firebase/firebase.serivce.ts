@@ -54,7 +54,6 @@ export class FirebaseService {
               expires: '03-09-2491',
             });
 
-            console.log('File URL:', url);
             resolve(url);
           });
       });

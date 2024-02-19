@@ -4,6 +4,8 @@ import {
   GraphQLObjectId,
   ObjectId,
   Property,
+  ReferencesMany,
+  Skip,
 } from 'dryerjs';
 import { BaseModel } from 'src/base/base.definition';
 import { Tags } from './tags.definition';
@@ -12,21 +14,22 @@ import { Product } from 'src/product/product.definition';
   timestamps: true,
 })
 export class TagWithValues extends BaseModel() {
-  @Property({ db: { unique: true } })
-  name: string;
+  @Property({ type: () => GraphQLObjectId, db: { unique: false } })
+  tag_id: ObjectId;
 
-  @Property({ type: () => String })
-  tag_slug: string;
+  @BelongsTo(() => Tags, { from: 'tag_id', skipExistenceCheck: true })
+  tag: Tags;
 
   @Property({ type: () => String })
   values: string;
 
-  @BelongsTo(() => Tags, { from: 'tag_slug' })
-  tags: Tags;
-
-  @Property({ type: () => GraphQLObjectId })
+  @Property({
+    type: () => GraphQLObjectId,
+    output: Skip,
+    db: { unique: false },
+  })
   product_id: ObjectId;
 
-  @BelongsTo(() => Product, { from: 'product_id' })
+  @BelongsTo(() => Product, { from: 'product_id', noPopulation: true })
   product: Product;
 }

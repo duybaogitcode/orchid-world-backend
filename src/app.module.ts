@@ -23,6 +23,7 @@ import { RoleGuard } from './auth/role.guard';
 import { create } from 'domain';
 import { ProductHook } from './product/product.hooks';
 import { FirebaseService } from './firebase/firebase.serivce';
+import { ProductService } from './product/product.service';
 
 console.log({ nod: configuration().NODE_ENV });
 @Module({
@@ -81,7 +82,7 @@ console.log({ nod: configuration().NODE_ENV });
         // Auction,
         // AuctionBiddingHistory,
       ],
-      providers: [ProductHook, FirebaseService, ProductResolver],
+      providers: [FirebaseService, ProductResolver, ProductService],
       contextDecorator: Ctx,
     }),
     JwtModule.register({
