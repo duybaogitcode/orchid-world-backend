@@ -90,8 +90,15 @@ export class ProductService {
         throw new Error('Product not found');
       }
 
-      const { name, description, price, quantity, tagsUpdate, deleteUrl } =
-        updateProductDto;
+      const {
+        name,
+        description,
+        price,
+        quantity,
+        tagsUpdate,
+        deleteUrl,
+        status,
+      } = updateProductDto;
 
       const oldMedia = product.media;
 
@@ -126,6 +133,7 @@ export class ProductService {
       product.price = price || product.price;
       product.quantity = quantity || product.quantity;
       product.media = media;
+      product.status = status || product.status;
       product.createdAt = product.createdAt;
       product.updatedAt = new Date();
 
