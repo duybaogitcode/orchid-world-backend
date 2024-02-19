@@ -20,10 +20,4 @@ export class Tags extends BaseModel() {
 
   @Property({ type: () => [String] })
   values: string[];
-
-  @HasMany(() => TagWithValues, {
-    to: 'tag_slug',
-    allowCreateWithin: false,
-  })
-  tagWithValues: TagWithValues[];
 }

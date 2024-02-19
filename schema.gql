@@ -12,13 +12,10 @@ type Categories {
   updatedAt: DateTime!
   name: String!
   slug: String!
-  product: [Product!]!
   paginateProduct(page: Int! = 1, limit: Int! = 10): PaginatedProducts
 }
 
-"""
-ObjectId is a mongodb ObjectId. String of 12 or 24 hex chars
-"""
+"""ObjectId is a mongodb ObjectId. String of 12 or 24 hex chars"""
 scalar ObjectId
 
 """
@@ -39,12 +36,9 @@ type TagWithValues {
   id: ObjectId!
   createdAt: DateTime!
   updatedAt: DateTime!
-  name: String!
-  tag_slug: String!
+  tag_id: ObjectId!
   values: String!
-  product_id: ObjectId!
-  tags: Tags!
-  product: Product!
+  tag: Tags!
 }
 
 type Permission {
@@ -84,14 +78,13 @@ type Product {
   id: ObjectId!
   createdAt: DateTime!
   updatedAt: DateTime!
-  authorId: ObjectId!
   name: String!
   media: [String!]
   slug: String!
-  shortDescription: String
-  longDescription: String
+  price: Float!
+  quantity: Float!
+  description: String
   status: ProductStatus
-  category_id: ObjectId!
   tags: [TagWithValues!]!
   author: User!
   category: Categories!
@@ -137,7 +130,7 @@ type Mutation {
   updateCategories(input: UpdateCategoriesInput!): Categories!
   removeCategories(id: ObjectId!, options: RemoveOptions): SuccessResponse!
   updateUser(input: UpdateUserInput!): User!
-  createProductTest(input: CreateProductInput!): String!
+  createProduct(input: CreateProductInput!): Product!
 }
 
 input CreateTagsInput {
@@ -181,23 +174,18 @@ input UpdateUserInput {
 
 input CreateProductInput {
   name: String!
-  media: [String!]
   file: [Upload!]!
-  slug: String!
-  shortDescription: String
-  longDescription: String
-  status: ProductStatus = PENDING
+  price: Float!
+  quantity: Float!
+  description: String
   tags: [CreateTagWithValuesWithinProductInput!]
   category_id: ObjectId!
 }
 
-"""
-The `Upload` scalar type represents a file upload.
-"""
+"""The `Upload` scalar type represents a file upload."""
 scalar Upload
 
 input CreateTagWithValuesWithinProductInput {
-  name: String!
-  tag_slug: String!
+  tag_id: ObjectId!
   values: String!
 }

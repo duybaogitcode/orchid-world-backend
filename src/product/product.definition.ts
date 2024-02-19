@@ -1,4 +1,5 @@
 import { registerEnumType } from '@nestjs/graphql';
+import { Prop } from '@nestjs/mongoose';
 import {
   BelongsTo,
   Definition,
@@ -20,6 +21,7 @@ export const BaseModelHasOwner = () => {
       type: () => GraphQLObjectId,
       create: Skip,
       update: Skip,
+      output: Skip,
     })
     authorId: ObjectId;
 
@@ -55,9 +57,15 @@ export class Product extends BaseModelHasOwner() {
   @Property({
     type: () => [String],
     nullable: true,
+    create: Skip,
+    db: { unique: false },
   })
   media: string[];
-  @Property({ type: () => [GraphQLUpload], db: Skip, output: Skip })
+  @Property({
+    type: () => [GraphQLUpload],
+    db: Skip,
+    output: Skip,
+  })
   file: Array<Promise<FileUpload>>;
 
   @Property({ db: { unique: true } })
@@ -66,15 +74,13 @@ export class Product extends BaseModelHasOwner() {
   @Property({ type: () => Number })
   price: number;
 
-  @Property({
-    nullable: true,
-  })
-  shortDescription: string;
+  @Property({ type: () => Number })
+  quantity: number;
 
   @Property({
     nullable: true,
   })
-  longDescription: string;
+  description: string;
 
   // @Embedded(() => ProductType)
   // productType: ProductType;
@@ -83,6 +89,7 @@ export class Product extends BaseModelHasOwner() {
     type: () => ProductStatus,
     nullable: true,
     defaultValue: ProductStatus.PENDING,
+    create: Skip,
   })
   status: ProductStatus;
 
@@ -93,7 +100,7 @@ export class Product extends BaseModelHasOwner() {
   })
   tags: TagWithValues[];
 
-  @Property({ type: () => GraphQLObjectId })
+  @Property({ type: () => GraphQLObjectId, output: Skip })
   category_id: ObjectId;
 
   @BelongsTo(() => Categories, { from: 'category_id' })

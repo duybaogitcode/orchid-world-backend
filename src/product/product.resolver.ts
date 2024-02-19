@@ -6,67 +6,21 @@ import * as stream from 'stream';
 import { v4 as uuidv4 } from 'uuid';
 import * as sharp from 'sharp';
 import { CreateProductInput } from './dto/create-product.input';
+import { ProductService } from './product.service';
 
 @Resolver()
 export class ProductResolver {
-  constructor(
-    @InjectFirebaseAdmin() private readonly firebase: FirebaseAdmin,
-  ) {}
+  constructor(private readonly productService: ProductService) {}
 
-  @Mutation(() => String, { name: 'createProductTest' })
+  @Mutation(() => OutputType(Product), { name: 'createProduct' })
   async create(@Args('input') input: CreateProductInput) {
     try {
-      const fileUpload = await input.file[0];
-      const listUser = await this.firebase.auth.listUsers();
-      console.log('listUser', listUser);
-      const { createReadStream } = fileUpload;
+      const newProduct = await this.productService.create(input);
 
-      const bucket = this.firebase.storage.bucket('orchid-fer.appspot.com');
-
-      const fileName = uuidv4() + '.webp';
-      const file = bucket.file(fileName);
-      const writeStream = file.createWriteStream({
-        metadata: {
-          contentType: 'image/webp',
-        },
-      });
-
-      const fileBuffer = await new Promise((resolve, reject) => {
-        const chunks = [];
-        createReadStream()
-          .on('data', (chunk) => chunks.push(chunk))
-          .on('error', reject)
-          .on('end', () => resolve(Buffer.concat(chunks)));
-      });
-
-      const convertedImageBuffer = await sharp(fileBuffer)
-        .toFormat('webp')
-        .toBuffer();
-
-      return new Promise((resolve, reject) => {
-        const bufferStream = new stream.PassThrough();
-        bufferStream.end(convertedImageBuffer);
-        bufferStream
-          .pipe(writeStream)
-          .on('error', (error) => {
-            console.error('Error uploading file:', error);
-            reject('Error uploading file');
-          })
-          .on('finish', async () => {
-            console.log('File uploaded successfully');
-
-            const [url] = await file.getSignedUrl({
-              action: 'read',
-              expires: '03-09-2491',
-            });
-
-            console.log('File URL:', url);
-            resolve(url);
-          });
-      });
+      return newProduct;
     } catch (error) {
-      console.error('Error uploading file:', error);
-      return 'Error uploading file';
+      console.error('Failed create new product:', error);
+      throw new Error('Failed create new product');
     }
   }
 }
