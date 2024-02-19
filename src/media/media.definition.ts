@@ -5,6 +5,7 @@ import { BaseModelHasOwner } from 'src/product/product.definition';
 export class Media extends BaseModelHasOwner() {
   @Property({ db: { unique: true } })
   name: string;
+
   mime: string;
 
   @Property({ db: { unique: true } })
