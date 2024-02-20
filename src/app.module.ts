@@ -24,6 +24,9 @@ import { create } from 'domain';
 import { ProductHook } from './product/product.hooks';
 import { FirebaseService } from './firebase/firebase.serivce';
 import { ProductService } from './product/product.service';
+import { CartItem } from './cart/definition/cartItem.definiton';
+import { CartShopItem } from './cart/definition/cartShopItem.definition';
+import { Cart } from './cart/definition/cart.definition';
 
 console.log({ nod: configuration().NODE_ENV });
 @Module({
@@ -77,12 +80,30 @@ console.log({ nod: configuration().NODE_ENV });
           definition: Permission,
           allowedApis: [],
         },
+        {
+          definition: CartItem,
+          allowedApis: ['remove'],
+        },
+        {
+          definition: CartShopItem,
+          allowedApis: [],
+        },
+        {
+          definition: Cart,
+          allowedApis: ['findAll', 'paginate'],
+        },
 
         // Media,
         // Auction,
         // AuctionBiddingHistory,
       ],
-      providers: [FirebaseService, ProductResolver, ProductService],
+
+      providers: [
+        FirebaseService,
+        ProductResolver,
+        ProductService,
+        ProductHook,
+      ],
       contextDecorator: Ctx,
     }),
     JwtModule.register({

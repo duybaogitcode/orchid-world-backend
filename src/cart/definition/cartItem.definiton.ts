@@ -11,17 +11,20 @@ import { BaseModel } from 'src/base/base.definition';
 @Definition()
 export class CartItem extends BaseModel() {
   @Property({ type: () => GraphQLObjectId })
-  productId: string;
+  productId: ObjectId;
 
   @BelongsTo(() => Product, { from: 'productId' })
   product: Product;
 
-  @Property({ type: Number })
+  @Property({ type: () => Number })
   quantity: number;
 
-  @Property({ type: Number })
+  @Property({ type: () => Number })
   totalPrice: number;
 
+  @Property({ type: () => Boolean, defaultValue: true })
+  isAvailableProduct: boolean;
+
   @Property({ type: () => GraphQLObjectId })
-  cartId: ObjectId;
+  cartShopItemId: ObjectId;
 }
