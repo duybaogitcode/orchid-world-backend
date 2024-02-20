@@ -10,9 +10,6 @@ type Permission {
   id: ObjectId!
   createdAt: DateTime!
   updatedAt: DateTime!
-  name: String!
-  slug: String!
-  paginateProduct(page: Int! = 1, limit: Int! = 10, filter: ProductFilter, sort: ProductSort): PaginatedProducts
   pattern: String!
 }
 
@@ -24,22 +21,6 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
-input ProductFilter {
-  name: ProductNameFilter
-  search: String
-}
-
-input ProductNameFilter {
-  contains: String
-}
-
-input ProductSort {
-  price: SortDirection
-}
-
-enum SortDirection {
-  ASC
-  DESC
 type Role {
   id: ObjectId!
   createdAt: DateTime!
@@ -103,6 +84,7 @@ type Product {
   id: ObjectId!
   createdAt: DateTime!
   updatedAt: DateTime!
+  authorId: ObjectId!
   name: String!
   media: [String!]
   slug: String!
@@ -134,6 +116,33 @@ type PaginatedProducts {
   pagingCounter: Int!
 }
 
+type Categories {
+  id: ObjectId!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  name: String!
+  slug: String!
+  paginateProduct(page: Int! = 1, limit: Int! = 10, filter: ProductFilter, sort: ProductSort): PaginatedProducts
+}
+
+input ProductFilter {
+  name: ProductNameFilter
+  search: String
+}
+
+input ProductNameFilter {
+  contains: String
+}
+
+input ProductSort {
+  price: SortDirection
+}
+
+enum SortDirection {
+  ASC
+  DESC
+}
+
 type CartItem {
   id: ObjectId!
   createdAt: DateTime!
@@ -160,6 +169,7 @@ type Cart {
   id: ObjectId!
   createdAt: DateTime!
   updatedAt: DateTime!
+  authorId: ObjectId!
   totalQuantity: Float!
   totalPrice: Float!
   CartShopItem: [CartShopItem!]!
@@ -176,14 +186,6 @@ type PaginatedCarts {
   hasPrevPage: Boolean!
   pagingCounter: Int!
 }
-type Categories {
-  id: ObjectId!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  name: String!
-  slug: String!
-  paginateProduct(page: Int! = 1, limit: Int! = 10): PaginatedProducts
-}
 
 type Query {
   product(id: ObjectId!): Product!
@@ -195,14 +197,14 @@ type Query {
   allCategories: [Categories!]!
   user(id: ObjectId!): User!
   allUsers: [User!]!
-  allCarts: [Cart!]!
-  paginateCarts(page: Int! = 1, limit: Int! = 10): PaginatedCarts!
   role(id: ObjectId!): Role!
   allRoles: [Role!]!
   permission(id: ObjectId!): Permission!
   allPermissions: [Permission!]!
   session(id: ObjectId!): Session!
   allSessions: [Session!]!
+  allCarts: [Cart!]!
+  paginateCarts(page: Int! = 1, limit: Int! = 10): PaginatedCarts!
   userByGoogleId(input: GetByUidInput!): User!
 }
 
@@ -219,10 +221,6 @@ type Mutation {
   removeCategories(id: ObjectId!, options: RemoveOptions): SuccessResponse!
   bulkRemoveUsers(ids: [ObjectId!]!, options: RemoveOptions): [BulkRemoveUsersResult!]!
   updateUser(input: UpdateUserInput!): User!
-  removeCartItem(id: ObjectId!, options: RemoveOptions): SuccessResponse!
-  createProduct(input: CreateProductInput!): Product!
-  updateProduct(input: UpdateProductInput!): Product!
-  removeProduct(id: String!): Boolean!
   createRole(input: CreateRoleInput!): Role!
   updateRole(input: UpdateRoleInput!): Role!
   removeRole(id: ObjectId!, options: RemoveOptions): SuccessResponse!
@@ -232,7 +230,11 @@ type Mutation {
   createSession(input: CreateSessionInput!): Session!
   updateSession(input: UpdateSessionInput!): Session!
   removeSession(id: ObjectId!, options: RemoveOptions): SuccessResponse!
+  removeCartItem(id: ObjectId!, options: RemoveOptions): SuccessResponse!
   createProduct(input: CreateProductInput!): Product!
+  updateProduct(input: UpdateProductInput!): Product!
+  removeProduct(id: String!): Boolean!
+  addToCart(input: String!): String!
   login(loginInput: LoginInput!): Session!
 }
 
@@ -272,7 +274,7 @@ input UpdateCategoriesInput {
 
 input UpdateUserInput {
   id: ObjectId!
-  google_id: String
+  googleId: String
   firstName: String
   lastName: String
   address: [String!]
@@ -294,13 +296,13 @@ input CreatePermissionInput {
 }
 
 input UpdateRoleInput {
-  id: ObjectId
+  id: ObjectId!
   name: String
   permissionIds: [ObjectId!]
 }
 
 input UpdatePermissionInput {
-  id: ObjectId
+  id: ObjectId!
   pattern: String
 }
 
@@ -311,7 +313,7 @@ input CreateSessionInput {
 }
 
 input UpdateSessionInput {
-  id: ObjectId
+  id: ObjectId!
   userId: ObjectId
   refreshToken: String
   accessToken: String
@@ -351,6 +353,8 @@ input UpdateProductInput {
 input InputTags {
   tag_id: ObjectId!
   values: String!
+}
+
 input LoginInput {
   """Firebase Id Token"""
   idToken: String!

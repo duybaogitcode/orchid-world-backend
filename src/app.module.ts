@@ -21,6 +21,9 @@ import { ProductService } from './product/product.service';
 import { CartItem } from './cart/definition/cartItem.definiton';
 import { CartShopItem } from './cart/definition/cartShopItem.definition';
 import { Cart } from './cart/definition/cart.definition';
+import { CartResolver } from './cart/cart.resolver';
+import { GatewayModule } from './gateway/gateway.module';
+import { ProductHook } from './product/product.hooks';
 import { User } from './user/user.definition';
 import { UserService } from './user/user.service';
 import { UserResolver } from './user/user.resolver';
@@ -39,6 +42,7 @@ console.log({ nod: configuration().NODE_ENV });
     FirebaseModule.forRoot({
       googleApplicationCredential: './src/firebase/service-account.json',
     }),
+    GatewayModule,
     DryerModule.register({
       definitions: [
         {
@@ -95,6 +99,8 @@ console.log({ nod: configuration().NODE_ENV });
         FirebaseService,
         ProductResolver,
         ProductService,
+        ProductHook,
+        CartResolver,
         UserService,
         UserResolver,
       ],
