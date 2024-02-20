@@ -191,7 +191,7 @@ export class ProductService {
   //   return `This action returns a #${id} dbao`;
   // }
 
-  async remove(id: ObjectId) {
+  async remove(id: ObjectId): Promise<boolean> {
     try {
       const product = await this.productService.model.findById(id);
       if (!product) {
@@ -199,8 +199,9 @@ export class ProductService {
       }
       product.status = ProductStatus.REMOVED;
       await product.save();
-    } catch (error) {}
-
-    return;
+      return true;
+    } catch (error) {
+      throw error;
+    }
   }
 }

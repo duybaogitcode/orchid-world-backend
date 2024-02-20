@@ -113,6 +113,7 @@ enum ProductStatus {
   APPROVED
   NOT_AVAILABLE
   DISAPPROVED
+  REMOVED
 }
 
 type PaginatedProducts {
@@ -150,6 +151,7 @@ type Mutation {
   updateUser(input: UpdateUserInput!): User!
   createProduct(input: CreateProductInput!): Product!
   updateProduct(input: UpdateProductInput!): Product!
+  removeProduct(id: String!): Boolean!
 }
 
 input CreateTagsInput {
