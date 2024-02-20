@@ -1,12 +1,17 @@
-import { Field, ObjectType } from '@nestjs/graphql';
+import { Field, InputType, ObjectType, OmitType } from '@nestjs/graphql';
 import {
+  CreateInputType,
   Definition,
   GraphQLObjectId,
   ObjectId,
+  OutputType,
   Property,
   ReferencesMany,
 } from 'dryerjs';
 import { BaseModel } from 'src/base/base.definition';
+import { Cart } from 'src/cart/definition/cart.definition';
+import { User } from 'src/user/user.definition';
+import { Wallet } from 'src/wallet/wallet.definition';
 
 @Definition({
   timestamps: true,
@@ -60,4 +65,20 @@ export class Session extends BaseModel() {
 export class AccessTokenResponse {
   @Field()
   accessToken: string;
+}
+
+const user = OutputType(User);
+const cart = OutputType(Cart);
+const wallet = OutputType(Wallet);
+
+@Definition()
+export class UserProfileWithCartAndWallet {
+  @Property({ type: () => user })
+  profile: User;
+
+  @Property({ type: () => cart })
+  cart: Cart;
+
+  @Property({ type: () => wallet })
+  wallet: Wallet;
 }

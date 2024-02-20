@@ -4,7 +4,6 @@ import {
   GraphQLObjectId,
   ObjectId,
   Property,
-  Skip,
 } from 'dryerjs';
 import { Role } from 'src/auth/auth.definition';
 import { BaseModel } from 'src/base/base.definition';
@@ -16,6 +15,7 @@ export class User extends BaseModel() {
   @Property({
     db: {
       unique: true,
+      index: true,
     },
     // update: Skip,
   })
@@ -36,6 +36,7 @@ export class User extends BaseModel() {
   @Property({
     db: {
       unique: true,
+      index: true,
     },
   })
   email: String;
@@ -44,6 +45,9 @@ export class User extends BaseModel() {
     nullable: true,
     db: {
       unique: true,
+      index: true,
+
+      default: null,
     },
   })
   phone: String;

@@ -8,6 +8,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Role, Session } from './auth.definition';
 import { JwtService } from '@nestjs/jwt';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 function getFirstAndLastName(fullname: string) {
   const names = fullname.split(' ');
@@ -29,6 +30,7 @@ export class AuthService {
     @InjectModel('Role') private readonly roleModel: Model<Role>,
     @InjectModel('Session') private readonly sessionModel: Model<Session>,
     private readonly jwtService: JwtService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async create(loginInput: LoginInput, roleName: string = 'user') {
@@ -49,9 +51,10 @@ export class AuthService {
           email: result.email,
           googleId: result.uid,
           lastName,
-
           roleId: userRole._id,
         });
+
+        this.eventEmitter.emit('User.created', { input: existUser });
       }
 
       let session = await this.sessionModel.findOne({ userId: existUser._id });

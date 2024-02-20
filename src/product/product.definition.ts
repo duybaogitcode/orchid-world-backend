@@ -18,12 +18,18 @@ import { Categories } from 'src/orthersDef/categories.definition';
 import { TagWithValues } from 'src/orthersDef/tagValues.definition';
 import { User } from 'src/user/user.definition';
 
-export const BaseModelHasOwner = () => {
+export const BaseModelHasOwner = (
+  { unique }: { unique?: boolean } = { unique: false },
+) => {
   class BaseModelHasOwnerClass extends BaseModel() {
     @Property({
       type: () => GraphQLObjectId,
       create: Skip,
       update: Skip,
+      output: Skip,
+      db: {
+        unique,
+      },
     })
     authorId: ObjectId;
 

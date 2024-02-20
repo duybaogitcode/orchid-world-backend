@@ -3,11 +3,25 @@ import { BaseModelHasOwner } from 'src/product/product.definition';
 import { CartShopItem } from './cartShopItem.definition';
 
 @Definition()
-export class Cart extends BaseModelHasOwner() {
-  @Property({ type: () => Number })
+export class Cart extends BaseModelHasOwner({
+  unique: true,
+}) {
+  @Property({
+    type: () => Number,
+    defaultValue: 0,
+    db: {
+      default: 0,
+    },
+  })
   totalQuantity: number;
 
-  @Property({ type: () => Number })
+  @Property({
+    type: () => Number,
+    defaultValue: 0,
+    db: {
+      default: 0,
+    },
+  })
   totalPrice: number;
 
   @HasMany(() => CartShopItem, {

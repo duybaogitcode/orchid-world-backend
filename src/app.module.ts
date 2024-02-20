@@ -27,6 +27,11 @@ import { ProductHook } from './product/product.hooks';
 import { User } from './user/user.definition';
 import { UserService } from './user/user.service';
 import { UserResolver } from './user/user.resolver';
+import { Wallet } from './wallet/wallet.definition';
+import { CartService } from './cart/cart.service';
+import { EventEmitHook } from './hooks/event.hook';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { WalletService } from './wallet/wallet.service';
 
 console.log({ nod: configuration().NODE_ENV });
 @Module({
@@ -43,6 +48,7 @@ console.log({ nod: configuration().NODE_ENV });
       googleApplicationCredential: './src/firebase/service-account.json',
     }),
     GatewayModule,
+    EventEmitterModule.forRoot(),
     DryerModule.register({
       definitions: [
         {
@@ -90,7 +96,10 @@ console.log({ nod: configuration().NODE_ENV });
           definition: Cart,
           allowedApis: ['findAll', 'paginate'],
         },
-
+        {
+          definition: Wallet,
+          allowedApis: ['findOne', 'create', 'update'],
+        },
         // Media,
         // Auction,
         // AuctionBiddingHistory,
@@ -101,8 +110,12 @@ console.log({ nod: configuration().NODE_ENV });
         ProductService,
         ProductHook,
         CartResolver,
+        EventEmitHook,
         UserService,
         UserResolver,
+        CartService,
+        CartResolver,
+        WalletService,
       ],
       contextDecorator: Ctx,
     }),

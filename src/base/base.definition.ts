@@ -1,14 +1,5 @@
 import { GraphQLISODateTime, registerEnumType } from '@nestjs/graphql';
-import {
-  BelongsTo,
-  Definition,
-  GraphQLObjectId,
-  Id,
-  ObjectId,
-  Property,
-  Skip,
-} from 'dryerjs';
-import { User } from 'src/user/user.definition';
+import { Id, ObjectId, Property, Skip } from 'dryerjs';
 export enum BaseStatus {
   PENDING = 'PENDING',
   APPROVED = 'APPROVED',
@@ -18,6 +9,15 @@ export enum BaseStatus {
 
 registerEnumType(BaseStatus, {
   name: 'Status',
+});
+
+export enum SimpleStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+}
+
+registerEnumType(SimpleStatus, {
+  name: 'SimpleStatus',
 });
 
 export const BaseModel = () => {

@@ -3,12 +3,15 @@ import { OutputType } from 'dryerjs';
 import { GetByUidInput } from './dto/get-by-uid.dto';
 import { User } from './user.definition';
 import { UserService } from './user.service';
+import { UserProfileWithCartAndWallet } from 'src/auth/auth.definition';
 
 @Resolver()
 export class UserResolver {
   constructor(private readonly userService: UserService) {}
 
-  @Query(() => OutputType(User), { name: 'userByGoogleId' })
+  @Query(() => OutputType(UserProfileWithCartAndWallet), {
+    name: 'userMyself',
+  })
   async getByGoogleId(@Args('input') input: GetByUidInput) {
     return this.userService.getByGoogleId(input.googleId);
   }
