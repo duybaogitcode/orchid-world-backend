@@ -1,10 +1,7 @@
 import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
 import { Product } from './product.definition';
-import { OutputType } from 'dryerjs';
-import { FirebaseAdmin, InjectFirebaseAdmin } from 'nestjs-firebase';
-import * as stream from 'stream';
-import { v4 as uuidv4 } from 'uuid';
-import * as sharp from 'sharp';
+import { ObjectId, OutputType } from 'dryerjs';
+
 import { CreateProductInput } from './dto/create-product.input';
 import { ProductService } from './product.service';
 import { UpdateProductInput } from './dto/update-product.input';
@@ -31,6 +28,18 @@ export class ProductResolver {
       const updatedProduct = await this.productService.update(input);
 
       return updatedProduct;
+    } catch (error) {
+      console.error('Failed create new product:', error);
+      throw error;
+    }
+  }
+
+  @Mutation(() => Boolean, { name: 'removeProduct' })
+  async remove(@Args('id') id: string) {
+    try {
+      const isRemoved = await this.productService.remove(new ObjectId(id));
+
+      return isRemoved;
     } catch (error) {
       console.error('Failed create new product:', error);
       throw error;

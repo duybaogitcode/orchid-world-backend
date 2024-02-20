@@ -4,7 +4,7 @@ import { BaseService, InjectBaseService, ObjectId } from 'dryerjs';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CreateProductInput } from './dto/create-product.input';
-import { Product } from './product.definition';
+import { Product, ProductStatus } from './product.definition';
 import { Context } from 'src/auth/ctx';
 import { FirebaseService } from 'src/firebase/firebase.serivce';
 import { FileUpload } from 'graphql-upload-ts';
@@ -191,7 +191,17 @@ export class ProductService {
   //   return `This action returns a #${id} dbao`;
   // }
 
-  // remove(id: number) {
-  //   return `This action removes a #${id} dbao`;
-  // }
+  async remove(id: ObjectId): Promise<boolean> {
+    try {
+      const product = await this.productService.model.findById(id);
+      if (!product) {
+        throw new Error('Product not found');
+      }
+      product.status = ProductStatus.REMOVED;
+      await product.save();
+      return true;
+    } catch (error) {
+      throw error;
+    }
+  }
 }

@@ -12,7 +12,7 @@ type Categories {
   updatedAt: DateTime!
   name: String!
   slug: String!
-  paginateProduct(page: Int! = 1, limit: Int! = 10): PaginatedProducts
+  paginateProduct(page: Int! = 1, limit: Int! = 10, filter: ProductFilter, sort: ProductSort): PaginatedProducts
 }
 
 """ObjectId is a mongodb ObjectId. String of 12 or 24 hex chars"""
@@ -22,6 +22,24 @@ scalar ObjectId
 A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
 """
 scalar DateTime
+
+input ProductFilter {
+  name: ProductNameFilter
+  search: String
+}
+
+input ProductNameFilter {
+  contains: String
+}
+
+input ProductSort {
+  price: SortDirection
+}
+
+enum SortDirection {
+  ASC
+  DESC
+}
 
 type Tags {
   id: ObjectId!
@@ -95,6 +113,7 @@ enum ProductStatus {
   APPROVED
   NOT_AVAILABLE
   DISAPPROVED
+  REMOVED
 }
 
 type PaginatedProducts {
@@ -111,8 +130,8 @@ type PaginatedProducts {
 type Query {
   whoAmI: User!
   product(id: ObjectId!): Product!
-  allProducts: [Product!]!
-  paginateProducts(page: Int! = 1, limit: Int! = 10): PaginatedProducts!
+  allProducts(filter: ProductFilter, sort: ProductSort): [Product!]!
+  paginateProducts(page: Int! = 1, limit: Int! = 10, filter: ProductFilter, sort: ProductSort): PaginatedProducts!
   tags(id: ObjectId!): Tags!
   allTags: [Tags!]!
   categories(id: ObjectId!): Categories!
@@ -132,6 +151,7 @@ type Mutation {
   updateUser(input: UpdateUserInput!): User!
   createProduct(input: CreateProductInput!): Product!
   updateProduct(input: UpdateProductInput!): Product!
+  removeProduct(id: String!): Boolean!
 }
 
 input CreateTagsInput {
@@ -141,7 +161,7 @@ input CreateTagsInput {
 }
 
 input UpdateTagsInput {
-  id: ObjectId
+  id: ObjectId!
   name: String
   slug: String
   values: [String!]
@@ -163,13 +183,13 @@ input CreateCategoriesInput {
 }
 
 input UpdateCategoriesInput {
-  id: ObjectId
+  id: ObjectId!
   name: String
   slug: String
 }
 
 input UpdateUserInput {
-  id: ObjectId
+  id: ObjectId!
   roleId: ObjectId
 }
 
@@ -192,7 +212,7 @@ input CreateTagWithValuesWithinProductInput {
 }
 
 input UpdateProductInput {
-  id: ObjectId
+  id: ObjectId!
   name: String
   price: Float
   quantity: Float

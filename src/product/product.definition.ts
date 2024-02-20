@@ -1,14 +1,16 @@
 import { InputType, OmitType, registerEnumType } from '@nestjs/graphql';
-import { Prop } from '@nestjs/mongoose';
 import {
   BelongsTo,
   CreateInputType,
   Definition,
+  Filterable,
   GraphQLObjectId,
   HasMany,
+  Index,
   ObjectId,
   Property,
   Skip,
+  Sortable,
 } from 'dryerjs';
 import { FileUpload, GraphQLUpload } from 'graphql-upload-ts';
 import { BaseModel } from 'src/base/base.definition';
@@ -32,11 +34,12 @@ export const BaseModelHasOwner = () => {
   return BaseModelHasOwnerClass;
 };
 
-enum ProductStatus {
+export enum ProductStatus {
   PENDING = 'PENDING',
   APPROVED = 'APPROVED',
   NOT_AVAILABLE = 'NOT_AVAILABLE',
   DISAPPROVED = 'DISAPPROVED',
+  REMOVED = 'REMOVED',
 }
 registerEnumType(ProductStatus, {
   name: 'ProductStatus',
@@ -54,10 +57,18 @@ registerEnumType(ProductStatus, {
 const inputTags = CreateInputType(TagWithValues);
 @InputType()
 export class InputTags extends OmitType(inputTags, ['product_id'] as const) {}
-@Definition({ timestamps: true })
+
+@Index({ name: 'text' })
+@Definition({
+  timestamps: true,
+  enableTextSearch: true,
+  schemaOptions: { selectPopulatedPaths: true },
+})
 export class Product extends BaseModelHasOwner() {
+  @Filterable(() => String, { operators: ['contains'] })
   @Property()
   name: string;
+
   @Property({
     type: () => [String],
     nullable: true,
@@ -76,6 +87,7 @@ export class Product extends BaseModelHasOwner() {
   slug: string;
 
   @Property({ type: () => Number })
+  @Sortable()
   price: number;
 
   @Property({ type: () => Number })
