@@ -29,7 +29,7 @@ export class ProductResolver {
 
       return updatedProduct;
     } catch (error) {
-      console.error('Failed create new product:', error);
+      console.error('Failed update product:', error);
       throw error;
     }
   }

@@ -127,6 +127,49 @@ type PaginatedProducts {
   pagingCounter: Int!
 }
 
+type CartItem {
+  id: ObjectId!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  productId: ObjectId!
+  quantity: Float!
+  totalPrice: Float!
+  isAvailableProduct: Boolean!
+  cartShopItemId: ObjectId!
+  product: Product!
+}
+
+type CartShopItem {
+  id: ObjectId!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  cartId: ObjectId!
+  totalQuantity: Float!
+  totalPrice: Float!
+  cartItem: [CartItem!]!
+}
+
+type Cart {
+  id: ObjectId!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  totalQuantity: Float!
+  totalPrice: Float!
+  CartShopItem: [CartShopItem!]!
+  author: User!
+}
+
+type PaginatedCarts {
+  docs: [Cart!]!
+  totalDocs: Int!
+  page: Int!
+  limit: Int!
+  totalPages: Int!
+  hasNextPage: Boolean!
+  hasPrevPage: Boolean!
+  pagingCounter: Int!
+}
+
 type Query {
   whoAmI: User!
   product(id: ObjectId!): Product!
@@ -138,6 +181,8 @@ type Query {
   allCategories: [Categories!]!
   user(id: ObjectId!): User!
   allUsers: [User!]!
+  allCarts: [Cart!]!
+  paginateCarts(page: Int! = 1, limit: Int! = 10): PaginatedCarts!
 }
 
 type Mutation {
@@ -149,6 +194,7 @@ type Mutation {
   updateCategories(input: UpdateCategoriesInput!): Categories!
   removeCategories(id: ObjectId!, options: RemoveOptions): SuccessResponse!
   updateUser(input: UpdateUserInput!): User!
+  removeCartItem(id: ObjectId!, options: RemoveOptions): SuccessResponse!
   createProduct(input: CreateProductInput!): Product!
   updateProduct(input: UpdateProductInput!): Product!
   removeProduct(id: String!): Boolean!
