@@ -34,11 +34,12 @@ export const BaseModelHasOwner = () => {
   return BaseModelHasOwnerClass;
 };
 
-enum ProductStatus {
+export enum ProductStatus {
   PENDING = 'PENDING',
   APPROVED = 'APPROVED',
   NOT_AVAILABLE = 'NOT_AVAILABLE',
   DISAPPROVED = 'DISAPPROVED',
+  REMOVED = 'REMOVED',
 }
 registerEnumType(ProductStatus, {
   name: 'ProductStatus',
