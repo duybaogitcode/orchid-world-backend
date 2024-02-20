@@ -1,0 +1,113 @@
+import { Injectable } from '@nestjs/common';
+import { FirebaseAdmin, InjectFirebaseAdmin } from 'nestjs-firebase';
+import { LoginInput } from './dto/create-auth.input';
+import { BaseService, InjectBaseService } from 'dryerjs';
+import { User } from 'src/user/user.definition';
+import { Context } from './ctx';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Role, Session } from './auth.definition';
+import { JwtService } from '@nestjs/jwt';
+
+function getFirstAndLastName(fullname: string) {
+  const names = fullname.split(' ');
+  return {
+    firstName: names[0],
+    lastName: names[names.length - 1],
+  };
+}
+
+@Injectable()
+export class AuthService {
+  private readonly expiresIn = {
+    accessToken: '1d',
+    refreshToken: '3d',
+  };
+  constructor(
+    @InjectFirebaseAdmin() private readonly firebaseService: FirebaseAdmin,
+    @InjectModel('User') private readonly userModel: Model<User>,
+    @InjectModel('Role') private readonly roleModel: Model<Role>,
+    @InjectModel('Session') private readonly sessionModel: Model<Session>,
+    private readonly jwtService: JwtService,
+  ) {}
+
+  async create(loginInput: LoginInput, roleName: string = 'user') {
+    try {
+      const { idToken } = loginInput;
+      const result = await this.firebaseService.auth.verifyIdToken(idToken);
+
+      let existUser = await this.userModel.findOne({ googleId: result.uid });
+      console.log('🚀 ~ AuthService ~ create ~ existUser:', existUser);
+
+      if (!existUser) {
+        const userRole = await this.roleModel.findOne({ name: roleName });
+        const { firstName, lastName } = getFirstAndLastName(result.name);
+        existUser = await this.userModel.create({
+          address: [],
+          avatar: result.picture,
+          firstName,
+          email: result.email,
+          googleId: result.uid,
+          lastName,
+
+          roleId: userRole._id,
+        });
+      }
+
+      let session = await this.sessionModel.findOne({ userId: existUser._id });
+
+      if (!session) {
+        session = await this.createSession(existUser);
+      } else if (this.isSessionExpired(session.accessToken)) {
+        session = await this.refreshSession(existUser);
+      }
+
+      return session;
+    } catch (error) {
+      // Handle error appropriately
+      throw error;
+    }
+  }
+
+  private async createSession(user: User) {
+    const payload = { email: user.email, sub: user.id };
+    const accessToken = this.jwtService.sign(payload, {
+      expiresIn: this.expiresIn.accessToken,
+    });
+    const refreshToken = this.jwtService.sign(payload, {
+      expiresIn: this.expiresIn.refreshToken,
+    });
+
+    const newSession = await this.sessionModel.create({
+      userId: user.id,
+      refreshToken,
+      accessToken,
+    });
+
+    return newSession;
+  }
+
+  private isSessionExpired(accessToken: string) {
+    const decodedAccessToken = this.jwtService.decode(accessToken);
+    const expirationTime = decodedAccessToken?.exp * 1000;
+    return !decodedAccessToken || expirationTime <= Date.now();
+  }
+
+  private async refreshSession(user: User) {
+    const payload = { email: user.email, sub: user.id };
+    const accessToken = this.jwtService.sign(payload, {
+      expiresIn: this.expiresIn.accessToken,
+    });
+    const refreshToken = this.jwtService.sign(payload, {
+      expiresIn: this.expiresIn.refreshToken,
+    });
+
+    const updatedSession = await this.sessionModel.findOneAndUpdate(
+      { userId: user.id },
+      { refreshToken, accessToken },
+      { new: true },
+    );
+
+    return updatedSession;
+  }
+}
