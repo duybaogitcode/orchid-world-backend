@@ -198,6 +198,7 @@ type Mutation {
   createProduct(input: CreateProductInput!): Product!
   updateProduct(input: UpdateProductInput!): Product!
   removeProduct(id: String!): Boolean!
+  addToCart(input: String!): String!
 }
 
 input CreateTagsInput {

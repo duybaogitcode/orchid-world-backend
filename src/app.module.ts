@@ -27,6 +27,8 @@ import { ProductService } from './product/product.service';
 import { CartItem } from './cart/definition/cartItem.definiton';
 import { CartShopItem } from './cart/definition/cartShopItem.definition';
 import { Cart } from './cart/definition/cart.definition';
+import { CartResolver } from './cart/cart.resolver';
+import { GatewayModule } from './gateway/gateway.module';
 
 console.log({ nod: configuration().NODE_ENV });
 @Module({
@@ -43,6 +45,7 @@ console.log({ nod: configuration().NODE_ENV });
       googleApplicationCredential:
         './src/firebase/orchid-fer-firebase-adminsdk-abbv0-f4ab971f7d.json',
     }),
+    GatewayModule,
     DryerModule.register({
       definitions: [
         {
@@ -103,6 +106,7 @@ console.log({ nod: configuration().NODE_ENV });
         ProductResolver,
         ProductService,
         ProductHook,
+        CartResolver,
       ],
       contextDecorator: Ctx,
     }),
