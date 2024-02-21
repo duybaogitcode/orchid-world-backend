@@ -6,13 +6,14 @@ import { CreateProductInput } from './dto/create-product.input';
 import { ProductService } from './product.service';
 import { UpdateProductInput } from './dto/update-product.input';
 import { UseGuards } from '@nestjs/common';
-import { AuthGuard } from 'src/guard/auth.guard';
+import { AdminOnly, UserOnly } from 'src/guard/role.guard';
+import { User } from 'src/user/user.definition';
 
 @Resolver()
 export class ProductResolver {
   constructor(private readonly productService: ProductService) {}
 
-  @UseGuards(AuthGuard)
+  @UserOnly()
   @Query(() => OutputType(Product), { name: 'product' })
   async findOne(@Args('slug') slug: string) {
     try {

@@ -60,9 +60,9 @@ export class AuthService {
       let session = await this.sessionModel.findOne({ userId: existUser._id });
 
       if (!session) {
-        session = await this.createSession(existUser, roleName);
+        session = await this.createSession(existUser);
       } else if (this.isSessionExpired(session.accessToken)) {
-        session = await this.refreshSession(existUser, roleName);
+        session = await this.refreshSession(existUser);
       }
 
       response.cookie('refreshToken', session.refreshToken, {
@@ -80,8 +80,8 @@ export class AuthService {
     }
   }
 
-  private async createSession(user: User, roleName: string) {
-    const payload = { email: user.email, sub: user.id, roleName: roleName };
+  private async createSession(user: User) {
+    const payload = { email: user.email, sub: user.id };
     const accessToken = this.jwtService.sign(payload, {
       expiresIn: this.expiresIn.accessToken,
     });
@@ -104,8 +104,8 @@ export class AuthService {
     return !decodedAccessToken || expirationTime <= Date.now();
   }
 
-  private async refreshSession(user: User, roleName: string) {
-    const payload = { email: user.email, sub: user.id, roleName: roleName };
+  private async refreshSession(user: User) {
+    const payload = { email: user.email, sub: user.id };
     const accessToken = this.jwtService.sign(payload, {
       expiresIn: this.expiresIn.accessToken,
     });
