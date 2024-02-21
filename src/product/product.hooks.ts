@@ -25,12 +25,12 @@ export class ProductHook {
   async afterFindManyProduct({
     items,
   }: AfterFindManyHookInput<Product, Context>) {
-    for (let i = items.length - 1; i >= 0; i--) {
-      if (items[i].status !== ProductStatus.APPROVED) {
-        items.splice(i, 1);
-      }
-    }
-    return items;
+    // for (let i = items.length - 1; i >= 0; i--) {
+    //   if (items[i].status !== ProductStatus.APPROVED) {
+    //     items.splice(i, 1);
+    //   }
+    // }
+    // return items;
   }
 
   // @BeforeCreateHook(() => Product)
