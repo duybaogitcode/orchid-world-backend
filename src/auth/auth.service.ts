@@ -72,13 +72,6 @@ export class AuthService {
         sameSite: 'strict',
         maxAge: 3 * 24 * 60 * 60 * 1000,
       });
-      response.cookie('uid', existUser._id, {
-        httpOnly: true,
-        secure: true,
-        path: '/',
-        sameSite: 'strict',
-        maxAge: 3 * 24 * 60 * 60 * 1000,
-      });
 
       return session;
     } catch (error) {
