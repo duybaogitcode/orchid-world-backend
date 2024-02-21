@@ -12,5 +12,5 @@ export const Ctx = createParamDecorator(
 
 export type Context = null | Pick<
   User,
-  'id' | 'roleId' | 'role' | 'googleId' | 'email'
+  'id' | 'roleId' | 'googleId' | 'email' | 'firstName' | 'lastName'
 >;
