@@ -40,6 +40,8 @@ console.log({ nod: configuration().NODE_ENV });
       driver: ApolloDriver,
       autoSchemaFile: configuration().NODE_ENV === 'dev' ? 'schema.gql' : true,
       playground: true,
+
+      context: ({ req, res }) => ({ req, res }),
     }),
     MongooseModule.forRoot(
       'mongodb+srv://admin:fng8LrZdG2BqKbh2@clusterqueue.knjjwp9.mongodb.net/OrchidSample?retryWrites=true&w=majority',
