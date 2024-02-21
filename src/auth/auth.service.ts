@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { FirebaseAdmin, InjectFirebaseAdmin } from 'nestjs-firebase';
 import { LoginInput } from './dto/create-auth.input';
-import { BaseService, InjectBaseService } from 'dryerjs';
+import { BaseService, InjectBaseService, OutputType } from 'dryerjs';
 import { User } from 'src/user/user.definition';
 import { Context } from './ctx';
 import { InjectModel } from '@nestjs/mongoose';
@@ -9,6 +9,7 @@ import { Model } from 'mongoose';
 import { Role, Session } from './auth.definition';
 import { JwtService } from '@nestjs/jwt';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Response } from 'express';
 
 function getFirstAndLastName(fullname: string) {
   const names = fullname.split(' ');
@@ -17,6 +18,7 @@ function getFirstAndLastName(fullname: string) {
     lastName: names[names.length - 1],
   };
 }
+const SessionEntity = OutputType(Session);
 
 @Injectable()
 export class AuthService {
@@ -33,7 +35,7 @@ export class AuthService {
     private eventEmitter: EventEmitter2,
   ) {}
 
-  async create(loginInput: LoginInput, roleName: string = 'user') {
+  async create(loginInput: LoginInput, roleName: string, response: Response) {
     try {
       const { idToken } = loginInput;
       const result = await this.firebaseService.auth.verifyIdToken(idToken);
@@ -64,6 +66,21 @@ export class AuthService {
       } else if (this.isSessionExpired(session.accessToken)) {
         session = await this.refreshSession(existUser);
       }
+
+      response.cookie('refreshToken', session.refreshToken, {
+        httpOnly: true,
+        secure: true,
+        path: '/',
+        sameSite: 'strict',
+        maxAge: 3 * 24 * 60 * 60 * 1000,
+      });
+      response.cookie('uid', existUser._id, {
+        httpOnly: true,
+        secure: true,
+        path: '/',
+        sameSite: 'strict',
+        maxAge: 3 * 24 * 60 * 60 * 1000,
+      });
 
       return session;
     } catch (error) {

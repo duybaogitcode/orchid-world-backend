@@ -187,9 +187,17 @@ export class ProductService {
   //   return `This action returns all dbao`;
   // }
 
-  // findOne(id: number) {
-  //   return `This action returns a #${id} dbao`;
-  // }
+  async findOne(slug: string) {
+    try {
+      const product = await this.productService.model.findOne({ slug: slug });
+      if (!product) {
+        throw new Error('Product not found');
+      }
+      return product;
+    } catch (error) {
+      throw error;
+    }
+  }
 
   async remove(id: ObjectId): Promise<boolean> {
     try {

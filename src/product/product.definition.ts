@@ -26,7 +26,6 @@ export const BaseModelHasOwner = (
       type: () => GraphQLObjectId,
       create: Skip,
       update: Skip,
-      output: Skip,
       db: {
         unique,
       },
