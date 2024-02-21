@@ -34,7 +34,6 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { WalletService } from './wallet/wallet.service';
 import * as redisStore from 'cache-manager-ioredis';
 import { CacheModule } from '@nestjs/cache-manager';
-import { RoleGuard } from './guard/role.guard';
 
 console.log({ nod: configuration().NODE_ENV });
 @Module({
