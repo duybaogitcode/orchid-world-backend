@@ -212,4 +212,51 @@ export class ProductService {
       throw error;
     }
   }
+
+  async relatedProducts(slug: string) {
+    try {
+      const product = await this.productService.model.findOne({ slug: slug });
+      if (!product) {
+        throw new Error('Product not found');
+      }
+
+      const allProducts = await this.productService.model.find({
+        _id: { $ne: product._id },
+      });
+
+      const scoredProducts = allProducts.map((otherProduct) => {
+        let score = 0;
+
+        if (otherProduct.category_id.equals(product.category_id)) {
+          score += 10;
+        }
+
+        if (otherProduct.authorId.equals(product.authorId)) {
+          score += 5;
+        }
+
+        // const matchingTags = otherProduct.tags.filter((tag) =>
+        //   product.tags.includes(tag),
+        // );
+        // score += matchingTags.length;
+
+        if (
+          Math.abs(otherProduct.price - product.price) / product.price <=
+          0.1
+        ) {
+          score += 5;
+        }
+
+        return { product: otherProduct, score };
+      });
+
+      const relatedProducts = scoredProducts
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 7);
+
+      return relatedProducts.map(({ product }) => product);
+    } catch (error) {
+      throw error;
+    }
+  }
 }

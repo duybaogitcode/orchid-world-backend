@@ -18,7 +18,6 @@ function getFirstAndLastName(fullname: string) {
     lastName: names[names.length - 1],
   };
 }
-const SessionEntity = OutputType(Session);
 
 @Injectable()
 export class AuthService {
@@ -41,7 +40,6 @@ export class AuthService {
       const result = await this.firebaseService.auth.verifyIdToken(idToken);
 
       let existUser = await this.userModel.findOne({ googleId: result.uid });
-      console.log('🚀 ~ AuthService ~ create ~ existUser:', existUser);
 
       if (!existUser) {
         const userRole = await this.roleModel.findOne({ name: roleName });
@@ -62,19 +60,12 @@ export class AuthService {
       let session = await this.sessionModel.findOne({ userId: existUser._id });
 
       if (!session) {
-        session = await this.createSession(existUser);
+        session = await this.createSession(existUser, roleName);
       } else if (this.isSessionExpired(session.accessToken)) {
-        session = await this.refreshSession(existUser);
+        session = await this.refreshSession(existUser, roleName);
       }
 
       response.cookie('refreshToken', session.refreshToken, {
-        httpOnly: true,
-        secure: true,
-        path: '/',
-        sameSite: 'strict',
-        maxAge: 3 * 24 * 60 * 60 * 1000,
-      });
-      response.cookie('uid', existUser._id, {
         httpOnly: true,
         secure: true,
         path: '/',
@@ -89,8 +80,8 @@ export class AuthService {
     }
   }
 
-  private async createSession(user: User) {
-    const payload = { email: user.email, sub: user.id };
+  private async createSession(user: User, roleName: string) {
+    const payload = { email: user.email, sub: user.id, roleName: roleName };
     const accessToken = this.jwtService.sign(payload, {
       expiresIn: this.expiresIn.accessToken,
     });
@@ -113,8 +104,8 @@ export class AuthService {
     return !decodedAccessToken || expirationTime <= Date.now();
   }
 
-  private async refreshSession(user: User) {
-    const payload = { email: user.email, sub: user.id };
+  private async refreshSession(user: User, roleName: string) {
+    const payload = { email: user.email, sub: user.id, roleName: roleName };
     const accessToken = this.jwtService.sign(payload, {
       expiresIn: this.expiresIn.accessToken,
     });
