@@ -45,4 +45,15 @@ export class ProductResolver {
       throw error;
     }
   }
+
+  @Query(() => OutputType(Product), { name: 'product' })
+  async findOne(@Args('slug') slug: string) {
+    try {
+      const product = await this.productService.findOne(slug);
+      return product;
+    } catch (error) {
+      console.error('Failed find product:', error);
+      throw error;
+    }
+  }
 }

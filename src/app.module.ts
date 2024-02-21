@@ -55,7 +55,7 @@ console.log({ nod: configuration().NODE_ENV });
       definitions: [
         {
           definition: Product,
-          allowedApis: ['findAll', 'findOne', 'paginate'],
+          allowedApis: ['findAll', 'paginate'],
         },
 
         {
