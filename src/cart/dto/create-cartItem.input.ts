@@ -1,11 +1,10 @@
-import { InputType, OmitType } from '@nestjs/graphql';
-import { CreateInputType } from 'dryerjs';
-import { CartItem } from '../definition/cartItem.definiton';
-
-const cartItemInput = CreateInputType(CartItem);
+import { Field, InputType } from '@nestjs/graphql';
 
 @InputType()
-export class CartItemInput extends OmitType(cartItemInput, [
-  'cartShopItemId',
-  'totalPrice',
-] as const) {}
+export class CartItemInput {
+  @Field(() => String)
+  productSlug: string;
+
+  @Field(() => Number)
+  quantity: number;
+}

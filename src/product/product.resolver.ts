@@ -1,4 +1,11 @@
-import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
+import {
+  Resolver,
+  Query,
+  Mutation,
+  Args,
+  Int,
+  registerEnumType,
+} from '@nestjs/graphql';
 import { Product } from './product.definition';
 import { ObjectId, OutputType } from 'dryerjs';
 
@@ -6,14 +13,15 @@ import { CreateProductInput } from './dto/create-product.input';
 import { ProductService } from './product.service';
 import { UpdateProductInput } from './dto/update-product.input';
 import { UseGuards } from '@nestjs/common';
-import { AdminOnly, UserOnly } from 'src/guard/role.guard';
+
 import { User } from 'src/user/user.definition';
+import { Context, Ctx } from 'src/auth/ctx';
+import { ShopOnly } from 'src/guard/roles.guard';
 
 @Resolver()
 export class ProductResolver {
   constructor(private readonly productService: ProductService) {}
 
-  @UserOnly()
   @Query(() => OutputType(Product), { name: 'product' })
   async findOne(@Args('slug') slug: string) {
     try {
@@ -36,11 +44,11 @@ export class ProductResolver {
     }
   }
 
+  @ShopOnly()
   @Mutation(() => OutputType(Product), { name: 'createProduct' })
   async create(@Args('input') input: CreateProductInput) {
     try {
       const newProduct = await this.productService.create(input);
-
       return newProduct;
     } catch (error) {
       console.error('Failed create new product:', error);
@@ -48,6 +56,7 @@ export class ProductResolver {
     }
   }
 
+  @ShopOnly()
   @Mutation(() => OutputType(Product), { name: 'updateProduct' })
   async update(@Args('input') input: UpdateProductInput) {
     try {
@@ -60,6 +69,7 @@ export class ProductResolver {
     }
   }
 
+  @ShopOnly()
   @Mutation(() => Boolean, { name: 'removeProduct' })
   async remove(@Args('id') id: string) {
     try {
