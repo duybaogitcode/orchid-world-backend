@@ -39,6 +39,10 @@ export class Wallet extends BaseModelHasOwner({
   })
   lockFunds: number;
 
-  @Property({ type: () => SimpleStatus })
+  @Property({
+    type: () => SimpleStatus,
+    defaultValue: SimpleStatus.ACTIVE,
+    db: { default: SimpleStatus.ACTIVE },
+  })
   status: SimpleStatus;
 }
