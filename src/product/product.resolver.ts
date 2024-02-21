@@ -5,11 +5,14 @@ import { ObjectId, OutputType } from 'dryerjs';
 import { CreateProductInput } from './dto/create-product.input';
 import { ProductService } from './product.service';
 import { UpdateProductInput } from './dto/update-product.input';
+import { UseGuards } from '@nestjs/common';
+import { AuthGuard } from 'src/guard/auth.guard';
 
 @Resolver()
 export class ProductResolver {
   constructor(private readonly productService: ProductService) {}
 
+  @UseGuards(AuthGuard)
   @Query(() => OutputType(Product), { name: 'product' })
   async findOne(@Args('slug') slug: string) {
     try {
