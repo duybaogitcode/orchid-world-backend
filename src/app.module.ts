@@ -32,6 +32,9 @@ import { CartService } from './cart/cart.service';
 import { EventEmitHook } from './hooks/event.hook';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { WalletService } from './wallet/wallet.service';
+import * as redisStore from 'cache-manager-ioredis';
+import { CacheModule } from '@nestjs/cache-manager';
+import { RoleGuard } from './guard/role.guard';
 
 console.log({ nod: configuration().NODE_ENV });
 @Module({
@@ -42,6 +45,15 @@ console.log({ nod: configuration().NODE_ENV });
       playground: true,
 
       context: ({ req, res }) => ({ req, res }),
+    }),
+    CacheModule.register({
+      isGlobal: true,
+      store: redisStore,
+      host: 'redis-11152.c323.us-east-1-2.ec2.cloud.redislabs.com',
+      port: 11152,
+      username: 'default',
+      password: 'hwHMty4zzVV9hes1qGiEPqqDTt1nrlZo',
+      ttl: 3600,
     }),
     MongooseModule.forRoot(
       'mongodb+srv://admin:fng8LrZdG2BqKbh2@clusterqueue.knjjwp9.mongodb.net/OrchidSample?retryWrites=true&w=majority',
