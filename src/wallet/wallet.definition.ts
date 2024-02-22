@@ -13,7 +13,6 @@ export class Wallet extends BaseModelHasOwner({
 }) {
   @Property({
     type: () => String,
-    defaultValue: generateWalletAddress(),
     db: {
       default: generateWalletAddress(),
       unique: true,
@@ -23,7 +22,6 @@ export class Wallet extends BaseModelHasOwner({
 
   @Property({
     type: () => Float,
-    defaultValue: 0,
     db: {
       default: 0,
     },
@@ -32,13 +30,15 @@ export class Wallet extends BaseModelHasOwner({
 
   @Property({
     type: () => Float,
-    defaultValue: 0,
     db: {
       default: 0,
     },
   })
   lockFunds: number;
 
-  @Property({ type: () => SimpleStatus })
+  @Property({
+    type: () => SimpleStatus,
+    db: { default: SimpleStatus.ACTIVE },
+  })
   status: SimpleStatus;
 }
