@@ -65,14 +65,6 @@ export class AuthService {
         session = await this.refreshSession(existUser);
       }
 
-      response.cookie('refreshToken', session.refreshToken, {
-        httpOnly: true,
-        secure: true,
-        path: '/',
-        sameSite: 'strict',
-        maxAge: 3 * 24 * 60 * 60 * 1000,
-      });
-
       return session;
     } catch (error) {
       // Handle error appropriately

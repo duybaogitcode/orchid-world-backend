@@ -42,7 +42,6 @@ console.log({ nod: configuration().NODE_ENV });
       driver: ApolloDriver,
       autoSchemaFile: configuration().NODE_ENV === 'dev' ? 'schema.gql' : true,
       playground: true,
-
       context: ({ req, res }) => ({ req, res }),
     }),
     CacheModule.register({
