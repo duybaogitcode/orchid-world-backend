@@ -111,7 +111,7 @@ console.log({ nod: configuration().NODE_ENV });
         },
         {
           definition: Wallet,
-          allowedApis: ['findOne', 'create', 'update'],
+          allowedApis: ['findOne', 'create', 'update', 'remove'],
         },
         // Media,
         // Auction,
