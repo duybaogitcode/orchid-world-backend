@@ -1,6 +1,7 @@
 import { Definition, HasMany, Property } from 'dryerjs';
 import { BaseModelHasOwner } from 'src/product/product.definition';
 import { CartShopItem } from './cartShopItem.definition';
+import { CartItem } from './cartItem.definiton';
 
 @Definition()
 export class Cart extends BaseModelHasOwner({
@@ -24,11 +25,11 @@ export class Cart extends BaseModelHasOwner({
   })
   totalPrice: number;
 
-  @HasMany(() => CartShopItem, {
-    to: 'cartId',
-    allowCreateWithin: true,
-    allowFindAll: true,
-    allowPaginate: true,
-  })
-  CartShopItem: CartShopItem[];
+  // @HasMany(() => CartItem, {
+  //   to: 'cartId',
+  //   allowCreateWithin: true,
+  //   allowFindAll: true,
+  //   allowPaginate: true,
+  // })
+  // cartItems: CartItem[];
 }

@@ -187,7 +187,7 @@ export class ProductService {
   //   return `This action returns all dbao`;
   // }
 
-  async findOne(slug: string) {
+  async findOneBySlug(slug: string) {
     try {
       const product = await this.productService.model.findOne({ slug: slug });
 

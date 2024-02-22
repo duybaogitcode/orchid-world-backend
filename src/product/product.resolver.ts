@@ -23,9 +23,9 @@ export class ProductResolver {
   constructor(private readonly productService: ProductService) {}
 
   @Query(() => OutputType(Product), { name: 'product' })
-  async findOne(@Args('slug') slug: string) {
+  async findOneBySlug(@Args('slug') slug: string) {
     try {
-      const product = await this.productService.findOne(slug);
+      const product = await this.productService.findOneBySlug(slug);
       return product;
     } catch (error) {
       console.error('Failed find product:', error);
