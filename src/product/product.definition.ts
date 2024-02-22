@@ -66,6 +66,7 @@ export class InputTags extends OmitType(inputTags, ['product_id'] as const) {}
 @Definition({
   timestamps: true,
   enableTextSearch: true,
+  schemaOptions: { selectPopulatedPaths: true },
 })
 export class Product extends BaseModelHasOwner() {
   @Filterable(() => String, { operators: ['contains'] })

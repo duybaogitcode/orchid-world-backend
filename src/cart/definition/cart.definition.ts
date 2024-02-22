@@ -28,6 +28,7 @@ export class Cart extends BaseModelHasOwner({
     to: 'cartId',
     allowCreateWithin: true,
     allowFindAll: true,
+    allowPaginate: true,
   })
   CartShopItem: CartShopItem[];
 }

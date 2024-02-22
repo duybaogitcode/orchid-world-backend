@@ -22,7 +22,7 @@ export class ProductService {
     private readonly firebaseService: FirebaseService,
   ) {}
 
-  async create(createProductDto: CreateProductInput) {
+  async create(createProductDto: CreateProductInput, uid: ObjectId) {
     const session = await this.productService.model.startSession();
     session.startTransaction();
     let media: string[] = [];
@@ -40,7 +40,7 @@ export class ProductService {
       media = await Promise.all(urls.map((url) => Promise.resolve(url)));
 
       const product = new this.productService.model({
-        authorId: new ObjectId('65d4cf43ba92501958627f1e'),
+        authorId: uid,
         category_id: createProductDto.category_id,
         description: createProductDto.description,
         media: media,
@@ -190,6 +190,7 @@ export class ProductService {
   async findOne(slug: string) {
     try {
       const product = await this.productService.model.findOne({ slug: slug });
+
       if (!product) {
         throw new Error('Product not found');
       }

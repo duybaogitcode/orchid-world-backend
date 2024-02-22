@@ -107,7 +107,7 @@ console.log({ nod: configuration().NODE_ENV });
         },
         {
           definition: Cart,
-          allowedApis: ['findAll', 'paginate'],
+          allowedApis: ['findAll'],
         },
         {
           definition: Wallet,
