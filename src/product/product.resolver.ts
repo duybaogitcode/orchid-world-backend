@@ -16,7 +16,7 @@ import { UseGuards } from '@nestjs/common';
 
 import { User } from 'src/user/user.definition';
 import { Context, Ctx } from 'src/auth/ctx';
-import { ShopOnly } from 'src/guard/roles.guard';
+import { ShopOnly, UserOnly } from 'src/guard/roles.guard';
 
 @Resolver()
 export class ProductResolver {
@@ -46,9 +46,9 @@ export class ProductResolver {
 
   @ShopOnly()
   @Mutation(() => OutputType(Product), { name: 'createProduct' })
-  async create(@Args('input') input: CreateProductInput) {
+  async create(@Args('input') input: CreateProductInput, @Ctx() ctx: Context) {
     try {
-      const newProduct = await this.productService.create(input);
+      const newProduct = await this.productService.create(input, ctx.id);
       return newProduct;
     } catch (error) {
       console.error('Failed create new product:', error);

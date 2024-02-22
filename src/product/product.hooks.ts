@@ -8,6 +8,7 @@ import {
   BeforeCreateHook,
   BeforeCreateHookInput,
   BeforeFindManyHook,
+  BeforeFindManyHookInput,
   InjectBaseService,
   ObjectId,
 } from 'dryerjs';
@@ -21,17 +22,24 @@ export class ProductHook {
     public productService: BaseService<Product, Context>,
   ) {}
 
-  @AfterFindManyHook(() => Product)
-  async afterFindManyProduct({
-    items,
-  }: AfterFindManyHookInput<Product, Context>) {
-    for (let i = items.length - 1; i >= 0; i--) {
-      if (items[i].status !== ProductStatus.APPROVED) {
-        items.splice(i, 1);
-      }
-    }
-    return items;
+  @BeforeFindManyHook(() => Product)
+  async beforeFindManyProduct({
+    filter,
+  }: BeforeFindManyHookInput<Product, Context>) {
+    filter.status = ProductStatus.APPROVED;
   }
+
+  // @AfterFindManyHook(() => Product)
+  // async afterFindManyProduct({
+  //   items,
+  // }: AfterFindManyHookInput<Product, Context>) {
+  //   for (let i = items.length - 1; i >= 0; i--) {
+  //     if (items[i].status !== ProductStatus.APPROVED) {
+  //       items.splice(i, 1);
+  //     }
+  //   }
+  //   return items;
+  // }
 
   // @BeforeCreateHook(() => Product)
   // async upLoadFileToFirebase({
