@@ -38,7 +38,7 @@ export class CartService {
         })
         .session(session);
 
-      if (!product || product.quantity < input.quantity) {
+      if (!product) {
         throw new Error('Product not found or out of stock');
       }
 
@@ -96,7 +96,9 @@ export class CartService {
             (input.quantity + cartItemExist.quantity) * product.price;
           await cartItemExist.save({ session });
           this.eventEmitter.emit('CartItem.added', { input: cartItemExist });
-
+          if (cartItemExist.quantity > product.quantity) {
+            throw new Error('Product out of stock');
+          }
           await session.commitTransaction();
           session.endSession();
 
@@ -105,6 +107,9 @@ export class CartService {
           cartItemExist.quantity = input.quantity;
           cartItemExist.totalPrice =
             (input.quantity + cartItemExist.quantity) * product.price;
+          if (cartItemExist.quantity > product.quantity) {
+            throw new Error('Product out of stock');
+          }
           await cartItemExist.save({ session });
           this.eventEmitter.emit('CartItem.added', { input: cartItemExist });
 
@@ -122,6 +127,9 @@ export class CartService {
         totalPrice: product.price * input.quantity,
       });
       await cartItem.save({ session });
+      if (cartItem.quantity > product.quantity) {
+        throw new Error('Product out of stock');
+      }
 
       this.eventEmitter.emit('CartItem.added', { input: cartItem });
 
