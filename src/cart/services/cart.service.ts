@@ -42,8 +42,7 @@ export class CartService {
         throw new Error('Product not found or out of stock');
       }
 
-      let cartShopItemId;
-      let cartId;
+      let cartShopItemId, cartId, cartShopItemReturn;
 
       const cart = await this.cartService.model
         .findOne({
@@ -77,8 +76,10 @@ export class CartService {
         });
         await cartShopItem.save({ session });
         cartShopItemId = cartShopItem.id;
+        cartShopItemReturn = cartShopItem;
       } else {
         cartShopItemId = cartShopItemExsist.id;
+        cartShopItemReturn = cartShopItemExsist;
       }
 
       const cartItemExist = await this.cartItemService.model
@@ -99,7 +100,7 @@ export class CartService {
           await session.commitTransaction();
           session.endSession();
 
-          return cartItemExist;
+          return cartShopItemReturn;
         } else {
           cartItemExist.quantity = input.quantity;
           cartItemExist.totalPrice =
@@ -110,7 +111,7 @@ export class CartService {
           await session.commitTransaction();
           session.endSession();
 
-          return cartItemExist;
+          return cartShopItemReturn;
         }
       }
 
@@ -127,7 +128,7 @@ export class CartService {
       await session.commitTransaction();
       session.endSession();
 
-      return cartItem;
+      return cartShopItemReturn;
     } catch (error) {
       await session.abortTransaction();
       session.endSession();

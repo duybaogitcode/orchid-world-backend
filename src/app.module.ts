@@ -49,6 +49,10 @@ console.log({ nod: configuration().NODE_ENV });
       playground: false,
       plugins: [ApolloServerPluginLandingPageLocalDefault()],
       context: ({ req, res }) => ({ req, res }),
+      installSubscriptionHandlers: true,
+      subscriptions: {
+        'graphql-ws': true,
+      },
     }),
     CacheModule.register({
       isGlobal: true,
