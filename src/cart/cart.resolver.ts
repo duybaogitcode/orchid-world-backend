@@ -5,15 +5,15 @@ import { Cart } from './definition/cart.definition';
 import { OutputType } from 'dryerjs';
 import { CartItemInput } from './dto/create-cartItem.input';
 import { Context, Ctx } from 'src/auth/ctx';
-import { CartItem } from './definition/cartItem.definiton';
+import { CartShopItem } from './definition/cartShopItem.definition';
 
-const cartItemOutputType = OutputType(CartItem);
+const cartShopItemOutputType = OutputType(CartShopItem);
 @Resolver()
 export class CartResolver {
   constructor(private readonly cartService: CartService) {}
 
   @ShopOrUserOnly()
-  @Mutation(() => cartItemOutputType, { name: 'addToCart' })
+  @Mutation(() => cartShopItemOutputType, { name: 'addToCart' })
   async create(@Args('input') input: CartItemInput, @Ctx() ctx: Context) {
     try {
       return this.cartService.addToCart(input, ctx.id);
