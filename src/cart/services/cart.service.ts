@@ -60,8 +60,8 @@ export class CartService {
       } else {
         cartId = cart.id;
       }
-      product.quantity -= input.quantity;
-      await product.save({ session });
+      // product.quantity -= input.quantity;
+      // await product.save({ session });
 
       const cartShopItemExsist = await this.CartIShopItemService.model
         .findOne({
