@@ -1,20 +1,22 @@
 import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
 import { ShopOnly, ShopOrUserOnly } from 'src/guard/roles.guard';
-import { CartService } from './cart.service';
-import { AddToCartDTO } from './dto/add-to-card.dto';
+import { CartService } from './services/cart.service';
 import { Cart } from './definition/cart.definition';
 import { OutputType } from 'dryerjs';
+import { CartItemInput } from './dto/create-cartItem.input';
+import { Context, Ctx } from 'src/auth/ctx';
+import { CartItem } from './definition/cartItem.definiton';
 
-const cartOutputType = OutputType(Cart);
+const cartItemOutputType = OutputType(CartItem);
 @Resolver()
 export class CartResolver {
   constructor(private readonly cartService: CartService) {}
 
-  // @ShopOrUserOnly()
-  @Mutation(() => cartOutputType, { name: 'addToCart' })
-  async create(@Args('input') input: AddToCartDTO) {
+  @ShopOrUserOnly()
+  @Mutation(() => cartItemOutputType, { name: 'addToCart' })
+  async create(@Args('input') input: CartItemInput, @Ctx() ctx: Context) {
     try {
-      return this.cartService.addToCart(input);
+      return this.cartService.addToCart(input, ctx.id);
     } catch (error) {
       console.error('Failed add to cart:', error);
       throw error;

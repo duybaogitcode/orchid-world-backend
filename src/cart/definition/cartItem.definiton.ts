@@ -10,30 +10,26 @@ import { Product } from 'src/product/product.definition';
 import { BaseModel } from 'src/base/base.definition';
 import { User } from 'src/user/user.definition';
 import { Cart } from './cart.definition';
+import { CartShopItem } from './cartShopItem.definition';
 
 @Definition()
 export class CartItem extends BaseModel() {
   @Property({ type: () => GraphQLObjectId })
   productId: ObjectId;
 
-  @Embedded(() => Product)
+  @BelongsTo(() => Product, {
+    from: 'productId',
+  })
   product: Product;
 
   @Property({ type: () => GraphQLObjectId })
-  shopId: ObjectId;
-
-  @Property({ type: () => GraphQLObjectId })
-  cartId: ObjectId;
+  cartShopItemId: ObjectId;
 
   @BelongsTo(() => Cart, {
-    from: 'cartId',
+    from: 'cart',
+    noPopulation: true,
   })
-  cart: Cart;
-
-  @BelongsTo(() => User, {
-    from: 'shopId',
-  })
-  shop: User;
+  cartShopItem: CartShopItem;
 
   @Property({ type: () => Number })
   quantity: number;
