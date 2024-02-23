@@ -55,6 +55,7 @@ export class RoleMultiGuard implements CanActivate {
     );
 
     if (!roles) return true;
+
     if (roles.some((role) => role === user.roleId.toString())) {
       return true;
     } else {

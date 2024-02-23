@@ -10,26 +10,20 @@ export class Cart extends BaseModelHasOwner({
   @Property({
     type: () => Number,
     defaultValue: 0,
-    db: {
-      default: 0,
-    },
   })
   totalQuantity: number;
 
   @Property({
     type: () => Number,
     defaultValue: 0,
-    db: {
-      default: 0,
-    },
   })
   totalPrice: number;
 
-  // @HasMany(() => CartItem, {
-  //   to: 'cartId',
-  //   allowCreateWithin: true,
-  //   allowFindAll: true,
-  //   allowPaginate: true,
-  // })
-  // cartItems: CartItem[];
+  @HasMany(() => CartShopItem, {
+    to: 'cartId',
+    allowCreateWithin: true,
+    allowFindAll: true,
+    allowPaginate: true,
+  })
+  cartShopItems: CartShopItem[];
 }

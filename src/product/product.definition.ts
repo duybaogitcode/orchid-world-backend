@@ -87,7 +87,7 @@ export class Product extends BaseModelHasOwner() {
   })
   file: Array<Promise<FileUpload>>;
 
-  @Property({ db: { unique: true } })
+  @Property({ db: { unique: true, sparse: true } })
   slug: string;
 
   @Property({ type: () => Number })

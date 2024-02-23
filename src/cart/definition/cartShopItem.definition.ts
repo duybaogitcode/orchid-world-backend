@@ -16,6 +16,11 @@ export class CartShopItem extends BaseModel() {
   @Property({ type: () => GraphQLObjectId })
   cartId: ObjectId;
 
+  @BelongsTo(() => Cart, {
+    from: 'cartId',
+  })
+  cart: Cart;
+
   @Property({ type: () => GraphQLObjectId })
   shopId: ObjectId;
 
@@ -31,9 +36,9 @@ export class CartShopItem extends BaseModel() {
   })
   cartItem: CartItem[];
 
-  @Property({ type: () => Number })
+  @Property({ type: () => Number, defaultValue: 0 })
   totalQuantity: number;
 
-  @Property({ type: () => Number })
+  @Property({ type: () => Number, defaultValue: 0 })
   totalPrice: number;
 }

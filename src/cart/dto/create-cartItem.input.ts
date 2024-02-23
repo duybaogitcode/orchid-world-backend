@@ -5,6 +5,6 @@ export class CartItemInput {
   @Field(() => String)
   productSlug: string;
 
-  @Field(() => Number)
+  @Field(() => Number, { defaultValue: 1 })
   quantity: number;
 }

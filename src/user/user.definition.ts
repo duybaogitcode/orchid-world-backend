@@ -1,12 +1,33 @@
+import { Field, InputType, ObjectType } from '@nestjs/graphql';
 import {
   BelongsTo,
+  CreateInputType,
   Definition,
+  Embedded,
   GraphQLObjectId,
   ObjectId,
+  OutputType,
   Property,
 } from 'dryerjs';
+import { GraphQLObjectType } from 'graphql';
+import { skip } from 'node:test';
 import { Role } from 'src/auth/auth.definition';
 import { BaseModel } from 'src/base/base.definition';
+
+@Definition()
+export class ShopOwner {
+  @Property({ type: () => String })
+  shopName: string;
+
+  @Property({ type: () => String })
+  pickupAddress: string;
+
+  @Property({ type: () => String })
+  emailShop: string;
+
+  @Property({ type: () => String })
+  phoneShop: string;
+}
 
 @Definition({
   timestamps: true,
@@ -71,4 +92,7 @@ export class User extends BaseModel() {
     from: 'roleId',
   })
   role: Role;
+
+  @Embedded(() => ShopOwner)
+  shopOwner: ShopOwner;
 }

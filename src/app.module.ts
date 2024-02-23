@@ -28,12 +28,17 @@ import { User } from './user/user.definition';
 import { UserService } from './user/user.service';
 import { UserResolver } from './user/user.resolver';
 import { Wallet } from './wallet/wallet.definition';
-import { CartService } from './cart/cart.service';
+import { CartService } from './cart/services/cart.service';
 import { EventEmitHook } from './hooks/event.hook';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { WalletService } from './wallet/wallet.service';
 import * as redisStore from 'cache-manager-ioredis';
 import { CacheModule } from '@nestjs/cache-manager';
+import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
+import { CartItemService } from './cart/services/cartItem.service';
+import { CartIShopItemService } from './cart/services/cartItemShop.service';
+import { Admin, UserOnly } from './guard/roles.guard';
+import { CartEvent } from './event/cart.event';
 
 console.log({ nod: configuration().NODE_ENV });
 @Module({
@@ -41,7 +46,8 @@ console.log({ nod: configuration().NODE_ENV });
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile: configuration().NODE_ENV === 'dev' ? 'schema.gql' : true,
-      playground: true,
+      playground: false,
+      plugins: [ApolloServerPluginLandingPageLocalDefault()],
       context: ({ req, res }) => ({ req, res }),
     }),
     CacheModule.register({
@@ -65,6 +71,12 @@ console.log({ nod: configuration().NODE_ENV });
       definitions: [
         {
           definition: Product,
+          embeddedConfigs: [
+            {
+              property: 'shopOwner',
+              allowedApis: [],
+            },
+          ],
           allowedApis: ['findAll', 'paginate', 'findOne', 'paginate'],
         },
 
@@ -83,6 +95,10 @@ console.log({ nod: configuration().NODE_ENV });
         {
           definition: User,
           allowedApis: ['findAll', 'findOne', 'update', 'bulkRemove'],
+          decorators: {
+            findAll: [Admin()],
+            bulkRemove: [Admin()],
+          },
         },
         {
           definition: Role,
@@ -126,8 +142,11 @@ console.log({ nod: configuration().NODE_ENV });
         UserService,
         UserResolver,
         CartService,
+        CartItemService,
+        CartIShopItemService,
         CartResolver,
         WalletService,
+        CartEvent,
       ],
       contextDecorator: Ctx,
     }),
