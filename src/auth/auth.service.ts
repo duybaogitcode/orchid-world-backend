@@ -73,7 +73,7 @@ export class AuthService {
   }
 
   private async createSession(user: User) {
-    const payload = { email: user.email, sub: user.id };
+    const payload = { email: user.email, sub: user.id, roleId: user.roleId };
     const accessToken = this.jwtService.sign(payload, {
       expiresIn: this.expiresIn.accessToken,
     });
@@ -97,7 +97,7 @@ export class AuthService {
   }
 
   private async refreshSession(user: User) {
-    const payload = { email: user.email, sub: user.id };
+    const payload = { email: user.email, sub: user.id, roleId: user.roleId };
     const accessToken = this.jwtService.sign(payload, {
       expiresIn: this.expiresIn.accessToken,
     });

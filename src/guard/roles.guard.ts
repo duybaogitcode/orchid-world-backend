@@ -15,19 +15,20 @@ import { Context } from 'src/auth/ctx';
 import { User } from 'src/user/user.definition';
 import { GqlExecutionContext, registerEnumType } from '@nestjs/graphql';
 import { Cache } from 'cache-manager';
+import { clear } from 'console';
 
 @Injectable()
 export class RoleMultiGuard implements CanActivate {
   constructor(
     private readonly jwtService: JwtService,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    // @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private reflector: Reflector,
     @InjectBaseService(User)
     public userService: BaseService<User, Context>,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const { req } = GqlExecutionContext.create(context).getContext();
+    const { req, res } = GqlExecutionContext.create(context).getContext();
 
     const ctx = await this.jwtService
       .verifyAsync(req.cookies.refreshToken)
@@ -37,29 +38,43 @@ export class RoleMultiGuard implements CanActivate {
       return false;
     }
 
-    let user: User = await this.cacheManager.get(ctx.sub);
-    if (!user) {
-      user = await this.userService.model.findById(ctx.sub);
-      await this.cacheManager.set(ctx.sub, user);
-    }
+    // let user: User = await this.cacheManager.get(ctx.sub);
+    // if (!user) {
+    //   user = await this.userService.model.findById(ctx.sub);
+    //   await this.cacheManager.set(ctx.sub, user);
+    // }
 
-    if (!user) {
-      return false;
-    }
+    // if (!user) {
+    //   return false;
+    // }
 
-    req.ctx = user;
+    req.ctx = ctx;
 
     const roles = this.reflector.get<UserRole[]>(
       RoleMultiCheck,
       context.getHandler(),
     );
 
+    if (!ctx.roleId) {
+      res.clearCookie('refreshToken');
+      for (const cookieName in req.cookies) {
+        res.clearCookie(cookieName);
+      }
+      throw new UnauthorizedException(
+        `Failed to authenticate. Please login again.`,
+      );
+    }
+
     if (!roles) return true;
 
-    if (roles.some((role) => role === user.roleId.toString())) {
+    if (roles.some((role) => role === ctx.roleId.toString())) {
       return true;
     } else {
       // const requiredRoles = roles.join(', ');
+      // res.clearCookie('refreshToken');
+      // for (const cookieName in req.cookies) {
+      //   res.clearCookie(cookieName);
+      // }
       throw new UnauthorizedException(
         `Access denied. You are not allowed to access this resource`,
       );

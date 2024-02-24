@@ -45,4 +45,7 @@ export class CartShopItem extends BaseModel() {
 
   @Property({ type: () => Number, defaultValue: 0 })
   totalPrice: number;
+
+  @Property({ type: () => Boolean, defaultValue: true })
+  isOrdered: boolean;
 }

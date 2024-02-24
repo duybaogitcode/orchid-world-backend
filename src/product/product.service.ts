@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { BaseService, InjectBaseService, ObjectId } from 'dryerjs';
 
 import { InjectModel } from '@nestjs/mongoose';
@@ -11,6 +11,8 @@ import { Context } from 'src/auth/ctx';
 import { FirebaseService } from 'src/firebase/firebase.serivce';
 import { TagWithValues } from 'src/orthersDef/tagValues.definition';
 import { UpdateProductInput } from './dto/update-product.input';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class ProductService {
@@ -190,7 +192,6 @@ export class ProductService {
   async findOneBySlug(slug: string) {
     try {
       const product = await this.productService.model.findOne({ slug: slug });
-
       if (!product) {
         throw new Error('Product not found');
       }
