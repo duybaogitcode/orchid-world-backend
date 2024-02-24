@@ -6,14 +6,13 @@ import {
   InjectBaseService,
   ObjectId,
 } from 'dryerjs';
+import { Types } from 'mongoose';
+import { Product } from 'src/product/product.definition';
 import { User } from 'src/user/user.definition';
 import { Cart } from '../definition/cart.definition';
-import { Product } from 'src/product/product.definition';
 import { CartItem } from '../definition/cartItem.definiton';
-import { AddToCartDTO } from '../dto/add-to-card.dto';
-import { CartItemInput } from '../dto/create-cartItem.input';
 import { CartShopItem } from '../definition/cartShopItem.definition';
-
+import { CartItemInput } from '../dto/create-cartItem.input';
 type CartContext = Cart;
 
 @Injectable()
@@ -51,6 +50,7 @@ export class CartService {
         .session(session);
 
       if (!cart) {
+        // Rarely happen. Because the cart will be created when the user is created
         const newCart = new this.cartService.model({
           authorId: new ObjectId(uid),
         });

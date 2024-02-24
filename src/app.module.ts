@@ -118,15 +118,15 @@ console.log({ nod: configuration().NODE_ENV });
         },
         {
           definition: CartItem,
-          allowedApis: ['remove'],
+          allowedApis: ['remove', 'update', 'create', 'findOne', 'findAll'],
         },
         {
           definition: CartShopItem,
-          allowedApis: [],
+          allowedApis: ['findAll', 'findOne', 'create', 'update', 'remove'],
         },
         {
           definition: Cart,
-          allowedApis: ['findAll'],
+          allowedApis: ['findAll', 'findOne', 'create', 'update', 'remove'],
         },
         {
           definition: Wallet,
