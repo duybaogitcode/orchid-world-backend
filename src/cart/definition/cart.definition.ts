@@ -3,7 +3,9 @@ import { BaseModelHasOwner } from 'src/product/product.definition';
 import { CartShopItem } from './cartShopItem.definition';
 import { CartItem } from './cartItem.definiton';
 
-@Definition()
+@Definition({
+  schemaOptions: { selectPopulatedPaths: true },
+})
 export class Cart extends BaseModelHasOwner({
   unique: true,
 }) {

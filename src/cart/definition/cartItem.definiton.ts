@@ -12,7 +12,9 @@ import { User } from 'src/user/user.definition';
 import { Cart } from './cart.definition';
 import { CartShopItem } from './cartShopItem.definition';
 
-@Definition()
+@Definition({
+  schemaOptions: { selectPopulatedPaths: true },
+})
 export class CartItem extends BaseModel() {
   @Property({ type: () => GraphQLObjectId })
   productId: ObjectId;

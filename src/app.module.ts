@@ -39,6 +39,12 @@ import { CartItemService } from './cart/services/cartItem.service';
 import { CartIShopItemService } from './cart/services/cartItemShop.service';
 import { Admin, UserOnly } from './guard/roles.guard';
 import { CartEvent } from './event/cart.event';
+import { Transaction } from './wallet/transaction.definition';
+import { TransactionService } from './wallet/transaction.service';
+import { TransactionResolver } from './wallet/transaction.resolver';
+import { Order, OrderItem } from './order/order.definition';
+import { OrderResolver } from './order/order.resolver';
+import { OrderService } from './order/order.service';
 
 console.log({ nod: configuration().NODE_ENV });
 @Module({
@@ -132,6 +138,40 @@ console.log({ nod: configuration().NODE_ENV });
           definition: Wallet,
           allowedApis: ['findOne', 'create', 'update', 'remove'],
         },
+        {
+          definition: Order,
+          allowedApis: [
+            'findOne',
+            'create',
+            'update',
+            'remove',
+            'paginate',
+            'findAll',
+          ],
+        },
+        {
+          definition: OrderItem,
+          allowedApis: [
+            'findOne',
+            'create',
+            'update',
+            'remove',
+            'paginate',
+            'findAll',
+          ],
+        },
+        {
+          definition: Transaction,
+          allowedApis: [
+            'findOne',
+            'create',
+            'update',
+            'remove',
+            'findAll',
+            'paginate',
+            'essentials',
+          ],
+        },
         // Media,
         // Auction,
         // AuctionBiddingHistory,
@@ -151,6 +191,10 @@ console.log({ nod: configuration().NODE_ENV });
         CartResolver,
         WalletService,
         CartEvent,
+        TransactionResolver,
+        TransactionService,
+        OrderResolver,
+        OrderService,
       ],
       contextDecorator: Ctx,
     }),
