@@ -1,5 +1,5 @@
 import { GraphQLISODateTime, registerEnumType } from '@nestjs/graphql';
-import { Id, ObjectId, Property, Skip } from 'dryerjs';
+import { Filterable, Id, ObjectId, Property, Skip, Sortable } from 'dryerjs';
 export enum BaseStatus {
   PENDING = 'PENDING',
   APPROVED = 'APPROVED',
@@ -25,6 +25,7 @@ export const BaseModel = () => {
     @Id()
     id: ObjectId;
 
+    @Sortable()
     @Property({
       output: { type: () => GraphQLISODateTime },
       create: Skip,
@@ -32,6 +33,7 @@ export const BaseModel = () => {
     })
     createdAt: Date;
 
+    @Sortable()
     @Property({
       output: { type: () => GraphQLISODateTime },
       create: Skip,

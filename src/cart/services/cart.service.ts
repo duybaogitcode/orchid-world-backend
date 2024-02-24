@@ -6,7 +6,6 @@ import {
   InjectBaseService,
   ObjectId,
 } from 'dryerjs';
-import { Types } from 'mongoose';
 import { Product } from 'src/product/product.definition';
 import { User } from 'src/user/user.definition';
 import { Cart } from '../definition/cart.definition';
