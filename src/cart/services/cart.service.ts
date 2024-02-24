@@ -31,24 +31,20 @@ export class CartService {
     const session = await this.productService.model.db.startSession();
     session.startTransaction();
     try {
-      const product = await this.productService.model
-        .findOne({
-          slug: input.productSlug,
-        })
-        .session(session);
+      const [product, cart] = await Promise.all([
+        this.productService.model
+          .findOne({ slug: input.productSlug })
+          .session(session),
+        this.cartService.model
+          .findOne({ authorId: new ObjectId(uid) })
+          .session(session),
+      ]);
 
-      if (!product) {
+      if (!product || product.quantity < input.quantity) {
         throw new Error('Product not found or out of stock');
       }
 
       let cartShopItemId, cartId, cartShopItemReturn;
-
-      const cart = await this.cartService.model
-        .findOne({
-          authorId: new ObjectId(uid),
-        })
-        .session(session);
-
       if (!cart) {
         // Rarely happen. Because the cart will be created when the user is created
         const newCart = new this.cartService.model({
