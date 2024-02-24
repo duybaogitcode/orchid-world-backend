@@ -90,34 +90,23 @@ export class CartService {
         .session(session);
 
       if (cartItemExist) {
-        if (input.quantity === 1) {
-          cartItemExist.quantity += input.quantity;
-          cartItemExist.totalPrice =
-            (input.quantity + cartItemExist.quantity) * product.price;
-          await cartItemExist.save({ session });
-          this.eventEmitter.emit('CartItem.added', { input: cartItemExist });
-          if (cartItemExist.quantity > product.quantity) {
-            throw new Error('Product out of stock');
-          }
-          await session.commitTransaction();
-          session.endSession();
-
-          return cartShopItemReturn;
-        } else {
-          cartItemExist.quantity = input.quantity;
-          cartItemExist.totalPrice =
-            (input.quantity + cartItemExist.quantity) * product.price;
-          if (cartItemExist.quantity > product.quantity) {
-            throw new Error('Product out of stock');
-          }
-          await cartItemExist.save({ session });
-          this.eventEmitter.emit('CartItem.added', { input: cartItemExist });
-
-          await session.commitTransaction();
-          session.endSession();
-
-          return cartShopItemReturn;
+        cartItemExist.quantity += input.quantity;
+        cartItemExist.totalPrice =
+          (input.quantity + cartItemExist.quantity) * product.price;
+        if (cartItemExist.quantity > product.quantity) {
+          throw new Error('Product out of stock');
         }
+        await cartItemExist.save({ session });
+        const { toltalPriceShopItem, quantityShopItem } =
+          await this.calculateTotalPriceAndQuantity(cartShopItemId, session);
+        cartShopItemReturn.totalPrice = toltalPriceShopItem;
+        cartShopItemReturn.totalQuantity = quantityShopItem;
+        await session.commitTransaction();
+        this.eventEmitter.emit('CartItem.added', { input: cartItemExist });
+
+        session.endSession();
+
+        return cartShopItemReturn;
       }
 
       const cartItem = new this.cartItemService.model({
@@ -131,6 +120,10 @@ export class CartService {
         throw new Error('Product out of stock');
       }
 
+      const { toltalPriceShopItem, quantityShopItem } =
+        await this.calculateTotalPriceAndQuantity(cartShopItemId, session);
+      cartShopItemReturn.totalPrice = toltalPriceShopItem;
+      cartShopItemReturn.totalQuantity = quantityShopItem;
       this.eventEmitter.emit('CartItem.added', { input: cartItem });
 
       await session.commitTransaction();
@@ -144,6 +137,27 @@ export class CartService {
     }
   }
 
+  private async calculateTotalPriceAndQuantity(
+    cartShopItemId: ObjectId,
+    session: any,
+  ) {
+    const cartItems = await this.cartItemService.model
+      .find({
+        cartShopItemId: cartShopItemId,
+      })
+      .session(session);
+
+    const quantityShopItem = cartItems.reduce(
+      (acc, item) => acc + item.quantity,
+      0,
+    );
+    const toltalPriceShopItem = cartItems.reduce(
+      (acc, item) => acc + item.totalPrice,
+      0,
+    );
+
+    return { toltalPriceShopItem, quantityShopItem };
+  }
   // async createCartItem({
   //   cartId,
   //   productId,
