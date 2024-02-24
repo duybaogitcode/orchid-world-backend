@@ -27,8 +27,8 @@ export class CartItem extends BaseModel() {
   @Property({ type: () => GraphQLObjectId })
   cartShopItemId: ObjectId;
 
-  @BelongsTo(() => Cart, {
-    from: 'cart',
+  @BelongsTo(() => CartShopItem, {
+    from: 'cartShopItemId',
     noPopulation: true,
   })
   cartShopItem: CartShopItem;

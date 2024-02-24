@@ -6,6 +6,7 @@ import { OutputType } from 'dryerjs';
 import { CartItemInput } from './dto/create-cartItem.input';
 import { Context, Ctx } from 'src/auth/ctx';
 import { CartShopItem } from './definition/cartShopItem.definition';
+import { UpdateCartInput } from './dto/update-cartItem.input';
 
 const cartShopItemOutputType = OutputType(CartShopItem);
 @Resolver()
@@ -17,6 +18,17 @@ export class CartResolver {
   async create(@Args('input') input: CartItemInput, @Ctx() ctx: Context) {
     try {
       return this.cartService.addToCart(input, ctx.id);
+    } catch (error) {
+      console.error('Failed add to cart:', error);
+      throw error;
+    }
+  }
+
+  @ShopOrUserOnly()
+  @Mutation(() => cartShopItemOutputType, { name: 'updateCart' })
+  async update(@Args('input') input: UpdateCartInput, @Ctx() ctx: Context) {
+    try {
+      return true;
     } catch (error) {
       console.error('Failed add to cart:', error);
       throw error;

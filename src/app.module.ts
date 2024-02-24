@@ -37,7 +37,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
 import { CartItemService } from './cart/services/cartItem.service';
 import { CartIShopItemService } from './cart/services/cartItemShop.service';
-import { Admin, UserOnly } from './guard/roles.guard';
+import { Admin, ShopOnly, UserOnly } from './guard/roles.guard';
 import { CartEvent } from './event/cart.event';
 import { Transaction } from './wallet/transaction.definition';
 import { TransactionService } from './wallet/transaction.service';
@@ -124,15 +124,23 @@ console.log({ nod: configuration().NODE_ENV });
         },
         {
           definition: CartItem,
-          allowedApis: ['remove', 'update', 'create', 'findOne', 'findAll'],
+          allowedApis: ['remove', 'bulkRemove'],
+          decorators: {
+            remove: [UserOnly(), ShopOnly()],
+            bulkRemove: [UserOnly(), ShopOnly()],
+          },
         },
         {
           definition: CartShopItem,
-          allowedApis: ['findAll', 'findOne', 'create', 'update', 'remove'],
+          allowedApis: ['remove', 'bulkRemove'],
+          decorators: {
+            remove: [UserOnly(), ShopOnly()],
+            bulkRemove: [UserOnly(), ShopOnly()],
+          },
         },
         {
           definition: Cart,
-          allowedApis: ['findAll', 'findOne', 'create', 'update', 'remove'],
+          allowedApis: ['findAll', 'findOne'],
         },
         {
           definition: Wallet,

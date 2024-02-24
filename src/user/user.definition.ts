@@ -15,12 +15,21 @@ import { Role } from 'src/auth/auth.definition';
 import { BaseModel } from 'src/base/base.definition';
 
 @Definition()
+export class address {
+  @Property({ type: () => String })
+  city: string;
+
+  @Property({ type: () => String })
+  district: string;
+}
+
+@Definition()
 export class ShopOwner {
   @Property({ type: () => String })
   shopName: string;
 
-  @Property({ type: () => String })
-  pickupAddress: string;
+  @Embedded(() => address)
+  pickupAddress: address;
 
   @Property({ type: () => String })
   emailShop: string;
