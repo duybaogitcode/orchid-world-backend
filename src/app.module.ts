@@ -124,19 +124,11 @@ console.log({ nod: configuration().NODE_ENV });
         },
         {
           definition: CartItem,
-          allowedApis: ['remove', 'bulkRemove'],
-          decorators: {
-            remove: [ShopOrUserOnly()],
-            bulkRemove: [UserOnly(), ShopOnly()],
-          },
+          allowedApis: [],
         },
         {
           definition: CartShopItem,
-          allowedApis: ['remove', 'bulkRemove'],
-          decorators: {
-            remove: [UserOnly()],
-            bulkRemove: [ShopOrUserOnly()],
-          },
+          allowedApis: [],
         },
         {
           definition: Cart,
