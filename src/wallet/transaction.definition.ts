@@ -10,9 +10,8 @@ import { BaseModel } from 'src/base/base.definition';
 import { Wallet } from './wallet.definition';
 
 export enum TransactionType {
-  TOPUP = 'TOPUP', // Nap tien
-  WITHDRAW = 'WITHDRAW', // Rut tien
-  TRANSFER = 'TRANSFER', // Chuyen tien
+  INCREASE = '1', // Cong tien
+  DECREASE = '0', // Tru tien
 }
 
 registerEnumType(TransactionType, {
@@ -44,23 +43,11 @@ export class Transaction extends BaseModel() {
     db: {
       unique: false,
     },
-    nullable: true,
   })
-  sentWalletId: ObjectId; // This will be null if the system is sending money
+  walletId: ObjectId; // This will be null if the system is sending money
 
-  @BelongsTo(() => Wallet, { from: 'sentWalletId' })
-  sentWallet: Wallet;
-
-  @Property({
-    type: () => GraphQLObjectId,
-    db: {
-      unique: false,
-    },
-  })
-  receiveWalletId: ObjectId;
-
-  @BelongsTo(() => Wallet, { from: 'receiveWalletId' })
-  receiveWallet: Wallet;
+  @BelongsTo(() => Wallet, { from: 'walletId' })
+  wallet: Wallet;
 
   @Property({
     type: () => Int,

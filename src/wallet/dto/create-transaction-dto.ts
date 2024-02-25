@@ -8,8 +8,6 @@ const TransactionInput = CreateInputType(Transaction);
 export class CreateTransactionDto extends OmitType(TransactionInput, [
   'createdAt',
   'id',
-  'sentWallet',
-  'receiveWallet',
   'status',
   'updatedAt',
 ] as const) {}
