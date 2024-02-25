@@ -183,6 +183,44 @@ export class CartService {
 
     return cart;
   }
+
+  async calculateTotalPriceAndQuantityForCart(cartId: ObjectId, session: any) {
+    const cartAggregation = await this.cartService.model
+      .aggregate([
+        { $match: { _id: cartId } },
+        {
+          $lookup: {
+            from: 'cartshopitems',
+            localField: '_id',
+            foreignField: 'cartId',
+            as: 'cartShopItems',
+          },
+        },
+        {
+          $addFields: {
+            totalQuantity: { $sum: '$cartShopItems.totalQuantity' },
+            totalPrice: { $sum: '$cartShopItems.totalPrice' },
+          },
+        },
+      ])
+      .session(session);
+
+    const cart = cartAggregation[0];
+    await this.cartService.model.updateOne(
+      { _id: cartId },
+      {
+        $set: {
+          totalQuantity: cart.totalQuantity,
+          totalPrice: cart.totalPrice,
+        },
+      },
+      { session },
+    );
+
+    cart.id = cart._id;
+
+    return cart;
+  }
   async updateCartItem(input: UpdateCartInput, uid: ObjectId) {
     const session = await this.cartItemService.model.db.startSession();
     session.startTransaction();
@@ -207,11 +245,14 @@ export class CartService {
         throw new Error('Product out of stock');
       }
 
+      let shouldCheckCartShopItem = false;
+
       switch (input.action) {
         case ActionCartTypes.REMOVE:
           await this.cartItemService.model
             .findByIdAndDelete(input.id)
             .session(session);
+          shouldCheckCartShopItem = true;
           break;
         case ActionCartTypes.QUANTITY:
           cartItem.quantity = input.quantity;
@@ -231,45 +272,48 @@ export class CartService {
       }
 
       if (input.action !== ActionCartTypes.REMOVE) {
-        await cartItem.save({ session });
         if (cartItem.quantity <= 0) {
           await this.cartItemService.model
             .findByIdAndDelete(input.id)
             .session(session);
+          shouldCheckCartShopItem = true;
+        } else {
+          await cartItem.save({ session });
         }
       }
 
-      const cartShopItemArray = await this.CartIShopItemService.model.aggregate(
-        [
-          {
-            $match: {
-              _id: cartItem.cartShopItemId,
-            },
-          },
-          {
-            $lookup: {
-              from: 'cartitems',
-              localField: '_id',
-              foreignField: 'cartShopItemId',
-              as: 'cartItem',
-            },
-          },
-          {
-            $project: {
-              totalQuantity: {
-                $sum: '$cartItem.quantity',
-              },
-              totalPrice: {
-                $sum: '$cartItem.totalPrice',
-              },
-            },
-          },
-        ],
+      const cartShopItem = await this.CartIShopItemService.model
+        .findById(cartItem.cartShopItemId)
+        .session(session);
+
+      if (shouldCheckCartShopItem) {
+        const cartItems = await this.cartItemService.model
+          .find({ cartShopItemId: cartItem.cartShopItemId })
+          .session(session);
+        if (cartItems.length === 0) {
+          await this.CartIShopItemService.model
+            .findByIdAndDelete(cartItem.cartShopItemId)
+            .session(session);
+          const cart = await this.calculateTotalPriceAndQuantityForCart(
+            cartShopItem.cartId,
+            session,
+          );
+          await session.commitTransaction();
+          session.endSession();
+          return cart;
+        }
+      }
+
+      const cart = await this.calculateTotalPriceAndQuantity(
+        cartShopItem.cartId,
+        cartItem.cartShopItemId,
+        session,
       );
 
       await session.commitTransaction();
       session.endSession();
-      return cartItem;
+
+      return cart;
     } catch (error) {
       await session.abortTransaction();
       session.endSession();
