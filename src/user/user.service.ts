@@ -1,13 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { User } from './user.definition';
 import { Context } from 'src/auth/ctx';
 import { BaseService, InjectBaseService } from 'dryerjs';
 import { Cart } from 'src/cart/definition/cart.definition';
 import { Wallet } from 'src/wallet/wallet.definition';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class UserService {
   constructor(
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
     @InjectBaseService(User)
     public userService: BaseService<User, Context>,
     @InjectBaseService(Cart)
@@ -21,18 +24,20 @@ export class UserService {
       googleId: googleId,
     });
 
-    const cart = await this.cartService.model.findOne({
-      authorId: user._id,
-    });
+    const [cart, wallet] = await Promise.all([
+      this.cartService.model.findOne({
+        authorId: user._id,
+      }),
+      this.walletService.model.findOne({
+        authorId: user._id,
+      }),
+    ]);
 
-    const wallet = await this.walletService.model.findOne({
-      authorId: user._id,
-    });
+    // console.log({
+    //   cart,
+    //   wallet,
+    // });
 
-    console.log({
-      cart,
-      wallet,
-    });
     return {
       profile: user,
       cart,

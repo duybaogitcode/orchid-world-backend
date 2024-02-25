@@ -12,6 +12,7 @@ import { CartItem } from './cartItem.definiton';
 import { User } from 'src/user/user.definition';
 
 @Definition({
+  timestamps: true,
   schemaOptions: {
     selectPopulatedPaths: true,
   },
@@ -22,6 +23,7 @@ export class CartShopItem extends BaseModel() {
 
   @BelongsTo(() => Cart, {
     from: 'cartId',
+    noPopulation: true,
   })
   cart: Cart;
 
