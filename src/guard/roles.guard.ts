@@ -48,7 +48,10 @@ export class RoleMultiGuard implements CanActivate {
     //   return false;
     // }
 
-    req.ctx = ctx;
+    req.ctx = {
+      id: ctx.sub,
+      roleId: ctx.roleId,
+    };
 
     const roles = this.reflector.get<UserRole[]>(
       RoleMultiCheck,
@@ -75,6 +78,8 @@ export class RoleMultiGuard implements CanActivate {
       // for (const cookieName in req.cookies) {
       //   res.clearCookie(cookieName);
       // }
+
+      console.log(ctx.roleId, roles);
       throw new UnauthorizedException(
         `Access denied. You are not allowed to access this resource`,
       );

@@ -1,5 +1,6 @@
 import { ExecutionContext, createParamDecorator } from '@nestjs/common';
 import { GqlExecutionContext } from '@nestjs/graphql';
+import { ObjectId } from 'dryerjs';
 import { User } from 'src/user/user.definition';
 
 export const Ctx = createParamDecorator(
@@ -10,7 +11,4 @@ export const Ctx = createParamDecorator(
   },
 );
 
-export type Context = null | Pick<
-  User,
-  'id' | 'roleId' | 'googleId' | 'email' | 'firstName' | 'lastName'
->;
+export type Context = null | Pick<User, 'id' | 'roleId'>;

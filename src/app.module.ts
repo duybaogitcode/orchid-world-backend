@@ -37,7 +37,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
 import { CartItemService } from './cart/services/cartItem.service';
 import { CartIShopItemService } from './cart/services/cartItemShop.service';
-import { Admin, ShopOnly, UserOnly } from './guard/roles.guard';
+import { Admin, ShopOnly, ShopOrUserOnly, UserOnly } from './guard/roles.guard';
 import { CartEvent } from './event/cart.event';
 import { Transaction } from './wallet/transaction.definition';
 import { TransactionService } from './wallet/transaction.service';
@@ -126,7 +126,7 @@ console.log({ nod: configuration().NODE_ENV });
           definition: CartItem,
           allowedApis: ['remove', 'bulkRemove'],
           decorators: {
-            remove: [UserOnly(), ShopOnly()],
+            remove: [ShopOrUserOnly()],
             bulkRemove: [UserOnly(), ShopOnly()],
           },
         },
@@ -134,8 +134,8 @@ console.log({ nod: configuration().NODE_ENV });
           definition: CartShopItem,
           allowedApis: ['remove', 'bulkRemove'],
           decorators: {
-            remove: [UserOnly(), ShopOnly()],
-            bulkRemove: [UserOnly(), ShopOnly()],
+            remove: [UserOnly()],
+            bulkRemove: [ShopOrUserOnly()],
           },
         },
         {

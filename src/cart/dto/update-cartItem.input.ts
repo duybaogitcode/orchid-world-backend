@@ -10,6 +10,7 @@ import { CartItem } from '../definition/cartItem.definiton';
 
 export enum ActionCartTypes {
   REMOVE = 'CartItem.removed',
+  QUANTITY = 'CartItem.newQuantity',
   PLUS = 'CartItem.plus',
   MINUS = 'CartItem.minus',
 }

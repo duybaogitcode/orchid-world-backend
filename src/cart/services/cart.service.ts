@@ -12,6 +12,7 @@ import { Cart } from '../definition/cart.definition';
 import { CartItem } from '../definition/cartItem.definiton';
 import { CartShopItem } from '../definition/cartShopItem.definition';
 import { CartItemInput } from '../dto/create-cartItem.input';
+import { ActionCartTypes, UpdateCartInput } from '../dto/update-cartItem.input';
 type CartContext = Cart;
 
 @Injectable()
@@ -31,104 +32,31 @@ export class CartService {
     session.startTransaction();
     try {
       const product = await this.productService.model
-        .findOne({
-          slug: input.productSlug,
-        })
+        .findOne({ slug: input.productSlug })
         .session(session);
 
       if (!product) {
         throw new Error('Product not found or out of stock');
       }
 
-      let cartShopItemId, cartId, cartShopItemReturn;
+      const cartId = await this.getOrCreateCart(uid, session);
+      const cartShopItemId = await this.getOrCreateCartShopItem(
+        product,
+        cartId,
+        session,
+      );
+      await this.getOrCreateCartItem(input, product, cartShopItemId, session);
 
-      const cart = await this.cartService.model
-        .findOne({
-          authorId: new ObjectId(uid),
-        })
-        .session(session);
-
-      if (!cart) {
-        // Rarely happen. Because the cart will be created when the user is created
-        const newCart = new this.cartService.model({
-          authorId: new ObjectId(uid),
-        });
-        await newCart.save({ session });
-        cartId = newCart.id;
-      } else {
-        cartId = cart.id;
-      }
-      // product.quantity -= input.quantity;
-      // await product.save({ session });
-
-      const cartShopItemExsist = await this.CartIShopItemService.model
-        .findOne({
-          shopId: product.authorId,
-          cartId: cartId,
-        })
-        .session(session);
-
-      if (!cartShopItemExsist) {
-        const cartShopItem = new this.CartIShopItemService.model({
-          cartId: cartId,
-          shopId: product.authorId,
-        });
-        await cartShopItem.save({ session });
-        cartShopItemId = cartShopItem.id;
-        cartShopItemReturn = cartShopItem;
-      } else {
-        cartShopItemId = cartShopItemExsist.id;
-        cartShopItemReturn = cartShopItemExsist;
-      }
-
-      const cartItemExist = await this.cartItemService.model
-        .findOne({
-          productId: product.id,
-          cartShopItemId: cartShopItemId,
-        })
-        .session(session);
-
-      if (cartItemExist) {
-        cartItemExist.quantity += input.quantity;
-        cartItemExist.totalPrice =
-          (input.quantity + cartItemExist.quantity) * product.price;
-        if (cartItemExist.quantity > product.quantity) {
-          throw new Error('Product out of stock');
-        }
-        await cartItemExist.save({ session });
-        const { toltalPriceShopItem, quantityShopItem } =
-          await this.calculateTotalPriceAndQuantity(cartShopItemId, session);
-        cartShopItemReturn.totalPrice = toltalPriceShopItem;
-        cartShopItemReturn.totalQuantity = quantityShopItem;
-        await session.commitTransaction();
-        this.eventEmitter.emit('CartItem.added', { input: cartItemExist });
-
-        session.endSession();
-
-        return cartShopItemReturn;
-      }
-
-      const cartItem = new this.cartItemService.model({
-        cartShopItemId: cartShopItemId,
-        productId: product.id,
-        quantity: input.quantity,
-        totalPrice: product.price * input.quantity,
-      });
-      await cartItem.save({ session });
-      if (cartItem.quantity > product.quantity) {
-        throw new Error('Product out of stock');
-      }
-
-      const { toltalPriceShopItem, quantityShopItem } =
-        await this.calculateTotalPriceAndQuantity(cartShopItemId, session);
-      cartShopItemReturn.totalPrice = toltalPriceShopItem;
-      cartShopItemReturn.totalQuantity = quantityShopItem;
-      this.eventEmitter.emit('CartItem.added', { input: cartItem });
+      const result = await this.calculateTotalPriceAndQuantity(
+        cartId,
+        cartShopItemId,
+        session,
+      );
 
       await session.commitTransaction();
       session.endSession();
 
-      return cartShopItemReturn;
+      return result;
     } catch (error) {
       await session.abortTransaction();
       session.endSession();
@@ -136,26 +64,217 @@ export class CartService {
     }
   }
 
-  private async calculateTotalPriceAndQuantity(
+  private async getOrCreateCart(uid: ObjectId, session: any) {
+    const cart = await this.cartService.model.findOneAndUpdate(
+      { authorId: new ObjectId(uid) },
+      { $setOnInsert: { authorId: new ObjectId(uid) } },
+      { new: true, upsert: true, session },
+    );
+
+    return cart.id;
+  }
+
+  private async getOrCreateCartShopItem(
+    product: Product,
+    cartId: ObjectId,
+    session: any,
+  ) {
+    const cartShopItem = await this.CartIShopItemService.model.findOneAndUpdate(
+      { shopId: product.authorId, cartId: cartId },
+      { $setOnInsert: { cartId: cartId, shopId: product.authorId } },
+      { new: true, upsert: true, session },
+    );
+
+    return cartShopItem.id;
+  }
+
+  private async getOrCreateCartItem(
+    input: CartItemInput,
+    product: any,
     cartShopItemId: ObjectId,
     session: any,
   ) {
-    const cartItems = await this.cartItemService.model
-      .find({
-        cartShopItemId: cartShopItemId,
-      })
+    const cartItem = await this.cartItemService.model.findOneAndUpdate(
+      { productId: product.id, cartShopItemId: cartShopItemId },
+      {
+        $inc: {
+          quantity: input.quantity,
+          totalPrice: product.price * input.quantity,
+        },
+      },
+      { new: true, upsert: true, session },
+    );
+
+    if (cartItem.quantity > product.quantity) {
+      throw new Error('Product out of stock');
+    }
+  }
+
+  private async calculateTotalPriceAndQuantity(
+    cartId: ObjectId,
+    cartShopItemId: ObjectId,
+    session: any,
+  ) {
+    const cartShopItemAggregation = await this.CartIShopItemService.model
+      .aggregate([
+        { $match: { _id: cartShopItemId } },
+        {
+          $lookup: {
+            from: 'cartitems',
+            localField: '_id',
+            foreignField: 'cartShopItemId',
+            as: 'cartItems',
+          },
+        },
+        {
+          $addFields: {
+            totalQuantity: { $sum: '$cartItems.quantity' },
+            totalPrice: { $sum: '$cartItems.totalPrice' },
+          },
+        },
+      ])
       .session(session);
 
-    const quantityShopItem = cartItems.reduce(
-      (acc, item) => acc + item.quantity,
-      0,
-    );
-    const toltalPriceShopItem = cartItems.reduce(
-      (acc, item) => acc + item.totalPrice,
-      0,
+    const cartShopItem = cartShopItemAggregation[0];
+    await this.CartIShopItemService.model.updateOne(
+      { _id: cartShopItemId },
+      {
+        $set: {
+          totalQuantity: cartShopItem.totalQuantity,
+          totalPrice: cartShopItem.totalPrice,
+        },
+      },
+      { session },
     );
 
-    return { toltalPriceShopItem, quantityShopItem };
+    const cartAggregation = await this.cartService.model
+      .aggregate([
+        { $match: { _id: cartId } },
+        {
+          $lookup: {
+            from: 'cartshopitems',
+            localField: '_id',
+            foreignField: 'cartId',
+            as: 'cartShopItems',
+          },
+        },
+        {
+          $addFields: {
+            totalQuantity: { $sum: '$cartShopItems.totalQuantity' },
+            totalPrice: { $sum: '$cartShopItems.totalPrice' },
+          },
+        },
+      ])
+      .session(session);
+
+    const cart = cartAggregation[0];
+    await this.cartService.model.updateOne(
+      { _id: cartId },
+      {
+        $set: {
+          totalQuantity: cart.totalQuantity,
+          totalPrice: cart.totalPrice,
+        },
+      },
+      { session },
+    );
+
+    cart.id = cart._id;
+
+    return cart;
+  }
+  async updateCartItem(input: UpdateCartInput, uid: ObjectId) {
+    const session = await this.cartItemService.model.db.startSession();
+    session.startTransaction();
+    try {
+      if (input.quantity < 0) {
+        throw new Error('Quantity must be greater than 0');
+      }
+
+      const cartItem = await this.cartItemService.model
+        .findById(input.id)
+        .session(session);
+
+      if (!cartItem) {
+        throw new Error('Cart item not found');
+      }
+
+      const product = await this.productService.model
+        .findById(cartItem.productId)
+        .session(session);
+
+      if (input.quantity > product.quantity) {
+        throw new Error('Product out of stock');
+      }
+
+      switch (input.action) {
+        case ActionCartTypes.REMOVE:
+          await this.cartItemService.model
+            .findByIdAndDelete(input.id)
+            .session(session);
+          break;
+        case ActionCartTypes.QUANTITY:
+          cartItem.quantity = input.quantity;
+          break;
+        case ActionCartTypes.PLUS:
+          cartItem.quantity += 1;
+          break;
+        case ActionCartTypes.MINUS:
+          cartItem.quantity -= 1;
+          break;
+        default:
+          break;
+      }
+
+      if (cartItem.quantity > product.quantity) {
+        throw new Error('Product out of stock');
+      }
+
+      if (input.action !== ActionCartTypes.REMOVE) {
+        await cartItem.save({ session });
+        if (cartItem.quantity <= 0) {
+          await this.cartItemService.model
+            .findByIdAndDelete(input.id)
+            .session(session);
+        }
+      }
+
+      const cartShopItemArray = await this.CartIShopItemService.model.aggregate(
+        [
+          {
+            $match: {
+              _id: cartItem.cartShopItemId,
+            },
+          },
+          {
+            $lookup: {
+              from: 'cartitems',
+              localField: '_id',
+              foreignField: 'cartShopItemId',
+              as: 'cartItem',
+            },
+          },
+          {
+            $project: {
+              totalQuantity: {
+                $sum: '$cartItem.quantity',
+              },
+              totalPrice: {
+                $sum: '$cartItem.totalPrice',
+              },
+            },
+          },
+        ],
+      );
+
+      await session.commitTransaction();
+      session.endSession();
+      return cartItem;
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      throw error; // re-throw the error
+    }
   }
 
   @OnEvent('User.created')
@@ -164,6 +283,8 @@ export class CartService {
   }: AfterCreateHookInput<User, CartContext>) {
     this.cartService.create(null, {
       authorId: input.id,
+      totalPrice: 0,
+      totalQuantity: 0,
     });
     console.log(
       '🚀 ~ file: cart.service.ts ~ line 30 ~ CartService ~ createCartWhenUserCreated ~ input',

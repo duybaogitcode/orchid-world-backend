@@ -13,6 +13,7 @@ import { Cart } from './cart.definition';
 import { CartShopItem } from './cartShopItem.definition';
 
 @Definition({
+  timestamps: true,
   schemaOptions: { selectPopulatedPaths: true },
 })
 export class CartItem extends BaseModel() {

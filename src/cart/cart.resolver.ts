@@ -8,13 +8,13 @@ import { Context, Ctx } from 'src/auth/ctx';
 import { CartShopItem } from './definition/cartShopItem.definition';
 import { UpdateCartInput } from './dto/update-cartItem.input';
 
-const cartShopItemOutputType = OutputType(CartShopItem);
+const cartOutputType = OutputType(Cart);
 @Resolver()
 export class CartResolver {
   constructor(private readonly cartService: CartService) {}
 
   @ShopOrUserOnly()
-  @Mutation(() => cartShopItemOutputType, { name: 'addToCart' })
+  @Mutation(() => cartOutputType, { name: 'addToCart' })
   async create(@Args('input') input: CartItemInput, @Ctx() ctx: Context) {
     try {
       return this.cartService.addToCart(input, ctx.id);
@@ -25,10 +25,10 @@ export class CartResolver {
   }
 
   @ShopOrUserOnly()
-  @Mutation(() => cartShopItemOutputType, { name: 'updateCart' })
+  @Mutation(() => cartOutputType, { name: 'updateCart' })
   async update(@Args('input') input: UpdateCartInput, @Ctx() ctx: Context) {
     try {
-      return true;
+      return this.cartService.updateCartItem(input, ctx.id);
     } catch (error) {
       console.error('Failed add to cart:', error);
       throw error;
