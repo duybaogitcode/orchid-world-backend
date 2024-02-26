@@ -8,12 +8,15 @@ import {
 } from 'dryerjs';
 import { OnEvent } from '@nestjs/event-emitter';
 import { Order, OrderStatus } from '../definition/order.definition';
+import { CartShopItem } from 'src/cart/definition/cartShopItem.definition';
 
 @Injectable()
 export class OrderEvent {
   constructor(
     @InjectBaseService(Order)
     public order: BaseService<Order, Context>,
+    @InjectBaseService(CartShopItem)
+    public cartShopItem: BaseService<CartShopItem, Context>,
   ) {}
 
   @OnEvent('Order.created')
@@ -40,6 +43,7 @@ export class OrderEvent {
           shopId: order.shopId,
           status: OrderStatus.PENDING,
         });
+        await this.cartShopItem.model.findByIdAndDelete(order.cartShopItemId);
       });
 
       await session.commitTransaction();
