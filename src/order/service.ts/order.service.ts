@@ -175,7 +175,7 @@ export class OrderTransactionService {
       await newOrderTransaction.save({ session });
 
       this.eventEmitter.emit('Order.created', {
-        input: { wallet, newOrderTransaction, listOrderInput, session },
+        input: { wallet, newOrderTransaction, listOrderInput },
       });
       // throw new Error('test');
       await session.commitTransaction();
