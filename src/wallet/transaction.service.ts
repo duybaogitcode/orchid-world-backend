@@ -90,4 +90,32 @@ export class TransactionService {
   getTransactionDescription({ type }: { type: TransactionType }) {
     return type === TransactionType.INCREASE ? 'Nạp tiền' : 'Rút tiền';
   }
+
+  async findAllMyTransactions(
+    userId: ObjectId,
+    { page = 1, limit = 10, sort },
+  ) {
+    console.log(
+      '🚀 ~ TransactionService ~ findAllMyTransactions ~ userId:',
+      userId,
+    );
+    const userWallet = await this.walletService.findOne(
+      {},
+      {
+        userId,
+      },
+    );
+
+    return this.transactionService.paginate(
+      {},
+      {
+        walletId: userWallet.id,
+      },
+      {
+        ...sort,
+      },
+      page,
+      limit,
+    );
+  }
 }
