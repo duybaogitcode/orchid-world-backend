@@ -21,6 +21,9 @@ export class address {
 
   @Property({ type: () => String })
   district: string;
+
+  @Property({ type: () => String })
+  detail: string;
 }
 
 @Definition()
