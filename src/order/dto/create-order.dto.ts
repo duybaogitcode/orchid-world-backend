@@ -1,9 +1,26 @@
-import { InputType, PickType } from '@nestjs/graphql';
+import { Field, InputType, PickType } from '@nestjs/graphql';
 import { CreateInputType } from 'dryerjs';
-import { CartShopItem } from 'src/cart/definition/cartShopItem.definition';
+import { OrderTransaction } from '../definition/orderTransaction.definition';
+import { Order } from '../definition/order.definition';
 
-const cartShopItemInputType = CreateInputType(CartShopItem);
+const orderInput = CreateInputType(OrderTransaction);
+const orderNestedInput = CreateInputType(Order);
+
 @InputType()
-export class CreateOrderDto extends PickType(cartShopItemInputType, [
-  'cartId',
+class OrderNestedInput extends PickType(orderNestedInput, [
+  'addressTo',
+  'addressFrom',
+  'note',
+  'cartShopItemId',
+  'shippingFee',
+  'deliveredUnit',
+  'shippingFee',
 ]) {}
+
+@InputType()
+export class CreateOrder extends PickType(orderInput, [
+  'recipientInformation',
+]) {
+  @Field(() => [OrderNestedInput])
+  order: [OrderNestedInput];
+}

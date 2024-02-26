@@ -42,8 +42,12 @@ import { CartEvent } from './event/cart.event';
 import { Transaction } from './wallet/transaction.definition';
 import { TransactionService } from './wallet/transaction.service';
 import { TransactionResolver } from './wallet/transaction.resolver';
+import { OrderTransactionResolver } from './order/order.resolver';
+import { OrderTransactionService } from './order/service.ts/order.service';
+import { OrderTransaction } from './order/definition/orderTransaction.definition';
 import { Order } from './order/definition/order.definition';
-import { OrderResolver } from './order/order.resolver';
+import { TransactionEvent } from './wallet/event/transaction.event';
+import { OrderEvent } from './order/event/order.event';
 
 console.log({ nod: configuration().NODE_ENV });
 @Module({
@@ -86,7 +90,7 @@ console.log({ nod: configuration().NODE_ENV });
               allowedApis: [],
             },
           ],
-          allowedApis: ['findAll', 'paginate', 'findOne', 'paginate'],
+          allowedApis: ['findAll', 'paginate'],
         },
 
         {
@@ -139,16 +143,14 @@ console.log({ nod: configuration().NODE_ENV });
         },
         {
           definition: Order,
-          allowedApis: [
-            'findOne',
-            'create',
-            'update',
-            'remove',
-            'paginate',
-            'findAll',
-          ],
+          allowedApis: ['findAll'],
         },
-        Order,
+        {
+          definition: OrderTransaction,
+
+          allowedApis: [],
+        },
+
         {
           definition: Transaction,
           allowedApis: [
@@ -182,7 +184,10 @@ console.log({ nod: configuration().NODE_ENV });
         CartEvent,
         TransactionResolver,
         TransactionService,
-        OrderResolver,
+        OrderTransactionResolver,
+        OrderTransactionService,
+        TransactionEvent,
+        OrderEvent,
       ],
       contextDecorator: Ctx,
     }),
