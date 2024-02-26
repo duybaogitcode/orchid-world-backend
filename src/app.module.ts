@@ -112,10 +112,12 @@ console.log({ nod: configuration().NODE_ENV });
           definition: User,
           allowedApis: ['findAll', 'findOne', 'update', 'bulkRemove'],
           decorators: {
+            findOne: [UserOnly()],
             findAll: [Admin()],
             bulkRemove: [Admin()],
           },
         },
+
         {
           definition: Role,
           allowedApis: ['findAll', 'findOne', 'create', 'update', 'remove'],

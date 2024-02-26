@@ -52,7 +52,6 @@ export class RoleMultiGuard implements CanActivate {
       id: ctx.sub,
       roleId: ctx.roleId,
     };
-
     const roles = this.reflector.get<UserRole[]>(
       RoleMultiCheck,
       context.getHandler(),
