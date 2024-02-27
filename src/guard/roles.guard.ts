@@ -116,6 +116,13 @@ export const ManagerOnly = () => {
   );
 };
 
+export const ManagerOrStaff = () => {
+  return applyDecorators(
+    RoleMultiCheck([UserRole.MANAGER, UserRole.STAFF]),
+    UseGuards(RoleMultiGuard),
+  );
+};
+
 export const Admin = () => {
   return applyDecorators(
     RoleMultiCheck([UserRole.ADMIN]),

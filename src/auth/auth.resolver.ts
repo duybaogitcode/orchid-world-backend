@@ -30,6 +30,7 @@ export class AuthResolver {
       'user',
       context.res,
     );
+    console.log('User login');
 
     context.res.cookie('refreshToken', session.refreshToken, {
       httpOnly: true,
