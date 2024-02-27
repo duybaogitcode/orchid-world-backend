@@ -6,6 +6,7 @@ import { OutputType } from 'dryerjs';
 import { User } from 'src/user/user.definition';
 import { Session } from './auth.definition';
 import { Response } from 'express';
+import { configuration } from 'src/config';
 
 const UserEntity = OutputType(User);
 const SessionEntity = OutputType(Session);
@@ -33,7 +34,10 @@ export class AuthResolver {
 
     context.res.cookie('refreshToken', session.refreshToken, {
       httpOnly: true,
-      domain: 'localhost',
+      domain:
+        configuration().NODE_ENV === 'dev'
+          ? 'localhost'
+          : 'orchid-world-frontend.vercel.app',
       secure: true,
       expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3),
       sameSite: 'none',
@@ -41,7 +45,10 @@ export class AuthResolver {
     });
     context.res.cookie(KEYS.SESSION_ID, session.id, {
       httpOnly: true,
-      domain: 'localhost',
+      domain:
+        configuration().NODE_ENV === 'dev'
+          ? 'localhost'
+          : 'orchid-world-frontend.vercel.app',
       secure: true,
       expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3),
       sameSite: 'none',
@@ -49,7 +56,10 @@ export class AuthResolver {
     });
     context.res.cookie(KEYS.SESSION_TOKEN, session.accessToken, {
       httpOnly: true,
-      domain: 'localhost',
+      domain:
+        configuration().NODE_ENV === 'dev'
+          ? 'localhost'
+          : 'orchid-world-frontend.vercel.app',
       secure: true,
       expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3),
       sameSite: 'none',
