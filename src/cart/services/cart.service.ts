@@ -101,6 +101,9 @@ export class CartService {
           quantity: input.quantity,
           totalPrice: product.price * input.quantity,
         },
+        $set: {
+          isAvailableProduct: true,
+        },
       },
       { new: true, upsert: true, session },
     );

@@ -48,6 +48,9 @@ import { OrderTransaction } from './order/definition/orderTransaction.definition
 import { Order } from './order/definition/order.definition';
 import { TransactionEvent } from './wallet/event/transaction.event';
 import { OrderEvent } from './order/event/order.event';
+import { OrderTransactionEvent } from './order/event/orderTransaction.event';
+import { WalletEvent } from './wallet/event/wallet.event';
+import { ProductEvent } from './product/event/product.event';
 
 console.log({ nod: configuration().NODE_ENV });
 @Module({
@@ -188,6 +191,9 @@ console.log({ nod: configuration().NODE_ENV });
         OrderTransactionService,
         TransactionEvent,
         OrderEvent,
+        OrderTransactionEvent,
+        WalletEvent,
+        ProductEvent,
       ],
       contextDecorator: Ctx,
     }),

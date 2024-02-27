@@ -22,18 +22,19 @@ export class TransactionEvent {
     public transaction: BaseService<Transaction, Context>,
   ) {}
 
-  @OnEvent('Order.created')
+  @OnEvent('Orders.created')
   async createTransactionAfterOrderCreated({
     input,
   }: AfterCreateHookInput<any, Context>) {
     const session = await this.transaction.model.db.startSession();
     session.startTransaction();
     try {
+      console.log('transaction event orders created ');
+
       await this.transaction.model.create({
-        id: input.newOrderTransaction.id,
         amount: input.newOrderTransaction.totalAmount,
         type: '0',
-        Status: 'SUCCESS',
+        status: 'SUCCESS',
         description: 'Trừ phí đơn hàng ' + input.newOrderTransaction.codeBill,
         walletId: input.wallet.id,
       });
