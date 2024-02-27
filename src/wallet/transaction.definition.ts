@@ -55,6 +55,11 @@ export class Transaction extends BaseModel() {
   amount: number;
 
   @Property({
+    type: () => String,
+  })
+  paypalOrderId: string;
+
+  @Property({
     type: () => TransactionType,
   })
   type: TransactionType;
