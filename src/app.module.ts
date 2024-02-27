@@ -51,10 +51,17 @@ import { OrderEvent } from './order/event/order.event';
 import { OrderTransactionEvent } from './order/event/orderTransaction.event';
 import { WalletEvent } from './wallet/event/wallet.event';
 import { ProductEvent } from './product/event/product.event';
+import { PaypalService } from './payment/paypal.service';
+import { ConfigModule } from '@nestjs/config';
+import { ReportTypes } from './report/definition/reportTypes.definition';
+import { ReportSolved } from './report/definition/reportSolved.definition';
+import { Report } from './report/definition/report.definition';
 
 console.log({ nod: configuration().NODE_ENV });
+
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile: configuration().NODE_ENV === 'dev' ? 'schema.gql' : true,
@@ -166,6 +173,24 @@ console.log({ nod: configuration().NODE_ENV });
             'essentials',
           ],
         },
+        {
+          definition: ReportTypes,
+          allowedApis: ['create', 'findAll', 'findOne', 'update', 'remove'],
+        },
+        {
+          definition: Report,
+          // embeddedConfigs: [
+          //   {
+          //     property: 'shopOwner',
+          //     allowedApis: ['create'],
+          //   },
+          // ],
+          allowedApis: ['findAll', 'findOne', 'remove'],
+        },
+        {
+          definition: ReportSolved,
+          allowedApis: ['create', 'findAll', 'findOne', 'update', 'remove'],
+        },
         // Media,
         // Auction,
         // AuctionBiddingHistory,
@@ -194,6 +219,7 @@ console.log({ nod: configuration().NODE_ENV });
         OrderTransactionEvent,
         WalletEvent,
         ProductEvent,
+        PaypalService,
       ],
       contextDecorator: Ctx,
     }),

@@ -23,7 +23,7 @@ export class AppService {
   }
 
   async getCapture(captureId: string) {
-    console.log(paypal);
+    // console.log(paypal);
 
     const request = new paypal.orders.OrdersGetRequest(captureId);
     try {
@@ -33,6 +33,9 @@ export class AppService {
         response.result.purchase_units[0].amount.value,
         response.result.purchase_units[0].description,
       );
+      // if (response.result.status === 'COMPLETED') {
+      //   console.log('Payment not completed');
+      // }
       return response.result;
     } catch (err) {
       console.error(err);
