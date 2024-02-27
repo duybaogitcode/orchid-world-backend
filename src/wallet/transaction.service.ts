@@ -8,6 +8,7 @@ import {
   TransactionType,
 } from './transaction.definition';
 import { Wallet } from './wallet.definition';
+import { PaypalService } from 'src/payment/paypal.service';
 
 @Injectable()
 export class TransactionService {
@@ -17,12 +18,15 @@ export class TransactionService {
     @InjectBaseService(User) public userService: BaseService<User, {}>,
     @InjectBaseService(Wallet)
     public walletService: BaseService<Wallet, {}>,
+    private readonly paypalService: PaypalService,
   ) {}
 
   async createOne(
     createTransactionDto: CreateTransactionDto,
     userId: ObjectId,
   ) {
+    await this.paypalService.getCapture(createTransactionDto.paypalOrderId);
+
     const { amount, description, walletId, type } = createTransactionDto;
     let createdTransaction: Transaction;
     const session = await this.walletService.model.startSession();
@@ -54,6 +58,7 @@ export class TransactionService {
           status: TransactionStatus.SUCCESS,
           type,
           description: description || this.getTransactionDescription({ type }),
+          paypalOrderId: createTransactionDto.paypalOrderId,
         },
       );
       await this.walletService.update(

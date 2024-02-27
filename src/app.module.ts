@@ -51,6 +51,8 @@ import { OrderEvent } from './order/event/order.event';
 import { OrderTransactionEvent } from './order/event/orderTransaction.event';
 import { WalletEvent } from './wallet/event/wallet.event';
 import { ProductEvent } from './product/event/product.event';
+import { FirebaseFCMService } from './firebase/noti.service';
+import { PaypalService } from './payment/paypal.service';
 
 console.log({ nod: configuration().NODE_ENV });
 @Module({
@@ -194,6 +196,7 @@ console.log({ nod: configuration().NODE_ENV });
         OrderTransactionEvent,
         WalletEvent,
         ProductEvent,
+        PaypalService,
       ],
       contextDecorator: Ctx,
     }),
