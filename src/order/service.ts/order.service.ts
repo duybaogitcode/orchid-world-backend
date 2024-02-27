@@ -100,6 +100,7 @@ export class OrderTransactionService {
 
       const listOrder: OrderNotId[] = [];
       const listOrderInput = [];
+      const listCartItemId = [];
 
       const listProductInOrder: ProductInOrder[] = [];
 
@@ -113,9 +114,9 @@ export class OrderTransactionService {
         }
 
         matchingShopItems.forEach((shopItem) => {
-          console.log(shopItem.shop);
           let totalAmount = 0;
           shopItem.cartItems.forEach((cartItem) => {
+            listCartItemId.push(cartItem._id);
             const productInOrder: ProductInOrder = {
               price: cartItem.totalPrice,
               quantity: cartItem.quantity,
@@ -170,14 +171,20 @@ export class OrderTransactionService {
       wallet.balance -= newOrderTransaction.totalAmount;
 
       await wallet.save({ session });
-      // console.log(newOrderTransaction);
+
+      // throw new Error('test');
 
       await newOrderTransaction.save({ session });
 
-      this.eventEmitter.emit('Order.created', {
-        input: { wallet, newOrderTransaction, listOrderInput },
+      this.eventEmitter.emit('OrderTransaction.created', {
+        input: {
+          wallet,
+          newOrderTransaction,
+          listOrderInput,
+          listProductInOrder,
+          listCartItemId,
+        },
       });
-      // throw new Error('test');
       await session.commitTransaction();
       session.endSession();
       return newOrderTransaction;
