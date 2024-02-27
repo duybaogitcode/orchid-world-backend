@@ -7,7 +7,11 @@ import * as cookieParser from 'cookie-parser';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors({
-    origin: ['http://localhost:3000', 'https://studio.apollographql.com'],
+    origin: [
+      'http://localhost:3000',
+      'https://studio.apollographql.com',
+      'https://orchid-world-frontend.vercel.app',
+    ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
