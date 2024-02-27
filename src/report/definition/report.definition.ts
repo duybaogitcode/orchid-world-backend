@@ -35,7 +35,6 @@ export class Report extends BaseModelHasOwner() {
 
   @HasOne(() => ReportSolved, {
     to: 'reportId',
-    allowCreateWithin: true,
   })
   reportSolved: Ref<ReportSolved>;
 
@@ -46,5 +45,5 @@ export class Report extends BaseModelHasOwner() {
   reportType: ReportTypes;
 
   @Embedded(() => ShopOwner)
-  registerAsShopOwner: ShopOwner;
+  registerAsShopOwner?: ShopOwner;
 }

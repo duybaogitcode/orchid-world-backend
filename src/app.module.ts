@@ -58,6 +58,7 @@ import { ReportSolved } from './report/definition/reportSolved.definition';
 import { Report } from './report/definition/report.definition';
 
 console.log({ nod: configuration().NODE_ENV });
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -178,13 +179,13 @@ console.log({ nod: configuration().NODE_ENV });
         },
         {
           definition: Report,
-          embeddedConfigs: [
-            {
-              property: 'shopOwner',
-              allowedApis: ['create'],
-            },
-          ],
-          allowedApis: ['create', 'findAll', 'findOne', 'update', 'remove'],
+          // embeddedConfigs: [
+          //   {
+          //     property: 'shopOwner',
+          //     allowedApis: ['create'],
+          //   },
+          // ],
+          allowedApis: ['findAll', 'findOne', 'remove'],
         },
         {
           definition: ReportSolved,
