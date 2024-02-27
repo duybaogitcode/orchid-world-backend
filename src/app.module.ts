@@ -1,12 +1,8 @@
-import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
-import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
-import { EventEmitterModule } from '@nestjs/event-emitter';
 import { GraphQLModule } from '@nestjs/graphql';
 import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
-import * as redisStore from 'cache-manager-ioredis';
 import { DryerModule } from 'dryerjs';
 import { FirebaseModule } from 'nestjs-firebase';
 import { AppController } from './app.controller';
@@ -14,44 +10,56 @@ import { AppService } from './app.service';
 import { Permission, Role, Session } from './auth/auth.definition';
 import { AuthModule } from './auth/auth.module';
 import { Ctx } from './auth/ctx';
-import { CartResolver } from './cart/cart.resolver';
-import { Cart } from './cart/definition/cart.definition';
-import { CartItem } from './cart/definition/cartItem.definiton';
-import { CartShopItem } from './cart/definition/cartShopItem.definition';
-import { CartService } from './cart/services/cart.service';
-import { CartItemService } from './cart/services/cartItem.service';
-import { CartIShopItemService } from './cart/services/cartItemShop.service';
 import { configuration } from './config';
-import { CartEvent } from './event/cart.event';
 import { FirebaseService } from './firebase/firebase.serivce';
-import { GatewayModule } from './gateway/gateway.module';
-import { Admin, UserOnly } from './guard/roles.guard';
-import { EventEmitHook } from './hooks/event.hook';
-import { Order } from './order/definition/order.definition';
-import { OrderTransaction } from './order/definition/orderTransaction.definition';
-import { OrderEvent } from './order/event/order.event';
-import { OrderTransactionEvent } from './order/event/orderTransaction.event';
-import { OrderTransactionResolver } from './order/order.resolver';
-import { OrderTransactionService } from './order/service.ts/order.service';
 import { Categories } from './orthersDef/categories.definition';
 import { TagWithValues } from './orthersDef/tagValues.definition';
 import { Tags } from './orthersDef/tags.definition';
-import { PaymentModule } from './payment/payment.module';
-import { ProductEvent } from './product/event/product.event';
 import { Product } from './product/product.definition';
-import { ProductHook } from './product/product.hooks';
 import { ProductResolver } from './product/product.resolver';
 import { ProductService } from './product/product.service';
+import { CartItem } from './cart/definition/cartItem.definiton';
+import { CartShopItem } from './cart/definition/cartShopItem.definition';
+import { Cart } from './cart/definition/cart.definition';
+import { CartResolver } from './cart/cart.resolver';
+import { GatewayModule } from './gateway/gateway.module';
+import { ProductHook } from './product/product.hooks';
 import { User } from './user/user.definition';
-import { UserResolver } from './user/user.resolver';
 import { UserService } from './user/user.service';
-import { TransactionEvent } from './wallet/event/transaction.event';
-import { WalletEvent } from './wallet/event/wallet.event';
-import { Transaction } from './wallet/transaction.definition';
-import { TransactionResolver } from './wallet/transaction.resolver';
-import { TransactionService } from './wallet/transaction.service';
+import { UserResolver } from './user/user.resolver';
 import { Wallet } from './wallet/wallet.definition';
+import { CartService } from './cart/services/cart.service';
+import { EventEmitHook } from './hooks/event.hook';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { WalletService } from './wallet/wallet.service';
+import * as redisStore from 'cache-manager-ioredis';
+import { CacheModule } from '@nestjs/cache-manager';
+import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
+import { CartItemService } from './cart/services/cartItem.service';
+import { CartIShopItemService } from './cart/services/cartItemShop.service';
+import { Admin, ShopOnly, ShopOrUserOnly, UserOnly } from './guard/roles.guard';
+import { CartEvent } from './event/cart.event';
+import { Transaction } from './wallet/transaction.definition';
+import { TransactionService } from './wallet/transaction.service';
+import { TransactionResolver } from './wallet/transaction.resolver';
+import { OrderTransactionResolver } from './order/order.resolver';
+import { OrderTransactionService } from './order/service.ts/order.service';
+import { OrderTransaction } from './order/definition/orderTransaction.definition';
+import { Order } from './order/definition/order.definition';
+import { TransactionEvent } from './wallet/event/transaction.event';
+import { OrderEvent } from './order/event/order.event';
+import { OrderTransactionEvent } from './order/event/orderTransaction.event';
+import { WalletEvent } from './wallet/event/wallet.event';
+import { ProductEvent } from './product/event/product.event';
+
+console.log({ nod: configuration().NODE_ENV });
+@Module({
+  imports: [
+    GraphQLModule.forRoot<ApolloDriverConfig>({
+      driver: ApolloDriver,
+      autoSchemaFile: configuration().NODE_ENV === 'dev' ? 'schema.gql' : true,
+      playground: false,
+      plugins: [ApolloServerPluginLandingPageLocalDefault()],
       context: ({ req, res }) => ({ req, res }),
       installSubscriptionHandlers: true,
       subscriptions: {
@@ -104,12 +112,10 @@ import { WalletService } from './wallet/wallet.service';
           definition: User,
           allowedApis: ['findAll', 'findOne', 'update', 'bulkRemove'],
           decorators: {
-            findOne: [UserOnly()],
             findAll: [Admin()],
             bulkRemove: [Admin()],
           },
         },
-
         {
           definition: Role,
           allowedApis: ['findAll', 'findOne', 'create', 'update', 'remove'],
@@ -197,7 +203,6 @@ import { WalletService } from './wallet/wallet.service';
       signOptions: { expiresIn: '7d' },
     }),
     AuthModule,
-    PaymentModule,
   ],
   controllers: [AppController],
   providers: [AppService],
