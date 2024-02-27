@@ -52,6 +52,15 @@ import { TransactionResolver } from './wallet/transaction.resolver';
 import { TransactionService } from './wallet/transaction.service';
 import { Wallet } from './wallet/wallet.definition';
 import { WalletService } from './wallet/wallet.service';
+
+console.log({ nod: configuration().NODE_ENV });
+@Module({
+  imports: [
+    GraphQLModule.forRoot<ApolloDriverConfig>({
+      driver: ApolloDriver,
+      autoSchemaFile: configuration().NODE_ENV === 'dev' ? 'schema.gql' : true,
+      playground: false,
+      plugins: [ApolloServerPluginLandingPageLocalDefault()],
       context: ({ req, res }) => ({ req, res }),
       installSubscriptionHandlers: true,
       subscriptions: {
