@@ -22,7 +22,7 @@ export class Categories extends BaseModel() {
   @HasMany(() => Product, {
     to: 'category_id',
     allowCreateWithin: false,
-    allowFindAll: false,
+    allowFindAll: true,
     allowPaginate: true,
   })
   product: Product[];
