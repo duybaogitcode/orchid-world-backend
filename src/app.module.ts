@@ -51,7 +51,6 @@ import { OrderEvent } from './order/event/order.event';
 import { OrderTransactionEvent } from './order/event/orderTransaction.event';
 import { WalletEvent } from './wallet/event/wallet.event';
 import { ProductEvent } from './product/event/product.event';
-import { FirebaseFCMService } from './firebase/noti.service';
 import { PaypalService } from './payment/paypal.service';
 import { ConfigModule } from '@nestjs/config';
 import { ReportTypes } from './report/definition/reportTypes.definition';
