@@ -51,6 +51,12 @@ export class Role extends BaseModel() {
 export class Session extends BaseModel() {
   @Property({ type: () => GraphQLObjectId, db: { unique: true } })
   userId: ObjectId;
+  @Property({
+    type: () => GraphQLObjectId,
+    db: { unique: false },
+    nullable: true,
+  })
+  roleId: ObjectId;
 
   @Property({ type: () => String, db: { unique: true } })
   refreshToken: string;

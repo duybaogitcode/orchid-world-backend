@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { BaseService, InjectBaseService, ObjectId } from 'dryerjs';
 
 import { InjectModel } from '@nestjs/mongoose';
@@ -13,6 +13,7 @@ import { TagWithValues } from 'src/orthersDef/tagValues.definition';
 import { UpdateProductInput } from './dto/update-product.input';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import { User } from 'src/user/user.definition';
 
 @Injectable()
 export class ProductService {
@@ -22,6 +23,8 @@ export class ProductService {
     @InjectBaseService(TagWithValues)
     public tagWithValues: BaseService<TagWithValues, Context>,
     private readonly firebaseService: FirebaseService,
+    @InjectBaseService(User)
+    public userService: BaseService<User, Context>,
   ) {}
 
   async create(createProductDto: CreateProductInput, uid: ObjectId) {
@@ -260,5 +263,35 @@ export class ProductService {
     } catch (error) {
       throw error;
     }
+  }
+
+  async getShopProducts({
+    uid,
+    sort = {},
+    page = 1,
+    limit = 10,
+  }: {
+    uid: ObjectId;
+    sort?: object;
+    page?: number;
+    limit?: number;
+  }) {
+    const user = await this.userService.findOne(null, {
+      id: uid,
+    });
+
+    if (!user.shopOwner || !user?.shopOwner?.shopName) {
+      throw new BadRequestException('Vui lòng đăng ký bán hàng trước.');
+    }
+
+    return this.productService.paginate(
+      null,
+      {
+        authorId: user.id,
+      },
+      sort,
+      page,
+      limit,
+    );
   }
 }

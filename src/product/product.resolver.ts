@@ -7,7 +7,7 @@ import {
   registerEnumType,
 } from '@nestjs/graphql';
 import { Product } from './product.definition';
-import { ObjectId, OutputType } from 'dryerjs';
+import { ObjectId, OutputType, PaginatedOutputType } from 'dryerjs';
 
 import { CreateProductInput } from './dto/create-product.input';
 import { ProductService } from './product.service';
@@ -17,6 +17,8 @@ import { UseGuards } from '@nestjs/common';
 import { User } from 'src/user/user.definition';
 import { Context, Ctx } from 'src/auth/ctx';
 import { ShopOnly, UserOnly } from 'src/guard/roles.guard';
+import { PaginationParameters } from 'dryerjs/dist/js/mongoose-paginate-v2';
+import { PaginateShopProductDTO } from './dto/paginate-shop-product.dto';
 
 @Resolver()
 export class ProductResolver {
@@ -37,6 +39,26 @@ export class ProductResolver {
   async findRelatedProduct(@Args('slug') slug: string) {
     try {
       const products = await this.productService.relatedProducts(slug);
+      return products;
+    } catch (error) {
+      console.error('Failed find related product:', error);
+      throw error;
+    }
+  }
+
+  // @ShopOnly()
+  @Query(() => PaginatedOutputType(Product), { name: 'paginateShopProducts' })
+  async paginateShopProducts(
+    @Ctx() ctx: Context,
+    @Args('input') input?: PaginateShopProductDTO,
+  ) {
+    try {
+      const products = await this.productService.getShopProducts({
+        uid: ctx?.id,
+        limit: input.limit,
+        page: input.page,
+        sort: input.sort,
+      });
       return products;
     } catch (error) {
       console.error('Failed find related product:', error);
