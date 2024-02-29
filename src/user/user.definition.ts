@@ -23,6 +23,9 @@ export class address {
   district: string;
 
   @Property({ type: () => String })
+  ward: string;
+
+  @Property({ type: () => String })
   detail: string;
 }
 

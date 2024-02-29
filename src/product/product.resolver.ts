@@ -17,7 +17,8 @@ import { UseGuards } from '@nestjs/common';
 import { User } from 'src/user/user.definition';
 import { Context, Ctx } from 'src/auth/ctx';
 import { ShopOnly, UserOnly } from 'src/guard/roles.guard';
-import { ProductFilter, ProductSort } from './dto/paging-product.input';
+import { PaginationParameters } from 'dryerjs/dist/js/mongoose-paginate-v2';
+import { PaginateShopProductDTO } from './dto/paginate-shop-product.dto';
 
 @Resolver()
 export class ProductResolver {
@@ -69,6 +70,25 @@ export class ProductResolver {
   //     throw error;
   //   }
   // }
+  // @ShopOnly()
+  @Query(() => PaginatedOutputType(Product), { name: 'paginateShopProducts' })
+  async paginateShopProducts(
+    @Ctx() ctx: Context,
+    @Args('input') input?: PaginateShopProductDTO,
+  ) {
+    try {
+      const products = await this.productService.getShopProducts({
+        uid: ctx?.id,
+        limit: input.limit,
+        page: input.page,
+        sort: input.sort,
+      });
+      return products;
+    } catch (error) {
+      console.error('Failed find related product:', error);
+      throw error;
+    }
+  }
 
   @ShopOnly()
   @Mutation(() => OutputType(Product), { name: 'createProduct' })

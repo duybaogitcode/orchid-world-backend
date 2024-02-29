@@ -65,7 +65,9 @@ export class AuthService {
         session = await this.refreshSession(existUser);
       }
 
-      return session;
+      return Object.assign(session, {
+        roleId: session?.roleId || existUser?.roleId,
+      });
     } catch (error) {
       // Handle error appropriately
       throw error;
@@ -85,6 +87,7 @@ export class AuthService {
       userId: user.id,
       refreshToken,
       accessToken,
+      roleId: user.roleId,
     });
 
     return newSession;
