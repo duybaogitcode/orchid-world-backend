@@ -13,7 +13,7 @@ import { OnEvent } from '@nestjs/event-emitter';
 import { CartShopItem } from 'src/cart/definition/cartShopItem.definition';
 import { CartItem } from 'src/cart/definition/cartItem.definiton';
 import { OrderTransaction } from 'src/order/definition/orderTransaction.definition';
-import { Product } from '../product.definition';
+import { Product, ProductStatus } from '../product.definition';
 
 @Injectable()
 export class ProductEvent {
@@ -40,7 +40,12 @@ export class ProductEvent {
           .session(session);
 
         product.quantity = product.quantity - item.quantity;
-        await product.save();
+        await product.save({ session: session });
+
+        if (product.quantity < 0) {
+          product.status = ProductStatus.NOT_AVAILABLE;
+          await product.save({ session: session });
+        }
 
         const cartItem = await this.cartItem.model.find({
           productId: product.id,
@@ -48,9 +53,9 @@ export class ProductEvent {
 
         if (cartItem.length > 0) {
           for (const item of cartItem) {
-            if (item.quantity > product.quantity) {
-              item.quantity = product.quantity;
-              await item.save();
+            if (item.quantity !== product.quantity) {
+              item.isAvailableProduct = false;
+              await item.save({ session: session });
             }
           }
         }

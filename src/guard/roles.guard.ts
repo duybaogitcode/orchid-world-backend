@@ -58,6 +58,7 @@ export class RoleMultiGuard implements CanActivate {
     );
 
     if (!ctx.roleId) {
+      console.log('no role');
       res.clearCookie('refreshToken');
       for (const cookieName in req.cookies) {
         res.clearCookie(cookieName);

@@ -117,7 +117,7 @@ console.log({ nod: configuration().NODE_ENV });
         },
         {
           definition: User,
-          allowedApis: ['findAll', 'findOne', 'update', 'bulkRemove'],
+          allowedApis: ['findAll', 'findOne', 'bulkRemove', 'update'],
           decorators: {
             findAll: [Admin()],
             bulkRemove: [Admin()],

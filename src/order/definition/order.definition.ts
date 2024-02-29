@@ -1,7 +1,8 @@
-import { OmitType, registerEnumType } from '@nestjs/graphql';
+import { InputType, OmitType, registerEnumType } from '@nestjs/graphql';
 import { create } from 'domain';
 import {
   BelongsTo,
+  CreateInputType,
   Definition,
   Embedded,
   GraphQLObjectId,
@@ -11,7 +12,6 @@ import {
   Skip,
 } from 'dryerjs';
 import { BaseModel, BaseStatus } from 'src/base/base.definition';
-import { CartShopItem } from 'src/cart/definition/cartShopItem.definition';
 import { BaseModelHasOwner, Product } from 'src/product/product.definition';
 import { User } from 'src/user/user.definition';
 // import { OrderTransaction } from './orderTransaction.definition';
@@ -66,6 +66,17 @@ export class ProductInOrder {
   quantity: number;
 }
 
+Definition();
+class CartShopItemInput {
+  @Property({ type: () => GraphQLObjectId, db: Skip, output: Skip })
+  cartShopItemId: ObjectId;
+
+  @Property({ type: () => [GraphQLObjectId], db: Skip, output: Skip })
+  cartItemId: [ObjectId];
+}
+
+const CartShopItemInputType = CreateInputType(CartShopItemInput);
+
 @Definition()
 export class Shop {
   @Property({ type: () => String })
@@ -79,7 +90,7 @@ export class Shop {
 }
 
 @Definition({ timestamps: true })
-export class Order extends BaseModel() {
+export class Order extends BaseModelHasOwner() {
   @Property({ type: () => String, nullable: true })
   note: string;
 
@@ -89,14 +100,14 @@ export class Order extends BaseModel() {
   @Embedded(() => Shop)
   shop: Shop;
 
+  @Property({ type: () => CartShopItemInputType, db: Skip, output: Skip })
+  cartShopItemInput: CartShopItemInput;
+
   @Property({ type: () => GraphQLObjectId })
   shopId: ObjectId;
 
   @BelongsTo(() => User, { from: 'shopId', noPopulation: true })
   refToShop: User;
-
-  @Property({ type: () => GraphQLObjectId, db: Skip, output: Skip })
-  cartShopItemId: ObjectId;
 
   @Property({ type: () => OrderStatus, defaultValue: OrderStatus.PENDING })
   status: OrderStatus;
@@ -142,8 +153,8 @@ export class OrderNotId {
   @Embedded(() => Shop)
   shop: Shop;
 
-  @Property({ type: () => GraphQLObjectId, db: Skip, output: Skip })
-  cartShopItemId: ObjectId;
+  @Property({ type: () => CartShopItemInputType, db: Skip, output: Skip })
+  cartShopItemInput: CartShopItemInput;
 
   @Property({ type: () => String })
   addressFrom: string;

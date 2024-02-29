@@ -46,6 +46,30 @@ export class ProductResolver {
     }
   }
 
+  // @Query(() => PaginatedOutputType(Product), { name: 'pendingProducts' })
+  // async pendingProducts(
+  //   @Args('page', { type: () => Int, defaultValue: 1 }) page: number,
+  //   @Args('limit', { type: () => Int, defaultValue: 10 }) limit: number,
+  //   @Args('filter', { type: () => ProductFilter, nullable: true })
+  //   filter: ProductFilter,
+  //   @Args('sort', { type: () => ProductSort, nullable: true })
+  //   sort: ProductSort,
+  //   @Ctx() ctx: Context,
+  // ) {
+  //   try {
+  //     const products = await this.productService.pendingProducts(
+  //       page,
+  //       limit,
+  //       filter,
+  //       sort,
+  //       ctx,
+  //     );
+  //     return products;
+  //   } catch (error) {
+  //     console.error('Failed find pending product:', error);
+  //     throw error;
+  //   }
+  // }
   // @ShopOnly()
   @Query(() => PaginatedOutputType(Product), { name: 'paginateShopProducts' })
   async paginateShopProducts(

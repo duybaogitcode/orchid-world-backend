@@ -98,15 +98,18 @@ export class OrderTransactionService {
 
       // console.log(result);
 
+      const orders = input.order;
+      // console.log(orders);
+
       const listOrder: OrderNotId[] = [];
       const listOrderInput = [];
-      const listCartItemId = [];
-
       const listProductInOrder: ProductInOrder[] = [];
 
       input.order.forEach((orderItem) => {
         const matchingShopItems = result.filter(
-          (item) => item._id.toString() === orderItem.cartShopItemId.toString(),
+          (item) =>
+            item._id.toString() ===
+            orderItem.cartShopItemInput.cartShopItemId.toString(),
         );
 
         if (matchingShopItems.length === 0) {
@@ -114,44 +117,83 @@ export class OrderTransactionService {
         }
 
         matchingShopItems.forEach((shopItem) => {
-          let totalAmount = 0;
-          shopItem.cartItems.forEach((cartItem) => {
-            listCartItemId.push(cartItem._id);
-            const productInOrder: ProductInOrder = {
-              price: cartItem.totalPrice,
-              quantity: cartItem.quantity,
-              media: cartItem.product.media,
-              name: cartItem.product.name,
-              slug: cartItem.product.slug,
-            };
-            listProductInOrder.push(productInOrder);
-            totalAmount += cartItem.totalPrice;
+          const listProductInOrderSeparate: ProductInOrder[] = [];
+          orderItem.cartShopItemInput.cartItemId.forEach((cartItemId) => {
+            const matchingCartItem = shopItem.cartItems.find(
+              (cartItem) =>
+                cartItem._id.toString() === cartItemId.toString() &&
+                cartItem.quantity > 0,
+            );
+            if (!matchingCartItem) {
+              throw new Error(`Cart item not found: ${cartItemId}`);
+            }
+
+            if (matchingCartItem) {
+              listProductInOrder.push({
+                name: matchingCartItem.product.name,
+                slug: matchingCartItem.product.slug,
+                media: matchingCartItem.product.media,
+                price: matchingCartItem.product.price,
+                quantity: matchingCartItem.quantity,
+              });
+              listProductInOrderSeparate.push({
+                name: matchingCartItem.product.name,
+                slug: matchingCartItem.product.slug,
+                media: matchingCartItem.product.media,
+                price: matchingCartItem.product.price,
+                quantity: matchingCartItem.quantity,
+              });
+            }
           });
 
-          const order: OrderNotId = {
-            addressFrom: orderItem.addressFrom,
+          listOrder.push({
             addressTo: orderItem.addressTo,
-            amountNotShippingFee: totalAmount,
-            totalAmount: totalAmount + orderItem.shippingFee,
-            cartShopItemId: orderItem.cartShopItemId,
+            addressFrom: orderItem.addressFrom,
             note: orderItem.note,
+            cartShopItemInput: orderItem.cartShopItemInput,
+            shippingFee: orderItem.shippingFee,
+            deliveredUnit: orderItem.deliveredUnit,
+            shop: {
+              shopName: shopItem.shop.shopName,
+              shopPhone: shopItem.shop.shopPhone,
+              productInOrder: listProductInOrderSeparate,
+            },
+            totalAmount:
+              listProductInOrderSeparate.reduce(
+                (acc, cur) => acc + cur.price * cur.quantity,
+                0,
+              ) + orderItem.shippingFee,
+            amountNotShippingFee: listProductInOrderSeparate.reduce(
+              (acc, cur) => acc + cur.price * cur.quantity,
+              0,
+            ),
+            code: uuidv4(),
+          });
+
+          listOrderInput.push({
+            addressTo: orderItem.addressTo,
+            addressFrom: orderItem.addressFrom,
+            note: orderItem.note,
+            cartShopItemInput: orderItem.cartShopItemInput,
+            shippingFee: orderItem.shippingFee,
+            deliveredUnit: orderItem.deliveredUnit,
             shop: {
               shopName: shopItem.shop.shopOwner.shopName,
               shopPhone: shopItem.shop.shopOwner.phoneShop,
-              productInOrder: listProductInOrder,
+              productInOrder: listProductInOrderSeparate,
             },
-            shippingFee: orderItem.shippingFee,
+            amountNotShippingFee: listProductInOrderSeparate.reduce(
+              (acc, cur) => acc + cur.price * cur.quantity,
+              0,
+            ),
+            totalAmount:
+              listProductInOrderSeparate.reduce(
+                (acc, cur) => acc + cur.price * cur.quantity,
+                0,
+              ) + orderItem.shippingFee,
             code: uuidv4(),
-            deliveredUnit: orderItem.deliveredUnit,
-          };
-
-          listOrder.push(order);
-
-          const orderInput = {
             shopId: shopItem.shop._id,
-            ...order,
-          };
-          listOrderInput.push(orderInput);
+          });
         });
       });
 
@@ -172,7 +214,7 @@ export class OrderTransactionService {
 
       await wallet.save({ session });
 
-      // throw new Error('test');
+      // throw new Error('Failed create order transaction');
 
       await newOrderTransaction.save({ session });
 
@@ -182,7 +224,8 @@ export class OrderTransactionService {
           newOrderTransaction,
           listOrderInput,
           listProductInOrder,
-          listCartItemId,
+          orders,
+          uid,
         },
       });
       await session.commitTransaction();

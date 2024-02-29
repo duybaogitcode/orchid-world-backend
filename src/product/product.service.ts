@@ -7,7 +7,7 @@ import { CreateProductInput } from './dto/create-product.input';
 import { Product, ProductStatus } from './product.definition';
 import { FileUpload } from 'graphql-upload-ts';
 import slugify from 'slugify';
-import { Context } from 'src/auth/ctx';
+import { Context, Ctx } from 'src/auth/ctx';
 import { FirebaseService } from 'src/firebase/firebase.serivce';
 import { TagWithValues } from 'src/orthersDef/tagValues.definition';
 import { UpdateProductInput } from './dto/update-product.input';

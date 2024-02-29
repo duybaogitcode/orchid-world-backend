@@ -11,7 +11,7 @@ class OrderNestedInput extends PickType(orderNestedInput, [
   'addressTo',
   'addressFrom',
   'note',
-  'cartShopItemId',
+  'cartShopItemInput',
   'shippingFee',
   'deliveredUnit',
   'shippingFee',

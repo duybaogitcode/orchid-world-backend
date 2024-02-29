@@ -26,10 +26,13 @@ export class OrderTransactionEvent {
     const session = await this.orderTransaction.model.db.startSession();
     session.startTransaction();
     try {
-      console.log('OrderTransaction event orders created failed');
+      console.log(
+        'OrderTransaction event orders created failed',
+        input.newOrderTransaction.id,
+      );
 
       await this.orderTransaction.model.findOneAndDelete({
-        id: input.newOrderTransaction.id,
+        _id: input.newOrderTransaction.id,
       });
 
       await session.commitTransaction();
