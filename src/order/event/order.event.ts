@@ -47,6 +47,7 @@ export class OrderEvent {
           orderTransactionId: input.newOrderTransaction.id,
           shopId: order.shopId,
           status: OrderStatus.PENDING,
+          authorId: input.uid,
         });
         await newOrder.save({ session: session });
       }

@@ -34,6 +34,7 @@
     "@nestjs/platform-socket.io": "^10.3.3",
     "@nestjs/websockets": "^10.3.2",
     "@paypal/checkout-server-sdk": "^1.0.3",
+    "@paypal/payouts-sdk": "^1.1.1",
     "@prisma/client": "^5.8.1",
     "cache-manager": "^5.4.0",
     "cache-manager-ioredis": "^2.1.0",

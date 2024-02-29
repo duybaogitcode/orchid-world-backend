@@ -90,7 +90,7 @@ export class Shop {
 }
 
 @Definition({ timestamps: true })
-export class Order extends BaseModel() {
+export class Order extends BaseModelHasOwner() {
   @Property({ type: () => String, nullable: true })
   note: string;
 
