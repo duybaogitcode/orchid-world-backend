@@ -32,6 +32,7 @@ export class OrderEvent {
   }: AfterCreateHookInput<any, Context>) {
     const session = await this.order.model.db.startSession();
     session.startTransaction();
+
     try {
       for (const order of input.listOrderInput) {
         const newOrder = new this.order.model({
@@ -47,7 +48,7 @@ export class OrderEvent {
           orderTransactionId: input.newOrderTransaction.id,
           shopId: order.shopId,
           status: OrderStatus.PENDING,
-          authorId: input.uid,
+          authorId: input.wallet.authorId,
         });
         await newOrder.save({ session: session });
       }
