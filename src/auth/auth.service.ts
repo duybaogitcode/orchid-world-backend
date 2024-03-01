@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { FirebaseAdmin, InjectFirebaseAdmin } from 'nestjs-firebase';
 import { LoginInput } from './dto/create-auth.input';
 import { BaseService, InjectBaseService, ObjectId, OutputType } from 'dryerjs';
-import { User } from 'src/user/user.definition';
+import { ShopOwner, User } from 'src/user/user.definition';
 import { Context } from './ctx';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -112,7 +112,7 @@ export class AuthService {
 
     const updatedSession = await this.sessionModel.findOneAndUpdate(
       { userId: user.id },
-      { refreshToken, accessToken },
+      { refreshToken, accessToken, roleId: user.roleId },
       { new: true },
     );
 
@@ -126,12 +126,17 @@ export class AuthService {
         throw new Error('You are not allowed to register a shop owner');
       }
 
+      const { shopOwner } = input;
+
       const userId = sessionExist.userId;
 
       const user = await this.userModel.findOneAndUpdate(
         { _id: userId },
         {
-          $set: { shopOwner: input, roleId: new ObjectId(UserRole.SHOP_OWNER) },
+          $set: {
+            shopOwner: shopOwner,
+            roleId: new ObjectId(UserRole.SHOP_OWNER),
+          },
         },
         { new: true, upsert: true },
       );
