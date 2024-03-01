@@ -46,7 +46,7 @@ export class ProductService {
       media = await Promise.all(urls.map((url) => Promise.resolve(url)));
 
       const product = new this.productService.model({
-        authorId: uid,
+        authorId: new ObjectId(uid),
         category_id: createProductDto.category_id,
         description: createProductDto.description,
         media: media,
