@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { FirebaseAdmin, InjectFirebaseAdmin } from 'nestjs-firebase';
 import { LoginInput } from './dto/create-auth.input';
-import { BaseService, InjectBaseService, OutputType } from 'dryerjs';
+import { BaseService, InjectBaseService, ObjectId, OutputType } from 'dryerjs';
 import { User } from 'src/user/user.definition';
 import { Context } from './ctx';
 import { InjectModel } from '@nestjs/mongoose';
@@ -9,7 +9,9 @@ import { Model } from 'mongoose';
 import { Role, Session } from './auth.definition';
 import { JwtService } from '@nestjs/jwt';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { Response } from 'express';
+import { Request, Response } from 'express';
+import { ShopOwnerInput } from './dto/shopOwner.input';
+import { UserRole } from 'src/guard/roles.guard';
 
 function getFirstAndLastName(fullname: string) {
   const names = fullname.split(' ');
@@ -115,5 +117,29 @@ export class AuthService {
     );
 
     return updatedSession;
+  }
+
+  async registerShopOwner(input: ShopOwnerInput, sessionId: string) {
+    try {
+      const sessionExist = await this.sessionModel.findById(sessionId);
+      if (sessionExist.roleId.toString() !== UserRole.USER.toString()) {
+        throw new Error('You are not allowed to register a shop owner');
+      }
+
+      const userId = sessionExist.userId;
+
+      const user = await this.userModel.findOneAndUpdate(
+        { _id: userId },
+        {
+          $set: { shopOwner: input, roleId: new ObjectId(UserRole.SHOP_OWNER) },
+        },
+        { new: true, upsert: true },
+      );
+
+      const session = await this.refreshSession(user);
+      return Object.assign(session, {
+        roleId: session?.roleId || user?.roleId,
+      });
+    } catch (error) {}
   }
 }

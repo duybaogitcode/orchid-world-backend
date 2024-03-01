@@ -7,7 +7,14 @@ import {
   registerEnumType,
 } from '@nestjs/graphql';
 import { Product } from './product.definition';
-import { ObjectId, OutputType, PaginatedOutputType } from 'dryerjs';
+import {
+  FilterOperator,
+  FilterType,
+  ObjectId,
+  OutputType,
+  PaginatedOutputType,
+  SortType,
+} from 'dryerjs';
 
 import { CreateProductInput } from './dto/create-product.input';
 import { ProductService } from './product.service';
@@ -16,7 +23,7 @@ import { UseGuards } from '@nestjs/common';
 
 import { User } from 'src/user/user.definition';
 import { Context, Ctx } from 'src/auth/ctx';
-import { ShopOnly, UserOnly } from 'src/guard/roles.guard';
+import { ManagerOrStaff, ShopOnly, UserOnly } from 'src/guard/roles.guard';
 import { PaginationParameters } from 'dryerjs/dist/js/mongoose-paginate-v2';
 import { PaginateShopProductDTO } from './dto/paginate-shop-product.dto';
 
@@ -46,31 +53,35 @@ export class ProductResolver {
     }
   }
 
-  // @Query(() => PaginatedOutputType(Product), { name: 'pendingProducts' })
-  // async pendingProducts(
-  //   @Args('page', { type: () => Int, defaultValue: 1 }) page: number,
-  //   @Args('limit', { type: () => Int, defaultValue: 10 }) limit: number,
-  //   @Args('filter', { type: () => ProductFilter, nullable: true })
-  //   filter: ProductFilter,
-  //   @Args('sort', { type: () => ProductSort, nullable: true })
-  //   sort: ProductSort,
-  //   @Ctx() ctx: Context,
-  // ) {
-  //   try {
-  //     const products = await this.productService.pendingProducts(
-  //       page,
-  //       limit,
-  //       filter,
-  //       sort,
-  //       ctx,
-  //     );
-  //     return products;
-  //   } catch (error) {
-  //     console.error('Failed find pending product:', error);
-  //     throw error;
-  //   }
-  // }
-  // @ShopOnly()
+  @ManagerOrStaff()
+  @Query(() => PaginatedOutputType(Product), {
+    name: 'paginateStaffManagerProducts',
+  })
+  async paginateStaffManagerProducts(
+    @Args('page', { type: () => Int, defaultValue: 1 }) page: number,
+    @Args('limit', { type: () => Int, defaultValue: 10 }) limit: number,
+    @Args('filter', { type: () => FilterType(Product), nullable: true })
+    filter: ReturnType<typeof FilterType>,
+    @Args('sort', { type: () => SortType(Product), nullable: true })
+    sort: ReturnType<typeof SortType>,
+    @Ctx() ctx: Context,
+  ) {
+    try {
+      const products = await this.productService.pagingProducts(
+        page,
+        limit,
+        filter,
+        sort,
+        ctx,
+      );
+      return products;
+    } catch (error) {
+      console.error('Failed find pending product:', error);
+      throw error;
+    }
+  }
+
+  @ShopOnly()
   @Query(() => PaginatedOutputType(Product), { name: 'paginateShopProducts' })
   async paginateShopProducts(
     @Ctx() ctx: Context,
@@ -82,10 +93,11 @@ export class ProductResolver {
         limit: input.limit,
         page: input.page,
         sort: input.sort,
+        ctx,
       });
       return products;
     } catch (error) {
-      console.error('Failed find related product:', error);
+      console.error('Failed find product:', error);
       throw error;
     }
   }

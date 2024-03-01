@@ -62,7 +62,6 @@ const inputTags = CreateInputType(TagWithValues);
 @InputType()
 export class InputTags extends OmitType(inputTags, ['product_id'] as const) {}
 
-@Index({ name: 'text' })
 @Definition({
   timestamps: true,
   enableTextSearch: true,

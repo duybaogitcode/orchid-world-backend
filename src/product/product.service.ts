@@ -14,6 +14,7 @@ import { UpdateProductInput } from './dto/update-product.input';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { User } from 'src/user/user.definition';
+import { stat } from 'node:fs';
 
 @Injectable()
 export class ProductService {
@@ -220,13 +221,16 @@ export class ProductService {
 
   async relatedProducts(slug: string) {
     try {
-      const product = await this.productService.model.findOne({ slug: slug });
+      const product = await this.productService.model.findOne({
+        slug: slug,
+      });
       if (!product) {
         throw new Error('Product not found');
       }
 
       const allProducts = await this.productService.model.find({
         _id: { $ne: product._id },
+        status: ProductStatus.APPROVED,
       });
 
       const scoredProducts = allProducts.map((otherProduct) => {
@@ -270,22 +274,25 @@ export class ProductService {
     sort = {},
     page = 1,
     limit = 10,
+    ctx,
   }: {
     uid: ObjectId;
     sort?: object;
     page?: number;
     limit?: number;
+    ctx: Context;
   }) {
     const user = await this.userService.findOne(null, {
-      id: uid,
+      _id: new ObjectId(uid),
     });
 
     if (!user.shopOwner || !user?.shopOwner?.shopName) {
       throw new BadRequestException('Vui lòng đăng ký bán hàng trước.');
     }
+    const filter = {};
 
     return this.productService.paginate(
-      null,
+      ctx,
       {
         authorId: user.id,
       },
@@ -293,5 +300,20 @@ export class ProductService {
       page,
       limit,
     );
+  }
+
+  async pagingProducts(
+    page: number,
+    limit: number,
+    filter: any,
+    sort: any,
+    ctx: Context,
+  ) {
+    if (filter) {
+      filter = {
+        name: { $regex: filter?.code?.contains ?? '', $options: 'i' },
+      };
+    }
+    return await this.productService.paginate(ctx, filter, sort, page, limit);
   }
 }

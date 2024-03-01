@@ -94,12 +94,6 @@ console.log({ nod: configuration().NODE_ENV });
       definitions: [
         {
           definition: Product,
-          embeddedConfigs: [
-            {
-              property: 'shopOwner',
-              allowedApis: [],
-            },
-          ],
           allowedApis: ['findAll', 'paginate'],
         },
 
@@ -153,11 +147,10 @@ console.log({ nod: configuration().NODE_ENV });
         },
         {
           definition: Order,
-          allowedApis: ['findAll'],
+          allowedApis: ['findAll', 'paginate'],
         },
         {
           definition: OrderTransaction,
-
           allowedApis: [],
         },
 
@@ -179,12 +172,6 @@ console.log({ nod: configuration().NODE_ENV });
         },
         {
           definition: Report,
-          // embeddedConfigs: [
-          //   {
-          //     property: 'shopOwner',
-          //     allowedApis: ['create'],
-          //   },
-          // ],
           allowedApis: ['findAll', 'findOne', 'remove'],
         },
         {

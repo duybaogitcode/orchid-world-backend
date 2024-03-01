@@ -5,11 +5,13 @@ import {
   CreateInputType,
   Definition,
   Embedded,
+  Filterable,
   GraphQLObjectId,
   HasMany,
   ObjectId,
   Property,
   Skip,
+  allOperators,
 } from 'dryerjs';
 import { BaseModel, BaseStatus } from 'src/base/base.definition';
 import { BaseModelHasOwner, Product } from 'src/product/product.definition';
@@ -89,11 +91,16 @@ export class Shop {
   productInOrder: ProductInOrder[];
 }
 
-@Definition({ timestamps: true })
+@Definition({
+  timestamps: true,
+  enableTextSearch: true,
+  schemaOptions: { selectPopulatedPaths: true },
+})
 export class Order extends BaseModelHasOwner() {
   @Property({ type: () => String, nullable: true })
   note: string;
 
+  @Filterable(() => String, { operators: ['contains'] })
   @Property({ type: () => String, db: { unique: true, sparse: true } })
   code: string;
 

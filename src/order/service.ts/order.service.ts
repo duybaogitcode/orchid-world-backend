@@ -3,19 +3,18 @@ import { Context } from 'src/auth/ctx';
 import { Cart } from 'src/cart/definition/cart.definition';
 import { CreateOrder } from '../dto/create-order.dto';
 import { OrderTransaction } from '../definition/orderTransaction.definition';
-import { BaseService, InjectBaseService, ObjectId } from 'dryerjs';
-import { skip } from 'node:test';
+import { BaseService, InjectBaseService, ObjectId, FilterType } from 'dryerjs';
 import {
   Order,
   OrderNotId,
   OrderStatus,
   ProductInOrder,
 } from '../definition/order.definition';
-import { OmitType } from '@nestjs/graphql';
 import { v4 as uuidv4 } from 'uuid';
-import { Omit } from 'nexus/dist/core';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Wallet } from 'src/wallet/wallet.definition';
+import { contains } from 'class-validator';
+import { UserRole } from 'src/guard/roles.guard';
 
 @Injectable()
 export class OrderTransactionService {
@@ -26,6 +25,8 @@ export class OrderTransactionService {
     @InjectBaseService(Cart) public cartService: BaseService<Cart, Context>,
     @InjectBaseService(OrderTransaction)
     public orderTransactionService: BaseService<OrderTransaction, Context>,
+    @InjectBaseService(Order)
+    public orderService: BaseService<Order, Context>,
   ) {}
 
   async createOrder(input: CreateOrder, uid: ObjectId) {
@@ -236,6 +237,76 @@ export class OrderTransactionService {
       await session.abortTransaction();
       session.endSession();
       throw error;
+    }
+  }
+
+  async findOneByCode(code: string, ctx: Context) {
+    const order = await this.orderService.model.findOne({
+      code: code,
+    });
+
+    switch (ctx.roleId.toString()) {
+      case UserRole.USER:
+        if (order.authorId.toString() !== ctx.id.toString()) {
+          throw new Error('Access denied');
+        }
+        break;
+      case UserRole.SHOP_OWNER:
+        if (
+          order.shopId.toString() !== ctx.id.toString() &&
+          order.authorId.toString() !== ctx.id.toString()
+        ) {
+          throw new Error('Access denied');
+        }
+        break;
+      default:
+        break;
+    }
+    return order;
+  }
+
+  async pagingOrders(
+    ctx: Context,
+    filter: any,
+    sort: any,
+    page: number,
+    limit: number,
+    ref: string,
+  ) {
+    if (filter) {
+      filter = {
+        code: { $regex: filter?.code?.contains ?? '', $options: 'i' },
+      };
+    }
+
+    switch (ref) {
+      case 'authorId':
+        const newFilter = {
+          ...filter,
+          authorId: new ObjectId(ctx.id),
+        };
+        return await this.orderService.paginate(
+          ctx,
+          newFilter,
+          sort,
+          page,
+          limit,
+        );
+
+      case 'shopId':
+        const newFilterShop = {
+          ...filter,
+          shopId: new ObjectId(ctx.id),
+        };
+        return await this.orderService.paginate(
+          ctx,
+          newFilterShop,
+          sort,
+          page,
+          limit,
+        );
+      default:
+        return await this.orderService.paginate(ctx, filter, sort, page, limit);
     }
   }
 }
