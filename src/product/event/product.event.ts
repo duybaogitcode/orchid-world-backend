@@ -53,7 +53,7 @@ export class ProductEvent {
 
         if (cartItem.length > 0) {
           for (const item of cartItem) {
-            if (item.quantity !== product.quantity) {
+            if (item.quantity > product.quantity) {
               item.isAvailableProduct = false;
               await item.save({ session: session });
             }
