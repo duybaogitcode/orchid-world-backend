@@ -14,6 +14,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Wallet } from 'src/wallet/wallet.definition';
 import { contains } from 'class-validator';
+import { UserRole } from 'src/guard/roles.guard';
 
 @Injectable()
 export class OrderTransactionService {
@@ -237,6 +238,31 @@ export class OrderTransactionService {
       session.endSession();
       throw error;
     }
+  }
+
+  async findOneByCode(code: string, ctx: Context) {
+    const order = await this.orderService.model.findOne({
+      code: code,
+    });
+
+    switch (ctx.roleId.toString()) {
+      case UserRole.USER:
+        if (order.authorId.toString() !== ctx.id.toString()) {
+          throw new Error('Access denied');
+        }
+        break;
+      case UserRole.SHOP_OWNER:
+        if (
+          order.shopId.toString() !== ctx.id.toString() &&
+          order.authorId.toString() !== ctx.id.toString()
+        ) {
+          throw new Error('Access denied');
+        }
+        break;
+      default:
+        break;
+    }
+    return order;
   }
 
   async pagingOrders(

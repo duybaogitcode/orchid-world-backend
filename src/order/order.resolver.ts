@@ -10,7 +10,11 @@ import { Context, Ctx } from 'src/auth/ctx';
 import { SuccessResponse } from 'dryerjs/dist/types';
 import { CreateOrder } from './dto/create-order.dto';
 import { OrderTransaction } from './definition/orderTransaction.definition';
-import { ShopOnly, ShopOrUserOnly } from 'src/guard/roles.guard';
+import {
+  AuthenticatedUser,
+  ShopOnly,
+  ShopOrUserOnly,
+} from 'src/guard/roles.guard';
 import { OrderTransactionService } from './service.ts/order.service';
 import { Order } from './definition/order.definition';
 
@@ -62,6 +66,16 @@ export class OrderTransactionResolver {
         limit,
         'authorId',
       );
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  @AuthenticatedUser()
+  @Query(() => OutputType(Order), { name: 'findOrderByCode' })
+  async findOrderByCode(@Args('code') code: string, @Ctx() ctx: Context) {
+    try {
+      return await this.orderTransactionService.findOneByCode(code, ctx);
     } catch (error) {
       throw error;
     }

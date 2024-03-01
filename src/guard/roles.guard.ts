@@ -137,6 +137,19 @@ export const ShopOrUserOnly = () => {
   );
 };
 
+export const AuthenticatedUser = () => {
+  return applyDecorators(
+    RoleMultiCheck([
+      UserRole.SHOP_OWNER,
+      UserRole.USER,
+      UserRole.STAFF,
+      UserRole.MANAGER,
+      UserRole.ADMIN,
+    ]),
+    UseGuards(RoleMultiGuard),
+  );
+};
+
 export enum UserRole {
   USER = '65d317029abc164abb8a830b',
   SHOP_OWNER = '65d4ae42f18fa2591d75c6c8',
