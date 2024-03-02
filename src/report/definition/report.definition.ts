@@ -18,13 +18,13 @@ export class Report extends BaseModelHasOwner() {
   @Property({ type: () => String })
   title: string;
 
-  @Property({ type: () => String })
+  @Property({ type: () => String, nullable: true })
   targetUrl: string;
 
   @Property({ type: () => String })
   content: string;
 
-  @Property({ type: () => GraphQLObjectId })
+  @Property({ type: () => GraphQLObjectId, nullable: true })
   reportedId: ObjectId;
 
   @BelongsTo(() => User, { from: 'reportedId' })
@@ -43,7 +43,4 @@ export class Report extends BaseModelHasOwner() {
 
   @BelongsTo(() => ReportTypes, { from: 'reportTypeId' })
   reportType: ReportTypes;
-
-  @Embedded(() => ShopOwner)
-  registerAsShopOwner?: ShopOwner;
 }
