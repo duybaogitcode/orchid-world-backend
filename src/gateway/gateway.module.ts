@@ -3,5 +3,6 @@ import { EventGateway } from './event.gateway';
 
 @Module({
   providers: [EventGateway],
+  exports: [EventGateway],
 })
 export class GatewayModule {}

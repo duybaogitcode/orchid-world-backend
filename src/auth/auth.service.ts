@@ -1,17 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { FirebaseAdmin, InjectFirebaseAdmin } from 'nestjs-firebase';
-import { LoginInput } from './dto/create-auth.input';
-import { BaseService, InjectBaseService, ObjectId, OutputType } from 'dryerjs';
-import { ShopOwner, User } from 'src/user/user.definition';
-import { Context } from './ctx';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Role, Session } from './auth.definition';
-import { JwtService } from '@nestjs/jwt';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { Request, Response } from 'express';
-import { ShopOwnerInput } from './dto/shopOwner.input';
+import { JwtService } from '@nestjs/jwt';
+import { InjectModel } from '@nestjs/mongoose';
+import { ObjectId } from 'dryerjs';
+import { Response } from 'express';
+import { Model } from 'mongoose';
+import { FirebaseAdmin, InjectFirebaseAdmin } from 'nestjs-firebase';
 import { UserRole } from 'src/guard/roles.guard';
+import { NotificationTypeEnum } from 'src/notification/notification.definition';
+import { User } from 'src/user/user.definition';
+import { Role, Session } from './auth.definition';
+import { LoginInput } from './dto/create-auth.input';
+import { ShopOwnerInput } from './dto/shopOwner.input';
 
 function getFirstAndLastName(fullname: string) {
   const names = fullname.split(' ');
@@ -66,6 +66,12 @@ export class AuthService {
       } else if (this.isSessionExpired(session.accessToken)) {
         session = await this.refreshSession(existUser);
       }
+
+      this.eventEmitter.emit('send-notification', {
+        message: 'Welcome to the platform',
+        notificationType: NotificationTypeEnum.SYSTEM,
+        receiver: existUser.id,
+      });
 
       return Object.assign(session, {
         roleId: session?.roleId || existUser?.roleId,
