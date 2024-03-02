@@ -1,6 +1,9 @@
-import { OnModuleInit } from '@nestjs/common';
+import { Logger, OnModuleInit } from '@nestjs/common';
 import {
   MessageBody,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+  OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
@@ -8,12 +11,30 @@ import {
 
 import { Server, Socket } from 'socket.io';
 
-@WebSocketGateway()
-export class EventGateway implements OnModuleInit {
+@WebSocketGateway({
+  cors: {
+    origin: '*',
+  },
+})
+export class EventGateway
+  implements
+    OnGatewayInit,
+    OnGatewayConnection,
+    OnGatewayDisconnect,
+    OnModuleInit
+{
   @WebSocketServer()
   server: Server;
-
+  private logger: Logger = new Logger('MessageGateway');
   private socketMap = new Map<string, Socket>();
+
+  emitToAll(event: string, data: any) {
+    this.server.emit(event, data);
+  }
+
+  emitTo(room: string, event: string, data: any) {
+    this.server.to(room).emit(event, data);
+  }
 
   onModuleInit() {
     this.server.on('connection', (socket) => {
@@ -31,19 +52,28 @@ export class EventGateway implements OnModuleInit {
     });
   }
 
-  @SubscribeMessage('newMessage')
-  onNewMessage(@MessageBody() body: any) {
-    console.log('data', body);
-    // Emit to a specific socket
-    const socket = this.socketMap.get(body.socketId);
-    if (socket) {
-      socket.emit('onMessage', {
-        msg: 'Hello from server',
-        content: body,
-      });
-      socket.emit('notification', {
-        msg: 'This is a notification from the server',
-      });
-    }
+  @SubscribeMessage('joinRoom')
+  public joinRoom(client: Socket, room: string): void {
+    console.log('🚀 ~ joinRoom ~ room:', room);
+    client.join(room);
+    client.emit('joinedRoom', room);
+  }
+
+  @SubscribeMessage('leaveRoom')
+  public leaveRoom(client: Socket, room: string): void {
+    client.leave(room);
+    client.emit('leftRoom', room);
+  }
+
+  public afterInit(server: Server): void {
+    return this.logger.log('Init');
+  }
+
+  public handleDisconnect(client: Socket): void {
+    return this.logger.log(`Client disconnected: ${client.id}`);
+  }
+
+  public handleConnection(client: Socket): void {
+    return this.logger.log(`Client connected: ${client.id}`);
   }
 }

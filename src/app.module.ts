@@ -56,6 +56,9 @@ import { ConfigModule } from '@nestjs/config';
 import { ReportTypes } from './report/definition/reportTypes.definition';
 import { ReportSolved } from './report/definition/reportSolved.definition';
 import { Report } from './report/definition/report.definition';
+import { Notification } from './notification/notification.definition';
+import { NotificationService } from './notification/notification.service';
+import { EventGateway } from './gateway/event.gateway';
 
 console.log({ nod: configuration().NODE_ENV });
 
@@ -178,6 +181,11 @@ console.log({ nod: configuration().NODE_ENV });
           definition: ReportSolved,
           allowedApis: ['create', 'findAll', 'findOne', 'update', 'remove'],
         },
+
+        {
+          definition: Notification,
+          allowedApis: ['findAll', 'findOne', 'create', 'update', 'remove'],
+        },
         // Media,
         // Auction,
         // AuctionBiddingHistory,
@@ -207,6 +215,8 @@ console.log({ nod: configuration().NODE_ENV });
         WalletEvent,
         ProductEvent,
         PaypalService,
+        NotificationService,
+        EventGateway,
       ],
       contextDecorator: Ctx,
     }),
