@@ -2,8 +2,8 @@ import { Field, InputType } from '@nestjs/graphql';
 
 @InputType()
 export class WithdrawPaypalInput {
-  @Field(() => String)
-  totalWithDraw: string;
+  @Field(() => Number)
+  amount: number;
 
   @Field(() => String)
   payPalUserName: string;
