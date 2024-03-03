@@ -27,6 +27,14 @@ export class TransactionService {
   ) {
     await this.paypalService.getCapture(createTransactionDto.paypalOrderId);
 
+    const checkPaypalOrder = await this.transactionService.model.findOne({
+      paypalOrderId: createTransactionDto.paypalOrderId,
+    });
+
+    if (checkPaypalOrder) {
+      throw new BadRequestException('OrderPayPal already exists');
+    }
+
     const { amount, description, walletId, type } = createTransactionDto;
     let createdTransaction: Transaction;
     const session = await this.walletService.model.startSession();
