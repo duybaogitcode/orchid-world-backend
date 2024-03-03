@@ -67,12 +67,6 @@ export class AuthService {
         session = await this.refreshSession(existUser);
       }
 
-      this.eventEmitter.emit('send-notification', {
-        message: 'Welcome to the platform',
-        notificationType: NotificationTypeEnum.SYSTEM,
-        receiver: existUser.id,
-      });
-
       return Object.assign(session, {
         roleId: session?.roleId || existUser?.roleId,
       });

@@ -14,6 +14,7 @@ import { Server, Socket } from 'socket.io';
 @WebSocketGateway({
   cors: {
     origin: '*',
+    credentials: true,
   },
 })
 export class EventGateway
@@ -26,23 +27,20 @@ export class EventGateway
   @WebSocketServer()
   server: Server;
   private logger: Logger = new Logger('MessageGateway');
-  private socketMap = new Map<string, Socket>();
+  private socketMap = new Map<string, string>();
 
   emitToAll(event: string, data: any) {
     this.server.emit(event, data);
   }
 
   emitTo(room: string, event: string, data: any) {
-    console.log({ room: this.socketMap.get(room).id });
-    this.server.to(this.socketMap.get(room).id).emit(event, data);
+    const roomId = this.socketMap.get(room) || room;
+    console.log({ room, roomId });
+    this.server.to(roomId).emit(event, data);
   }
 
   onModuleInit() {
     this.server.on('connection', (socket) => {
-      console.log('socket', socket.id);
-      console.log('Connected');
-      this.socketMap.set(socket.id, socket);
-
       socket.emit('onMessage', {
         msg: 'Welcome to the server!',
       });
@@ -55,10 +53,8 @@ export class EventGateway
 
   @SubscribeMessage('joinRoom')
   public joinRoom(client: Socket, room: string): void {
-    console.log('🚀 ~ joinRoom ~ room:', room);
     client.join(room);
-    client.emit('joinedRoom', room);
-    this.socketMap.set(room, client);
+    this.socketMap.set(room, client?.id || room);
   }
 
   @SubscribeMessage('leaveRoom')
