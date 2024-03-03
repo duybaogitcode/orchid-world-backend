@@ -141,7 +141,6 @@ export class Order extends BaseModelHasOwner() {
 
   @BelongsTo(() => OrderTransaction, {
     from: 'orderTransactionId',
-    noPopulation: true,
   })
   orderTransaction: OrderTransaction;
 
