@@ -47,27 +47,30 @@ export class PaypalService {
     }
   }
 
-  async createPayout() {
-    const bactchId = uuidv4();
-
+  async createPayout(
+    bactchId: string,
+    amount: string,
+    receiver: string,
+    uid: string,
+  ) {
     try {
       const request = new paypalout.payouts.PayoutsPostRequest();
       request.requestBody({
         sender_batch_header: {
           recipient_type: 'EMAIL',
-          email_message: 'Duy Bao test chuyển tiền',
+          email_message: uid + ' rút tiền',
           note: 'Enjoy your Payout!!',
           sender_batch_id: bactchId,
-          email_subject: 'This is a test transaction from Orchid',
+          email_subject: 'Rút tiền từ ví của Orchid',
         },
         items: [
           {
-            note: 'Your 1$ Payout!',
+            note: 'Tiền rút từ ví Orchid Wallet',
             amount: {
               currency: 'USD',
-              value: '5.00',
+              value: amount,
             },
-            receiver: 'sb-hhjli29689413@personal.example.com',
+            receiver: receiver,
             sender_item_id: bactchId,
           },
         ],

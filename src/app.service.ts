@@ -28,7 +28,7 @@ export class AppService {
 
   getHello(): string {
     // this.getCapture('94310278VV511143N');
-    this.createPayout();
+    // this.createPayout();
     return 'Hello World!';
   }
 
@@ -60,10 +60,10 @@ export class AppService {
       request.requestBody({
         sender_batch_header: {
           recipient_type: 'EMAIL',
-          email_message: 'Duy Bao test chuyển tiền',
-          note: 'Enjoy your Payout!!',
+          email_message: 'Rút tiền',
+          note: 'Rút tiền từ Orchid Wallet!',
           sender_batch_id: bactchId,
-          email_subject: 'This is a test transaction from Orchid',
+          email_subject: 'Transaction from Orchid',
         },
         items: [
           {

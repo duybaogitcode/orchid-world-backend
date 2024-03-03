@@ -57,8 +57,16 @@ export class Transaction extends BaseModel() {
   @Property({
     type: () => String,
     nullable: true,
+    db: { unique: true, sparse: true },
   })
   paypalOrderId: string;
+
+  @Property({
+    type: () => String,
+    nullable: true,
+    db: { unique: true, sparse: true },
+  })
+  paypalBatchId: string;
 
   @Property({
     type: () => TransactionType,

@@ -9,6 +9,12 @@ import {
 } from './transaction.definition';
 import { Wallet } from './wallet.definition';
 import { PaypalService } from 'src/payment/paypal.service';
+import { WithdrawPaypalInput } from './dto/withdraw-paypal.input';
+import { Context } from 'src/auth/ctx';
+import { v4 as uuidv4 } from 'uuid';
+import { PaymentService } from 'src/payment/payment.service';
+import { ServiceProvider } from 'src/payment/payment.definition';
+import { ExchangeInput } from 'src/payment/dto/exchange.input';
 
 @Injectable()
 export class TransactionService {
@@ -19,6 +25,7 @@ export class TransactionService {
     @InjectBaseService(Wallet)
     public walletService: BaseService<Wallet, {}>,
     private readonly paypalService: PaypalService,
+    private readonly paymentService: PaymentService,
   ) {}
 
   async createOne(
@@ -26,6 +33,14 @@ export class TransactionService {
     userId: ObjectId,
   ) {
     await this.paypalService.getCapture(createTransactionDto.paypalOrderId);
+
+    const checkPaypalOrder = await this.transactionService.model.findOne({
+      paypalOrderId: createTransactionDto.paypalOrderId,
+    });
+
+    if (checkPaypalOrder) {
+      throw new BadRequestException('OrderPayPal already exists');
+    }
 
     const { amount, description, walletId, type } = createTransactionDto;
     let createdTransaction: Transaction;
@@ -122,5 +137,68 @@ export class TransactionService {
       page,
       limit,
     );
+  }
+
+  async withDrawPayPal(input: WithdrawPaypalInput, ctx: Context) {
+    const wallet = await this.walletService.model.findOne({
+      authorId: new ObjectId(ctx.id),
+    });
+
+    if (!wallet) {
+      throw new BadRequestException('Wallet not found');
+    }
+
+    const { amount, payPalUserName } = input;
+
+    if (Number(amount) <= 50000) {
+      throw new BadRequestException('Amount must be greater than 50000');
+    }
+
+    if (Number(amount) > wallet.balance) {
+      throw new BadRequestException('Not enough balance');
+    }
+
+    const exchagneInput: ExchangeInput = {
+      amount: amount,
+      serviceProvider: ServiceProvider.paypal,
+    };
+
+    const exchangeMoney = this.paymentService.exchangeMoney(exchagneInput);
+
+    const batchId = uuidv4();
+
+    try {
+      await this.paypalService.createPayout(
+        batchId,
+        exchangeMoney.totalWithDraw,
+        payPalUserName,
+        ctx.id.toString(),
+      );
+
+      const transaction = await this.transactionService.create(
+        {},
+        {
+          amount: amount,
+          walletId: wallet.id,
+          status: TransactionStatus.SUCCESS,
+          type: TransactionType.DECREASE,
+          paypalBatchId: batchId,
+          description: 'Rút tiền từ PayPal',
+        },
+      );
+
+      await this.walletService.update(
+        {},
+        {
+          id: wallet.id,
+          balance: wallet.balance - amount,
+        },
+      );
+
+      return transaction;
+    } catch (error) {
+      console.log('🚀 ~ TransactionService ~ error:', error);
+      throw error;
+    }
   }
 }
