@@ -59,6 +59,10 @@ import { Report } from './report/definition/report.definition';
 import { Notification } from './notification/notification.definition';
 import { NotificationService } from './notification/notification.service';
 import { EventGateway } from './gateway/event.gateway';
+import { ExchangePayment } from './payment/payment.definition';
+import { PaymentService } from './payment/payment.service';
+import { ExchangePaymentResolver } from './payment/payment.resolver';
+import { NotificationResolver } from './notification/notification.resolver';
 
 console.log({ nod: configuration().NODE_ENV });
 
@@ -229,6 +233,9 @@ console.log({ nod: configuration().NODE_ENV });
         PaypalService,
         NotificationService,
         EventGateway,
+        PaymentService,
+        ExchangePaymentResolver,
+        NotificationResolver,
       ],
       contextDecorator: Ctx,
     }),
