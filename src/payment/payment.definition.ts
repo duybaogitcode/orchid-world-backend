@@ -32,7 +32,10 @@ export class ExchangePayment {
   afterExchange: number;
 
   @Property({ type: () => String, db: Skip })
-  total: string;
+  totalTopUp: string;
+
+  @Property({ type: () => String, db: Skip })
+  totalWithDraw: string;
 
   @Property({ type: () => ServiceProvider, db: Skip })
   serviceProvider: ServiceProvider;

@@ -9,6 +9,9 @@ import {
 } from './transaction.definition';
 import { Wallet } from './wallet.definition';
 import { PaypalService } from 'src/payment/paypal.service';
+import { WithdrawPaypalInput } from './dto/withdraw-paypal.input';
+import { Context } from 'src/auth/ctx';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class TransactionService {
@@ -130,5 +133,61 @@ export class TransactionService {
       page,
       limit,
     );
+  }
+
+  async withDrawPayPal(input: WithdrawPaypalInput, ctx: Context) {
+    const wallet = await this.walletService.model.findOne({
+      authorId: new ObjectId(ctx.id),
+    });
+
+    if (!wallet) {
+      throw new BadRequestException('Wallet not found');
+    }
+
+    const { totalWithDraw, payPalUserName } = input;
+
+    if (Number(totalWithDraw) <= 0) {
+      throw new BadRequestException('Amount must be greater than 0');
+    }
+
+    if (Number(totalWithDraw) > wallet.balance) {
+      throw new BadRequestException('Not enough balance');
+    }
+
+    const batchId = uuidv4();
+
+    try {
+      await this.paypalService.createPayout(
+        batchId,
+        totalWithDraw,
+        payPalUserName,
+        ctx.id.toString(),
+      );
+
+      const transaction = await this.transactionService.create(
+        {},
+        {
+          amount: +totalWithDraw,
+          walletId: wallet.id,
+          status: TransactionStatus.SUCCESS,
+          type: TransactionType.DECREASE,
+          paypalBatchId: batchId,
+          description: 'Rút tiền từ PayPal',
+        },
+      );
+
+      await this.walletService.update(
+        {},
+        {
+          id: wallet.id,
+          balance: wallet.balance - Number(totalWithDraw),
+        },
+      );
+
+      return transaction;
+    } catch (error) {
+      console.log('🚀 ~ TransactionService ~ error:', error);
+      throw error;
+    }
   }
 }

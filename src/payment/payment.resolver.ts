@@ -1,15 +1,15 @@
 import { Args, Mutation, Resolver } from '@nestjs/graphql';
 import { OutputType } from 'dryerjs';
-import { ShopOrUserOnly } from 'src/guard/roles.guard';
 import { PaymentService } from './payment.service';
 import { ExchangePayment } from './payment.definition';
 import { ExchangeInput } from './dto/exchange.input';
+import { AuthenticatedUser } from 'src/guard/roles.guard';
 
 @Resolver()
 export class ExchangePaymentResolver {
   constructor(private readonly paymentService: PaymentService) {}
 
-  @ShopOrUserOnly()
+  @AuthenticatedUser()
   @Mutation(() => OutputType(ExchangePayment), {
     name: 'exchangeMoney',
   })

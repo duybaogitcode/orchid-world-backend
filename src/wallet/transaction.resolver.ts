@@ -4,6 +4,8 @@ import { CreateTransactionDto } from './dto/create-transaction-dto';
 import { Context, Ctx } from 'src/auth/ctx';
 import { OutputType, PaginatedOutputType, SortDirection } from 'dryerjs';
 import { Transaction } from './transaction.definition';
+import { WithdrawPaypalInput } from './dto/withdraw-paypal.input';
+import { AuthenticatedUser } from 'src/guard/roles.guard';
 
 @Resolver()
 export class TransactionResolver {
@@ -15,6 +17,15 @@ export class TransactionResolver {
     @Ctx() ctx: Context,
   ) {
     return this.transactionService.createOne(input, ctx?.id);
+  }
+
+  @AuthenticatedUser()
+  @Mutation(() => OutputType(Transaction), { name: 'withDrawPaypal' })
+  withDrawPaypal(
+    @Args('input') input: WithdrawPaypalInput,
+    @Ctx() ctx: Context,
+  ) {
+    return this.transactionService.withDrawPayPal(input, ctx);
   }
 
   @Query(() => PaginatedOutputType(Transaction), { name: 'myTransactions' })

@@ -25,14 +25,16 @@ export class PaymentService {
         throw new Error('Unsupported service provider');
     }
 
-    const total = afterExchange + serviceFee;
+    const totalTopUp = afterExchange + serviceFee;
+    const totalWithDraw = afterExchange - serviceFee;
 
     return {
       ...input,
       afterExchange,
       serviceFee,
       rate,
-      total: total.toFixed(2).toString(),
+      totalTopUp: totalTopUp.toFixed(2).toString(),
+      totalWithDraw: totalWithDraw.toFixed(2).toString(),
     };
   }
 }
