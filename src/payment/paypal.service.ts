@@ -1,10 +1,12 @@
 import { Injectable } from '@nestjs/common';
 const paypal = require('@paypal/checkout-server-sdk');
+const paypalout = require('@paypal/payouts-sdk');
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class PaypalService {
   private client: any;
-
+  private clientout: any;
   constructor() {
     const clientId =
       'AXYpMOBg9oGL9_tWWf7P53A0XYoK-OR178XB_IQHoPkgcyhHhjDlx4j2bBSbQ0N-hwUVQimiCbkU7HHp';
@@ -15,6 +17,11 @@ export class PaypalService {
       client_secret,
     );
     this.client = new paypal.core.PayPalHttpClient(environment);
+    const payoutEvironment = new paypalout.core.SandboxEnvironment(
+      clientId,
+      client_secret,
+    );
+    this.clientout = new paypalout.core.PayPalHttpClient(payoutEvironment);
   }
 
   async getCapture(captureId: string) {
@@ -37,6 +44,40 @@ export class PaypalService {
       return true;
     } catch (err) {
       throw new Error('Payment not completed');
+    }
+  }
+
+  async createPayout() {
+    const bactchId = uuidv4();
+
+    try {
+      const request = new paypalout.payouts.PayoutsPostRequest();
+      request.requestBody({
+        sender_batch_header: {
+          recipient_type: 'EMAIL',
+          email_message: 'Duy Bao test chuyển tiền',
+          note: 'Enjoy your Payout!!',
+          sender_batch_id: bactchId,
+          email_subject: 'This is a test transaction from Orchid',
+        },
+        items: [
+          {
+            note: 'Your 1$ Payout!',
+            amount: {
+              currency: 'USD',
+              value: '5.00',
+            },
+            receiver: 'sb-hhjli29689413@personal.example.com',
+            sender_item_id: bactchId,
+          },
+        ],
+      });
+
+      const result = await this.clientout.execute(request);
+      console.log(result);
+    } catch (error) {
+      console.log(error);
+      throw error;
     }
   }
 }

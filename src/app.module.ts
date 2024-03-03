@@ -175,7 +175,7 @@ console.log({ nod: configuration().NODE_ENV });
         },
         {
           definition: Report,
-          allowedApis: ['findAll', 'findOne', 'remove'],
+          allowedApis: ['findAll', 'findOne', 'remove', 'create', 'update'],
         },
         {
           definition: ReportSolved,
