@@ -62,6 +62,7 @@ import { EventGateway } from './gateway/event.gateway';
 import { ExchangePayment } from './payment/payment.definition';
 import { PaymentService } from './payment/payment.service';
 import { ExchangePaymentResolver } from './payment/payment.resolver';
+import { NotificationResolver } from './notification/notification.resolver';
 
 console.log({ nod: configuration().NODE_ENV });
 
@@ -187,7 +188,14 @@ console.log({ nod: configuration().NODE_ENV });
 
         {
           definition: Notification,
-          allowedApis: ['findAll', 'findOne', 'create', 'update', 'remove'],
+          allowedApis: [
+            'findAll',
+            'findOne',
+            'create',
+            'update',
+            'remove',
+            'paginate',
+          ],
         },
 
         {
@@ -227,6 +235,7 @@ console.log({ nod: configuration().NODE_ENV });
         EventGateway,
         PaymentService,
         ExchangePaymentResolver,
+        NotificationResolver,
       ],
       contextDecorator: Ctx,
     }),

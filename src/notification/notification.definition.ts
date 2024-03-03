@@ -1,5 +1,11 @@
 import { registerEnumType } from '@nestjs/graphql';
-import { Definition, Embedded, GraphQLObjectId, Property } from 'dryerjs';
+import {
+  Definition,
+  Embedded,
+  Filterable,
+  GraphQLObjectId,
+  Property,
+} from 'dryerjs';
 import { BaseModel } from 'src/base/base.definition';
 
 export enum NotificationTypeEnum {
@@ -24,9 +30,21 @@ registerEnumType(NotificationTypeEnum, {
 export class Notification extends BaseModel() {
   @Property({
     type: () => String,
+    nullable: true,
+    db: {
+      default: '/',
+    },
+  })
+  href: string;
+
+  @Property({
+    type: () => String,
   })
   message: string;
 
+  @Filterable(() => GraphQLObjectId, {
+    operators: ['eq'],
+  })
   @Property({
     type: () => GraphQLObjectId,
     nullable: true,
