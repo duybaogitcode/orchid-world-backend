@@ -33,7 +33,8 @@ export class EventGateway
   }
 
   emitTo(room: string, event: string, data: any) {
-    this.server.to(room).emit(event, data);
+    console.log({ room: this.socketMap.get(room).id });
+    this.server.to(this.socketMap.get(room).id).emit(event, data);
   }
 
   onModuleInit() {
@@ -57,6 +58,7 @@ export class EventGateway
     console.log('🚀 ~ joinRoom ~ room:', room);
     client.join(room);
     client.emit('joinedRoom', room);
+    this.socketMap.set(room, client);
   }
 
   @SubscribeMessage('leaveRoom')
