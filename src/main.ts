@@ -12,7 +12,7 @@ async function bootstrap() {
     origin: [
       'http://localhost:3000',
       'https://studio.apollographql.com',
-      'https://orchid-world-frontend.vercel.app'
+      'https://orchid-world-frontend.vercel.app',
       'https://orchid.movie-world.store',
     ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
