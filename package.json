@@ -42,6 +42,7 @@
     "class-validator": "^0.14.1",
     "cookie-parser": "^1.4.6",
     "dataloader": "^2.2.2",
+    "dayjs": "^1.11.10",
     "dryerjs": "^1.5.5",
     "graphql": "^16.8.1",
     "graphql-upload-ts": "^2.1.0",

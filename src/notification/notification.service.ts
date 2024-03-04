@@ -5,6 +5,20 @@ import { Context } from 'src/auth/ctx';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { EventGateway } from 'src/gateway/event.gateway';
 import { SystemNotificationDto } from './dto/system-notification.dto';
+import { registerEnumType } from '@nestjs/graphql';
+
+export enum NotificationEvent {
+  READ = 'notification:read',
+  SEND = 'notification:send',
+}
+
+registerEnumType(NotificationEvent, {
+  name: 'NotificationEvent',
+});
+
+// export const NotificationFactory = {
+//   input:
+// }
 
 @Injectable()
 export class NotificationService {
@@ -28,11 +42,11 @@ export class NotificationService {
   }
 
   async readNotification(id: ObjectId) {
-    this.eventEmitter.emit('notification.read', id);
+    this.eventEmitter.emit(NotificationEvent.READ, id);
     return true;
   }
 
-  @OnEvent('notification.read')
+  @OnEvent(NotificationEvent.READ)
   async handleReadNotification(id: ObjectId) {
     try {
       if (!id) throw new Error('id is required');
@@ -49,7 +63,7 @@ export class NotificationService {
     }
   }
 
-  @OnEvent('send-notification')
+  @OnEvent(NotificationEvent.SEND)
   async handleSendNotification({
     message,
     notificationType,

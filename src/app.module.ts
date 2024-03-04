@@ -65,6 +65,12 @@ import { ExchangePaymentResolver } from './payment/payment.resolver';
 import { NotificationResolver } from './notification/notification.resolver';
 import { OrderEvidence } from './order/definition/orderEvidence.definition';
 import { OrderIssues } from './order/definition/orderIssues.definition';
+import {
+  AuctionSubscription,
+  UserSubscription,
+} from './subscription/subscription.definition';
+import { SubscriptionService } from './subscription/subscription.service';
+import { SubscriptionResolver } from './subscription/subscription.resolver';
 
 console.log({ nod: configuration().NODE_ENV });
 
@@ -199,7 +205,6 @@ console.log({ nod: configuration().NODE_ENV });
             'paginate',
           ],
         },
-
         {
           definition: ExchangePayment,
           allowedApis: [],
@@ -212,6 +217,27 @@ console.log({ nod: configuration().NODE_ENV });
         {
           definition: OrderIssues,
           allowedApis: [],
+        },
+        {
+          definition: AuctionSubscription,
+          allowedApis: [
+            'findAll',
+            'findOne',
+            'create',
+            'update',
+            'remove',
+            'paginate',
+          ],
+        },
+        {
+          definition: UserSubscription,
+          allowedApis: ['findAll', 'findOne', 'create', 'update', 'remove'],
+          decorators: {
+            findAll: [Admin()],
+            create: [UserOnly()],
+            update: [UserOnly()],
+            remove: [UserOnly()],
+          },
         },
         // Media,
         // Auction,
@@ -247,6 +273,8 @@ console.log({ nod: configuration().NODE_ENV });
         PaymentService,
         ExchangePaymentResolver,
         NotificationResolver,
+        SubscriptionService,
+        SubscriptionResolver,
       ],
       contextDecorator: Ctx,
     }),
