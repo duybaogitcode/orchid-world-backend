@@ -8,6 +8,7 @@ import {
   ObjectId,
   OutputType,
   Property,
+  Skip,
 } from 'dryerjs';
 import { GraphQLObjectType } from 'graphql';
 import { skip } from 'node:test';
@@ -27,6 +28,12 @@ export class address {
 
   @Property({ type: () => String })
   detail: string;
+}
+
+@Definition()
+export class AddressWithDefaultPriority extends address {
+  @Property({ type: () => Boolean })
+  isDefault: boolean;
 }
 
 @Definition()
@@ -63,17 +70,15 @@ export class User extends BaseModel() {
   @Property()
   lastName: String;
 
-  @Property({
-    type: () => [String],
-    nullable: true,
-  })
-  address: String[];
+  @Embedded(() => AddressWithDefaultPriority)
+  address: AddressWithDefaultPriority[];
 
   @Property({
     db: {
       unique: true,
       index: true,
     },
+    update: Skip,
   })
   email: String;
 
@@ -100,6 +105,7 @@ export class User extends BaseModel() {
 
   @Property({
     type: () => GraphQLObjectId,
+    update: Skip,
   })
   roleId: ObjectId;
 
