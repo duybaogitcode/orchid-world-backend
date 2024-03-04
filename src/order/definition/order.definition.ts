@@ -19,6 +19,9 @@ import { User } from 'src/user/user.definition';
 // import { OrderTransaction } from './orderTransaction.definition';
 import { forwardRef } from '@nestjs/common';
 import { OrderTransaction } from './orderTransaction.definition';
+import { OrderEvidence } from './orderEvidence.definition';
+import { OrderIssues } from './orderIssues.definition';
+import { FileUpload, GraphQLUpload } from 'graphql-upload-ts';
 
 export enum OrderStatus {
   PENDING = 'PENDING',
@@ -26,6 +29,8 @@ export enum OrderStatus {
   WAITING = 'WAITING',
   CANCELED = 'CANCELED',
   DELIVERED = 'DELIVERED',
+  CONFIRMED_RECEIPT = 'CONFIRMED_RECEIPT',
+  RETURNED = 'RETURNED',
 }
 
 registerEnumType(OrderStatus, {
@@ -146,6 +151,31 @@ export class Order extends BaseModelHasOwner() {
 
   @Embedded(() => DeliveredUnit)
   deliveredUnit: DeliveredUnit;
+
+  @HasMany(() => OrderEvidence, {
+    to: 'orderId',
+    allowCreateWithin: true,
+    allowFindAll: true,
+  })
+  orderEvidence: OrderEvidence[];
+
+  @HasMany(() => OrderIssues, {
+    to: 'orderId',
+    allowCreateWithin: true,
+    allowFindAll: true,
+  })
+  orderIssues: OrderIssues[];
+
+  @Property({
+    type: () => GraphQLUpload,
+    db: Skip,
+    output: Skip,
+    nullable: true,
+  })
+  file: Promise<FileUpload>;
+
+  @Property({ type: () => String, db: Skip, output: Skip })
+  description: string;
 }
 
 @Definition({ timestamps: true })

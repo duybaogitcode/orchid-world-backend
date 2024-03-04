@@ -63,6 +63,8 @@ import { ExchangePayment } from './payment/payment.definition';
 import { PaymentService } from './payment/payment.service';
 import { ExchangePaymentResolver } from './payment/payment.resolver';
 import { NotificationResolver } from './notification/notification.resolver';
+import { OrderEvidence } from './order/definition/orderEvidence.definition';
+import { OrderIssues } from './order/definition/orderIssues.definition';
 
 console.log({ nod: configuration().NODE_ENV });
 
@@ -200,6 +202,15 @@ console.log({ nod: configuration().NODE_ENV });
 
         {
           definition: ExchangePayment,
+          allowedApis: [],
+        },
+
+        {
+          definition: OrderEvidence,
+          allowedApis: [],
+        },
+        {
+          definition: OrderIssues,
           allowedApis: [],
         },
         // Media,
