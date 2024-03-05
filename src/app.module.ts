@@ -221,10 +221,10 @@ console.log({ nod: configuration().NODE_ENV });
           definition: OrderEvidence,
           allowedApis: [],
         },
-        {
-          definition: OrderIssues,
-          allowedApis: [],
-        },
+        // {
+        //   definition: OrderIssues,
+        //   allowedApis: [],
+        // },
         // Media,
         // Auction,
         // AuctionBiddingHistory,

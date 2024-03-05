@@ -12,6 +12,7 @@ import { CreateOrder } from './dto/create-order.dto';
 import { OrderTransaction } from './definition/orderTransaction.definition';
 import {
   AuthenticatedUser,
+  ShippingOnly,
   ShopOnly,
   ShopOrUserOnly,
 } from 'src/guard/roles.guard';
@@ -117,6 +118,21 @@ export class OrderTransactionResolver {
     try {
       const updatedOrder =
         await this.orderTransactionService.shopUpdateStatusOrder(input, ctx);
+      return updatedOrder;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  @ShippingOnly()
+  @Mutation(() => OutputType(Order), { name: 'shipperUpdateOrderStatus' })
+  async shipperUpdateOrderStatus(
+    @Args('input') input: UpdateOrder,
+    @Ctx() ctx: Context,
+  ) {
+    try {
+      const updatedOrder =
+        await this.orderTransactionService.shipperUpdateStatusOrder(input, ctx);
       return updatedOrder;
     } catch (error) {
       throw error;

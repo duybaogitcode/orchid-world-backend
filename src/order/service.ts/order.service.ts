@@ -427,4 +427,71 @@ export class OrderTransactionService {
       input: inputTransaction,
     });
   }
+
+  async shipperUpdateStatusOrder(input: UpdateOrder, ctx: Context) {
+    const session = await this.orderService.model.db.startSession();
+    session.startTransaction();
+
+    try {
+      const order = await this.orderService.model
+        .findOne({
+          code: input.code,
+        })
+        .session(session);
+
+      if (!order) {
+        throw new Error('Order not found');
+      }
+
+      if (order.status !== OrderStatus.SHIPPING) {
+        throw new Error('Order is not shipping');
+      }
+
+      if (ctx.roleId.toString() !== UserRole.SHIPPING) {
+        throw new Error('Access denied');
+      }
+
+      if (
+        input.status !== OrderStatus.DELIVERED &&
+        input.status !== OrderStatus.WAITING
+      ) {
+        throw new Error(
+          'Invalid status, Shipper can only update to delivered or waiting status',
+        );
+      }
+
+      order.status = input.status;
+      await order.save({ session });
+
+      if (input.status === OrderStatus.WAITING) {
+        if (!input.file) {
+          throw new Error('File is required when status is waiting');
+        }
+        if (!input.description) {
+          throw new Error('Description is required when status is waiting');
+        }
+      }
+
+      this.eventEmitter.emit('Order.status.updated', {
+        input: input,
+        inputOrder: order,
+        ctx: ctx,
+      });
+
+      this.eventEmitter.emit('send-notification', {
+        message: `Đơn hàng ${order.code} đã được cập nhật`,
+        notificationType: NotificationTypeEnum.ORDER,
+        receiver: order.authorId,
+      });
+
+      await session.commitTransaction();
+      session.endSession();
+
+      return order;
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
+    }
+  }
 }
