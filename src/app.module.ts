@@ -72,6 +72,12 @@ import { NotificationResolver } from './notification/notification.resolver';
 import { OrderEvidence } from './order/definition/orderEvidence.definition';
 import { OrderIssues } from './order/definition/orderIssues.definition';
 import { OrderEvidenceEvent } from './order/event/orderEvidence.event';
+import {
+  AuctionSubscription,
+  UserSubscription,
+} from './subscription/subscription.definition';
+import { SubscriptionService } from './subscription/subscription.service';
+import { SubscriptionResolver } from './subscription/subscription.resolver';
 
 console.log({ nod: configuration().NODE_ENV });
 
@@ -211,7 +217,6 @@ console.log({ nod: configuration().NODE_ENV });
             'paginate',
           ],
         },
-
         {
           definition: ExchangePayment,
           allowedApis: [],
@@ -225,6 +230,31 @@ console.log({ nod: configuration().NODE_ENV });
         //   definition: OrderIssues,
         //   allowedApis: [],
         // },
+        {
+          definition: OrderIssues,
+          allowedApis: [],
+        },
+        {
+          definition: AuctionSubscription,
+          allowedApis: [
+            'findAll',
+            'findOne',
+            'create',
+            'update',
+            'remove',
+            'paginate',
+          ],
+        },
+        {
+          definition: UserSubscription,
+          allowedApis: ['findAll', 'findOne', 'create', 'update', 'remove'],
+          decorators: {
+            findAll: [Admin()],
+            create: [UserOnly()],
+            update: [UserOnly()],
+            remove: [UserOnly()],
+          },
+        },
         // Media,
         // Auction,
         // AuctionBiddingHistory,
@@ -260,6 +290,8 @@ console.log({ nod: configuration().NODE_ENV });
         ExchangePaymentResolver,
         NotificationResolver,
         OrderEvidenceEvent,
+        SubscriptionService,
+        SubscriptionResolver,
       ],
       contextDecorator: Ctx,
     }),
