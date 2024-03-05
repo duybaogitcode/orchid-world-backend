@@ -232,15 +232,11 @@ export class OrderTransactionService {
         },
       });
 
-      const notification = {
+      this.eventEmitter.emit('send-notification', {
         message:
           'Đơn hàng ' + newOrderTransaction.codeBill + ' đã được cập nhật',
         notificationType: NotificationTypeEnum.ORDER,
         receiver: new ObjectId(uid),
-      };
-
-      this.eventEmitter.emit('send-notification', {
-        input: notification,
       });
       await session.commitTransaction();
       session.endSession();
