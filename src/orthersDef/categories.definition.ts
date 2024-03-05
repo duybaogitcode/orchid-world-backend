@@ -1,5 +1,6 @@
 import {
   Definition,
+  Filterable,
   GraphQLObjectId,
   HasMany,
   ObjectId,
@@ -16,6 +17,7 @@ export class Categories extends BaseModel() {
   @Property({ db: { unique: true } })
   name: string;
 
+  @Filterable(() => String, { operators: ['eq'] })
   @Property({ db: { unique: true } })
   slug: string;
 

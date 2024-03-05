@@ -116,7 +116,7 @@ console.log({ nod: configuration().NODE_ENV });
       definitions: [
         {
           definition: Product,
-          allowedApis: ['findAll', 'paginate'],
+          allowedApis: ['findAll', 'paginate', 'essentials'],
         },
 
         {
@@ -129,7 +129,15 @@ console.log({ nod: configuration().NODE_ENV });
         },
         {
           definition: Categories,
-          allowedApis: ['findAll', 'findOne', 'create', 'update', 'remove'],
+          allowedApis: [
+            'findAll',
+            'findOne',
+            'create',
+            'update',
+            'remove',
+            'paginate',
+            'essentials',
+          ],
         },
         {
           definition: User,

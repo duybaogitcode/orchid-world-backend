@@ -122,6 +122,9 @@ export class Product extends BaseModelHasOwner() {
   @Property({ type: () => GraphQLObjectId, output: Skip })
   category_id: ObjectId;
 
+  @Filterable(() => String, {
+    operators: ['all'],
+  })
   @BelongsTo(() => Categories, { from: 'category_id' })
   category: Categories;
 
