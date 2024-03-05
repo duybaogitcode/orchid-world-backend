@@ -37,7 +37,13 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
 import { CartItemService } from './cart/services/cartItem.service';
 import { CartIShopItemService } from './cart/services/cartItemShop.service';
-import { Admin, ShopOnly, ShopOrUserOnly, UserOnly } from './guard/roles.guard';
+import {
+  Admin,
+  ManagerOrStaff,
+  ShopOnly,
+  ShopOrUserOnly,
+  UserOnly,
+} from './guard/roles.guard';
 import { CartEvent } from './event/cart.event';
 import { Transaction } from './wallet/transaction.definition';
 import { TransactionService } from './wallet/transaction.service';
@@ -65,6 +71,7 @@ import { ExchangePaymentResolver } from './payment/payment.resolver';
 import { NotificationResolver } from './notification/notification.resolver';
 import { OrderEvidence } from './order/definition/orderEvidence.definition';
 import { OrderIssues } from './order/definition/orderIssues.definition';
+import { OrderEvidenceEvent } from './order/event/orderEvidence.event';
 import {
   AuctionSubscription,
   UserSubscription,
@@ -126,9 +133,10 @@ console.log({ nod: configuration().NODE_ENV });
         },
         {
           definition: User,
-          allowedApis: ['findAll', 'findOne', 'bulkRemove', 'update'],
+          allowedApis: ['findAll', 'findOne', 'bulkRemove', 'update', 'create'],
           decorators: {
             findAll: [Admin()],
+            create: [Admin()],
             bulkRemove: [Admin()],
           },
         },
@@ -163,6 +171,10 @@ console.log({ nod: configuration().NODE_ENV });
         {
           definition: Order,
           allowedApis: ['findAll', 'paginate'],
+          decorators: {
+            findAll: [ManagerOrStaff()],
+            paginate: [ManagerOrStaff()],
+          },
         },
         {
           definition: OrderTransaction,
@@ -214,6 +226,10 @@ console.log({ nod: configuration().NODE_ENV });
           definition: OrderEvidence,
           allowedApis: [],
         },
+        // {
+        //   definition: OrderIssues,
+        //   allowedApis: [],
+        // },
         {
           definition: OrderIssues,
           allowedApis: [],
@@ -273,6 +289,7 @@ console.log({ nod: configuration().NODE_ENV });
         PaymentService,
         ExchangePaymentResolver,
         NotificationResolver,
+        OrderEvidenceEvent,
         SubscriptionService,
         SubscriptionResolver,
       ],

@@ -6,8 +6,8 @@ const updateOrder = UpdateInputType(Order);
 
 @InputType()
 export class UpdateOrder extends PickType(updateOrder, [
-  'id',
   'file',
-  'status',
   'description',
+  'status',
+  'code',
 ] as const) {}

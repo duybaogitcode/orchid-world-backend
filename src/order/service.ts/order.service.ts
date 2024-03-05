@@ -15,6 +15,8 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Wallet } from 'src/wallet/wallet.definition';
 import { contains } from 'class-validator';
 import { UserRole } from 'src/guard/roles.guard';
+import { UpdateOrder } from '../dto/update-order.dto';
+import { NotificationTypeEnum } from 'src/notification/notification.definition';
 
 @Injectable()
 export class OrderTransactionService {
@@ -229,6 +231,17 @@ export class OrderTransactionService {
           uid,
         },
       });
+
+      const notification = {
+        message:
+          'Đơn hàng ' + newOrderTransaction.codeBill + ' đã được cập nhật',
+        notificationType: NotificationTypeEnum.ORDER,
+        receiver: new ObjectId(uid),
+      };
+
+      this.eventEmitter.emit('send-notification', {
+        input: notification,
+      });
       await session.commitTransaction();
       session.endSession();
       return newOrderTransaction;
@@ -307,6 +320,178 @@ export class OrderTransactionService {
         );
       default:
         return await this.orderService.paginate(ctx, filter, sort, page, limit);
+    }
+  }
+
+  async autoUpdateStatusOrder() {
+    const orders = await this.orderService.model.find({
+      status: OrderStatus.PENDING,
+    });
+
+    orders.forEach((order) => {
+      if (order.createdAt.getTime() + 1000 * 60 * 60 * 24 * 7 < Date.now()) {
+        order.status = OrderStatus.CANCELED;
+        order.save();
+      }
+    });
+  }
+
+  async shopUpdateStatusOrder(input: UpdateOrder, ctx: Context) {
+    const session = await this.orderService.model.db.startSession();
+    session.startTransaction();
+
+    try {
+      const order = await this.orderService.model
+        .findOne({
+          code: input.code,
+        })
+        .session(session);
+
+      if (!order) {
+        throw new Error('Order not found');
+      }
+
+      if (order.status !== OrderStatus.PENDING) {
+        throw new Error('Order is not pending');
+      }
+
+      if (
+        input.status !== OrderStatus.CANCELED &&
+        input.status !== OrderStatus.SHIPPING
+      ) {
+        throw new Error(
+          'Invalid status, Shop can only update to shipping or cancel status',
+        );
+      }
+
+      if (order.shopId.toString() !== ctx.id.toString()) {
+        throw new Error('Access denied');
+      }
+
+      order.status = input.status;
+      await order.save({ session });
+
+      if (order.status === OrderStatus.CANCELED) {
+        await this.handleOrderCancellation(order, ctx, session);
+      }
+
+      input.description = input.description || 'Đơn hàng bắt đầu vận chuyển';
+
+      this.eventEmitter.emit('Order.status.updated', {
+        input: input,
+        inputOrder: order,
+        ctx: ctx,
+      });
+
+      this.eventEmitter.emit('send-notification', {
+        message: `Đơn hàng ${order.code} đã được cập nhật`,
+        notificationType: NotificationTypeEnum.ORDER,
+        receiver: order.authorId,
+      });
+
+      await session.commitTransaction();
+      session.endSession();
+      return order;
+    } catch (error) {
+      console.log(error);
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
+    }
+  }
+
+  async handleOrderCancellation(order, ctx, session) {
+    const wallet = await this.wallet.model
+      .findOne({ authorId: new ObjectId(ctx.id) })
+      .session(session);
+
+    if (!wallet) {
+      throw new Error('Wallet not found');
+    }
+
+    const refundAmount = order.totalAmount * 0.1;
+    wallet.balance -= refundAmount;
+    if (wallet.balance < 0) {
+      wallet.balance = 0;
+    }
+    await wallet.save({ session });
+
+    const inputTransaction = {
+      message: `Trừ tiền hủy đơn hàng ${order.code} ${refundAmount}`,
+      amount: refundAmount,
+      type: '0',
+      walletId: wallet._id,
+    };
+
+    this.eventEmitter.emit('Wallet.updated', {
+      input: inputTransaction,
+    });
+  }
+
+  async shipperUpdateStatusOrder(input: UpdateOrder, ctx: Context) {
+    const session = await this.orderService.model.db.startSession();
+    session.startTransaction();
+
+    try {
+      const order = await this.orderService.model
+        .findOne({
+          code: input.code,
+        })
+        .session(session);
+
+      if (!order) {
+        throw new Error('Order not found');
+      }
+
+      if (order.status !== OrderStatus.SHIPPING) {
+        throw new Error('Order is not shipping');
+      }
+
+      if (ctx.roleId.toString() !== UserRole.SHIPPING) {
+        throw new Error('Access denied');
+      }
+
+      if (
+        input.status !== OrderStatus.DELIVERED &&
+        input.status !== OrderStatus.WAITING
+      ) {
+        throw new Error(
+          'Invalid status, Shipper can only update to delivered or waiting status',
+        );
+      }
+
+      order.status = input.status;
+      await order.save({ session });
+
+      if (input.status === OrderStatus.WAITING) {
+        if (!input.file) {
+          throw new Error('File is required when status is waiting');
+        }
+        if (!input.description) {
+          throw new Error('Description is required when status is waiting');
+        }
+      }
+
+      this.eventEmitter.emit('Order.status.updated', {
+        input: input,
+        inputOrder: order,
+        ctx: ctx,
+      });
+
+      this.eventEmitter.emit('send-notification', {
+        message: `Đơn hàng ${order.code} đã được cập nhật`,
+        notificationType: NotificationTypeEnum.ORDER,
+        receiver: order.authorId,
+      });
+
+      await session.commitTransaction();
+      session.endSession();
+
+      return order;
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
     }
   }
 }

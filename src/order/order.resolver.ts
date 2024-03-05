@@ -12,11 +12,13 @@ import { CreateOrder } from './dto/create-order.dto';
 import { OrderTransaction } from './definition/orderTransaction.definition';
 import {
   AuthenticatedUser,
+  ShippingOnly,
   ShopOnly,
   ShopOrUserOnly,
 } from 'src/guard/roles.guard';
 import { OrderTransactionService } from './service.ts/order.service';
 import { Order } from './definition/order.definition';
+import { UpdateOrder } from './dto/update-order.dto';
 
 const orderOutputType = OutputType(OrderTransaction);
 
@@ -102,6 +104,36 @@ export class OrderTransactionResolver {
         limit,
         'shopId',
       );
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  @ShopOnly()
+  @Mutation(() => OutputType(Order), { name: 'shopUpdateOrderStatus' })
+  async shopUpdateOrderStatus(
+    @Args('input') input: UpdateOrder,
+    @Ctx() ctx: Context,
+  ) {
+    try {
+      const updatedOrder =
+        await this.orderTransactionService.shopUpdateStatusOrder(input, ctx);
+      return updatedOrder;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  @ShippingOnly()
+  @Mutation(() => OutputType(Order), { name: 'shipperUpdateOrderStatus' })
+  async shipperUpdateOrderStatus(
+    @Args('input') input: UpdateOrder,
+    @Ctx() ctx: Context,
+  ) {
+    try {
+      const updatedOrder =
+        await this.orderTransactionService.shipperUpdateStatusOrder(input, ctx);
+      return updatedOrder;
     } catch (error) {
       throw error;
     }

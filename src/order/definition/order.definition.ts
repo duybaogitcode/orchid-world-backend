@@ -25,7 +25,7 @@ import { FileUpload, GraphQLUpload } from 'graphql-upload-ts';
 
 export enum OrderStatus {
   PENDING = 'PENDING',
-  PROCESSING = 'PROCESSING',
+  SHIPPING = 'SHIPPING',
   WAITING = 'WAITING',
   CANCELED = 'CANCELED',
   DELIVERED = 'DELIVERED',
@@ -159,13 +159,6 @@ export class Order extends BaseModelHasOwner() {
   })
   orderEvidence: OrderEvidence[];
 
-  @HasMany(() => OrderIssues, {
-    to: 'orderId',
-    allowCreateWithin: true,
-    allowFindAll: true,
-  })
-  orderIssues: OrderIssues[];
-
   @Property({
     type: () => GraphQLUpload,
     db: Skip,
@@ -176,6 +169,9 @@ export class Order extends BaseModelHasOwner() {
 
   @Property({ type: () => String, db: Skip, output: Skip })
   description: string;
+
+  @Property({ type: () => String, db: Skip, output: Skip })
+  issue: string;
 }
 
 @Definition({ timestamps: true })

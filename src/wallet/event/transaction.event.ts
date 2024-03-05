@@ -48,4 +48,29 @@ export class TransactionEvent {
       throw error;
     }
   }
+
+  @OnEvent('Wallet.updated')
+  async createTransactionAfterWalletUpdated({
+    input,
+  }: AfterCreateHookInput<any, Context>) {
+    const session = await this.transaction.model.db.startSession();
+    session.startTransaction();
+    try {
+      await this.transaction.model.create({
+        amount: input.amount,
+        type: input.type,
+        status: 'SUCCESS',
+        description: input.message,
+        walletId: input.walletId,
+      });
+
+      await session.commitTransaction();
+      session.endSession();
+    } catch (error) {
+      console.log(error);
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
+    }
+  }
 }
