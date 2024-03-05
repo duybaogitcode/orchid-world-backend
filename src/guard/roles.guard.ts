@@ -117,6 +117,13 @@ export const ManagerOnly = () => {
   );
 };
 
+export const ShippingOnly = () => {
+  return applyDecorators(
+    RoleMultiCheck([UserRole.SHIPPING]),
+    UseGuards(RoleMultiGuard),
+  );
+};
+
 export const ManagerOrStaff = () => {
   return applyDecorators(
     RoleMultiCheck([UserRole.MANAGER, UserRole.STAFF]),
@@ -145,6 +152,7 @@ export const AuthenticatedUser = () => {
       UserRole.STAFF,
       UserRole.MANAGER,
       UserRole.ADMIN,
+      UserRole.SHIPPING,
     ]),
     UseGuards(RoleMultiGuard),
   );
@@ -155,6 +163,7 @@ export enum UserRole {
   SHOP_OWNER = '65d4ae42f18fa2591d75c6c8',
   STAFF = '65d594658407311c88986cf1',
   MANAGER = '65d5946c8407311c88986cf6',
+  SHIPPING = '65e6acb8e400da00a5bdf109',
   ADMIN = '65d594718407311c88986cfb',
 }
 

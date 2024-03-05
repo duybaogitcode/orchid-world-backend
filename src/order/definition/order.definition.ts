@@ -25,7 +25,7 @@ import { FileUpload, GraphQLUpload } from 'graphql-upload-ts';
 
 export enum OrderStatus {
   PENDING = 'PENDING',
-  PROCESSING = 'PROCESSING',
+  SHIPPING = 'SHIPPING',
   WAITING = 'WAITING',
   CANCELED = 'CANCELED',
   DELIVERED = 'DELIVERED',

@@ -17,22 +17,22 @@ import { BaseModel } from 'src/base/base.definition';
 
 @Definition()
 export class address {
-  @Property({ type: () => String })
+  @Property({ type: () => String, nullable: true })
   city: string;
 
-  @Property({ type: () => String })
+  @Property({ type: () => String, nullable: true })
   district: string;
 
-  @Property({ type: () => String })
+  @Property({ type: () => String, nullable: true })
   ward: string;
 
-  @Property({ type: () => String })
+  @Property({ type: () => String, nullable: true })
   detail: string;
 }
 
 @Definition()
 export class AddressWithDefaultPriority extends address {
-  @Property({ type: () => Boolean })
+  @Property({ type: () => Boolean, nullable: true })
   isDefault: boolean;
 }
 

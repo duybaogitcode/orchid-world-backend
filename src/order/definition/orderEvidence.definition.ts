@@ -12,7 +12,7 @@ import { Order, OrderStatus } from './order.definition';
   timestamps: true,
 })
 export class OrderEvidence extends BaseModelHasOwner() {
-  @Property({ type: () => String })
+  @Property({ type: () => String, nullable: true })
   media: string;
 
   @Property({ type: () => GraphQLObjectId })

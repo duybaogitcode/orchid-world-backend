@@ -60,6 +60,7 @@ export class NotificationService {
     receiver: ObjectId;
   }) {
     try {
+      console.log('receiver', message);
       const createdNotification = await this.notificationService.create(null, {
         message,
         notificationType,

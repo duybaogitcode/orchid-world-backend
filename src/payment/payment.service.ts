@@ -12,7 +12,6 @@ export class PaymentService {
     switch (input.serviceProvider) {
       case ServiceProvider.paypal:
         afterExchange = input.amount / Rates.USD;
-        console.log(afterExchange);
         serviceFee = afterExchange * 0.0544;
         rate = Rates.USD;
         break;
