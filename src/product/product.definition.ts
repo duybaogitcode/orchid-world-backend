@@ -22,6 +22,9 @@ export const BaseModelHasOwner = (
   { unique }: { unique?: boolean } = { unique: false },
 ) => {
   class BaseModelHasOwnerClass extends BaseModel() {
+    @Filterable(() => GraphQLObjectId, {
+      operators: ['eq'],
+    })
     @Property({
       type: () => GraphQLObjectId,
       create: Skip,
@@ -119,6 +122,9 @@ export class Product extends BaseModelHasOwner() {
   })
   tags: TagWithValues[];
 
+  @Filterable(() => String, {
+    operators: ['eq'],
+  })
   @Property({ type: () => GraphQLObjectId, output: Skip })
   category_id: ObjectId;
 
