@@ -11,6 +11,10 @@ import {
   UserSubscription,
 } from './subscription.definition';
 import { PaypalService } from 'src/payment/paypal.service';
+import {
+  Transaction,
+  TransactionStatus,
+} from 'src/wallet/transaction.definition';
 @Injectable()
 export class SubscriptionService {
   constructor(
@@ -19,6 +23,8 @@ export class SubscriptionService {
       AuctionSubscription,
       {}
     >,
+    @InjectBaseService(Transaction)
+    private readonly transactionService: BaseService<Transaction, {}>,
     @InjectBaseService(UserSubscription)
     private readonly userSubscription: BaseService<UserSubscription, {}>,
     private readonly eventEmitter: EventEmitter2,
@@ -30,21 +36,30 @@ export class SubscriptionService {
   }
   async subscribe(userId: ObjectId, input: SubscribeToSubscriptionDTO) {
     if (!userId) throw new UnauthorizedException();
-    if (!input.paypalId) throw new Error('Payment is required');
+    if (!input.transactionId) throw new Error('Payment is required');
 
-    const isPaid = await this.paypalService.getCapture(
-      input.paypalId as string,
+    const transaction = await this.transactionService.findOne(
+      {},
+      {
+        id: input.transactionId,
+      },
     );
 
-    if (!isPaid) {
-      throw new Error('Payment not completed');
-    }
     const subscription = await this.auctionSubscriptionService.findOne(
       {},
       {
         planId: input.planId,
       },
     );
+
+    if (transaction.status !== TransactionStatus.SUCCESS) {
+      throw new Error('Invalid transaction status');
+    }
+
+    if (transaction.amount !== subscription.price) {
+      throw new Error('Invalid transaction amount');
+    }
+
     // TODO: Does user have subscription before?
     const userSubscription = await this.userSubscription.findOne(
       {},

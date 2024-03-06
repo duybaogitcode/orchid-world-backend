@@ -78,6 +78,7 @@ import {
 } from './subscription/subscription.definition';
 import { SubscriptionService } from './subscription/subscription.service';
 import { SubscriptionResolver } from './subscription/subscription.resolver';
+import { Auction } from './auction/auction.definition';
 
 console.log({ nod: configuration().NODE_ENV });
 
@@ -260,6 +261,23 @@ console.log({ nod: configuration().NODE_ENV });
             create: [UserOnly()],
             update: [UserOnly()],
             remove: [UserOnly()],
+          },
+        },
+        {
+          definition: Auction,
+          allowedApis: [
+            'findAll',
+            'findOne',
+            'create',
+            'update',
+            'remove',
+            'paginate',
+            'essentials',
+          ],
+          decorators: {
+            create: [ShopOnly()],
+            update: [ShopOnly()],
+            remove: [ShopOnly()],
           },
         },
         // Media,
