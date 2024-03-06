@@ -15,6 +15,8 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { User } from 'src/user/user.definition';
 import { stat } from 'node:fs';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { ProductEventEnum } from './event/product.event';
 
 @Injectable()
 export class ProductService {
@@ -26,6 +28,7 @@ export class ProductService {
     private readonly firebaseService: FirebaseService,
     @InjectBaseService(User)
     public userService: BaseService<User, Context>,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async create(createProductDto: CreateProductInput, uid: ObjectId) {
@@ -82,6 +85,7 @@ export class ProductService {
   }
 
   async update(updateProductDto: UpdateProductInput) {
+    console.log('updateProductDto', updateProductDto);
     const session = await this.productService.model.startSession();
     session.startTransaction();
     let uploadFile: string[] = [];
@@ -159,13 +163,11 @@ export class ProductService {
         await this.tagWithValues.model.insertMany(tagValues, { session });
       }
 
-      // if (deleteUrl && deleteUrl.length > 0) {
-      //   await Promise.all(
-      //     deleteUrl.map((filePath) =>
-      //       this.firebaseService.deleteFile(filePath),
-      //     ),
-      //   );
-      // }
+      if (deleteUrl && deleteUrl.length > 0) {
+        this.eventEmitter.emit(ProductEventEnum.DELETEURL, {
+          input: deleteUrl,
+        });
+      }
 
       await session.commitTransaction();
       session.endSession();
