@@ -17,6 +17,7 @@ import { User } from 'src/user/user.definition';
 import { stat } from 'node:fs';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ProductEventEnum } from './event/product.event';
+import { Categories } from 'src/orthersDef/categories.definition';
 
 @Injectable()
 export class ProductService {
@@ -29,6 +30,8 @@ export class ProductService {
     @InjectBaseService(User)
     public userService: BaseService<User, Context>,
     private readonly eventEmitter: EventEmitter2,
+    @InjectBaseService(Categories)
+    public categories: BaseService<Categories, Context>,
   ) {}
 
   async create(createProductDto: CreateProductInput, uid: ObjectId) {
@@ -313,5 +316,17 @@ export class ProductService {
       };
     }
     return await this.productService.paginate(ctx, filter, sort, page, limit);
+  }
+
+  async findOneCategoryBySlug(slug: string) {
+    try {
+      const category = await this.categories.model.findOne({ slug: slug });
+      if (!category) {
+        throw new Error('Category not found');
+      }
+      return category;
+    } catch (error) {
+      throw error;
+    }
   }
 }
