@@ -399,7 +399,7 @@ export class OrderTransactionService {
     }
   }
 
-  async handleOrderCancellation(order, ctx, session) {
+  async handleOrderCancellation(order: Order, ctx: Context, session: any) {
     const wallet = await this.wallet.model
       .findOne({ authorId: new ObjectId(ctx.id) })
       .session(session);
@@ -408,15 +408,31 @@ export class OrderTransactionService {
       throw new Error('Wallet not found');
     }
 
-    const refundAmount = order.totalAmount * 0.1;
-    wallet.balance -= refundAmount;
-    if (wallet.balance < 0) {
-      wallet.balance = 0;
+    let refundAmount;
+    let message;
+
+    if (ctx.id === order.authorId) {
+      // user cancels
+      refundAmount = order.totalAmount * 0.9; // refund 90%
+      message = `Hoàn tiền hủy đơn hàng ${order.code} ${refundAmount}`;
+      wallet.balance += refundAmount;
+    } else if (ctx.id === order.shopId) {
+      // shop cancels
+      refundAmount = order.totalAmount * 0.1; // deduct 10%
+      message = `Trừ tiền hủy đơn hàng ${order.code} ${refundAmount}`;
+      wallet.balance -= refundAmount;
+
+      if (wallet.balance < 0) {
+        wallet.balance = 0;
+      }
+    } else {
+      throw new Error('Invalid cancellation source');
     }
+
     await wallet.save({ session });
 
     const inputTransaction = {
-      message: `Trừ tiền hủy đơn hàng ${order.code} ${refundAmount}`,
+      message: message,
       amount: refundAmount,
       type: '0',
       walletId: wallet._id,
@@ -471,6 +487,33 @@ export class OrderTransactionService {
       order.status = input.status;
       await order.save({ session });
 
+      if (order.status === OrderStatus.DELIVERED) {
+        const wallet = await this.wallet.model
+          .findOne({ authorId: order.shopId })
+          .session(session);
+
+        if (!wallet) {
+          throw new Error('Wallet not found');
+        }
+
+        const inputTransaction = {
+          message: `Nhận tiền từ đơn hàng ${order.code}`,
+          amount: order.amountNotShippingFee,
+          type: '1',
+          walletId: wallet._id,
+        };
+
+        this.eventEmitter.emit(TransactionEventEnum.CREATED, {
+          input: inputTransaction,
+        });
+
+        this.eventEmitter.emit(NotificationEvent.SEND, {
+          message: `Nhận tiền từ đơn hàng ${order.code}`,
+          notificationType: NotificationTypeEnum.ORDER,
+          receiver: order.shopId,
+        });
+      }
+
       this.eventEmitter.emit(OrderEvidenceEventEnum.CREATED, {
         input: input,
         inputOrder: order,
@@ -482,11 +525,13 @@ export class OrderTransactionService {
         notificationType: NotificationTypeEnum.ORDER,
         receiver: order.authorId,
       });
-      this.eventEmitter.emit(NotificationEvent.SEND, {
-        message: `Đơn hàng ${order.code} đã được cập nhật`,
-        notificationType: NotificationTypeEnum.ORDER,
-        receiver: order.shopId,
-      });
+      if (input.status === OrderStatus.WAITING) {
+        this.eventEmitter.emit(NotificationEvent.SEND, {
+          message: `Đơn hàng ${order.code} đã được cập nhật`,
+          notificationType: NotificationTypeEnum.ORDER,
+          receiver: order.shopId,
+        });
+      }
 
       await session.commitTransaction();
       session.endSession();
