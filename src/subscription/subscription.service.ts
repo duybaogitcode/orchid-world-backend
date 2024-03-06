@@ -4,12 +4,13 @@ import * as dayjs from 'dayjs';
 import { BaseService, InjectBaseService, ObjectId } from 'dryerjs';
 import { NotificationTypeEnum } from 'src/notification/notification.definition';
 import { NotificationEvent } from 'src/notification/notification.service';
-import { SubscribeToSubscriptionDTO } from './subscribe.dto';
+import { SubscribeToSubscriptionDTO } from './dto/subscribe.dto';
 import {
   AuctionSubscription,
   SubscriptionPeriodUnit,
   UserSubscription,
 } from './subscription.definition';
+import { PaypalService } from 'src/payment/paypal.service';
 @Injectable()
 export class SubscriptionService {
   constructor(
@@ -21,6 +22,7 @@ export class SubscriptionService {
     @InjectBaseService(UserSubscription)
     private readonly userSubscription: BaseService<UserSubscription, {}>,
     private readonly eventEmitter: EventEmitter2,
+    private readonly paypalService: PaypalService,
   ) {}
 
   getDateFormatter() {
@@ -28,13 +30,39 @@ export class SubscriptionService {
   }
   async subscribe(userId: ObjectId, input: SubscribeToSubscriptionDTO) {
     if (!userId) throw new UnauthorizedException();
+    if (!input.paypalId) throw new Error('Payment is required');
+
+    const isPaid = await this.paypalService.getCapture(
+      input.paypalId as string,
+    );
+
+    if (!isPaid) {
+      throw new Error('Payment not completed');
+    }
     const subscription = await this.auctionSubscriptionService.findOne(
       {},
       {
         planId: input.planId,
       },
     );
+    // TODO: Does user have subscription before?
+    const userSubscription = await this.userSubscription.findOne(
+      {},
+      {
+        userId: userId,
+      },
+    );
+
     const dateFormatter = this.getDateFormatter();
+
+    if (userSubscription) {
+      // if (!this.doesSubscriptionExpired(userSubscription.expireAt)) {
+
+      // }
+      // TODO: Handle upgrade or downgrade subscription
+      throw new Error('User already have subscription');
+    }
+
     const startAtDayjs = dateFormatter().locale('vi');
     const expireAt = this.getEndDate(
       startAtDayjs,
@@ -60,6 +88,10 @@ export class SubscriptionService {
     });
 
     return createdUserSubscription;
+  }
+
+  doesSubscriptionExpired(expireAt: Date) {
+    return dayjs().isAfter(dayjs(expireAt));
   }
 
   getEndDate(
