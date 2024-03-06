@@ -17,6 +17,9 @@ import { contains } from 'class-validator';
 import { UserRole } from 'src/guard/roles.guard';
 import { UpdateOrder } from '../dto/update-order.dto';
 import { NotificationTypeEnum } from 'src/notification/notification.definition';
+import { NotificationEvent } from 'src/notification/notification.service';
+import { TransactionEventEnum } from 'src/wallet/event/transaction.event';
+import { OrderEvidenceEventEnum } from '../event/orderEvidence.event';
 
 @Injectable()
 export class OrderTransactionService {
@@ -232,7 +235,7 @@ export class OrderTransactionService {
         },
       });
 
-      this.eventEmitter.emit('send-notification', {
+      this.eventEmitter.emit(NotificationEvent.SEND, {
         message:
           'Đơn hàng ' + newOrderTransaction.codeBill + ' đã được cập nhật',
         notificationType: NotificationTypeEnum.ORDER,
@@ -373,13 +376,13 @@ export class OrderTransactionService {
 
       input.description = input.description || 'Đơn hàng bắt đầu vận chuyển';
 
-      this.eventEmitter.emit('Order.status.updated', {
+      this.eventEmitter.emit(OrderEvidenceEventEnum.CREATED, {
         input: input,
         inputOrder: order,
         ctx: ctx,
       });
 
-      this.eventEmitter.emit('send-notification', {
+      this.eventEmitter.emit(NotificationEvent.SEND, {
         message: `Đơn hàng ${order.code} đã được cập nhật`,
         notificationType: NotificationTypeEnum.ORDER,
         receiver: order.authorId,
@@ -419,7 +422,7 @@ export class OrderTransactionService {
       walletId: wallet._id,
     };
 
-    this.eventEmitter.emit('Wallet.updated', {
+    this.eventEmitter.emit(TransactionEventEnum.CREATED, {
       input: inputTransaction,
     });
   }
@@ -456,9 +459,6 @@ export class OrderTransactionService {
         );
       }
 
-      order.status = input.status;
-      await order.save({ session });
-
       if (input.status === OrderStatus.WAITING) {
         if (!input.file) {
           throw new Error('File is required when status is waiting');
@@ -468,16 +468,24 @@ export class OrderTransactionService {
         }
       }
 
-      this.eventEmitter.emit('Order.status.updated', {
+      order.status = input.status;
+      await order.save({ session });
+
+      this.eventEmitter.emit(OrderEvidenceEventEnum.CREATED, {
         input: input,
         inputOrder: order,
         ctx: ctx,
       });
 
-      this.eventEmitter.emit('send-notification', {
+      this.eventEmitter.emit(NotificationEvent.SEND, {
         message: `Đơn hàng ${order.code} đã được cập nhật`,
         notificationType: NotificationTypeEnum.ORDER,
         receiver: order.authorId,
+      });
+      this.eventEmitter.emit(NotificationEvent.SEND, {
+        message: `Đơn hàng ${order.code} đã được cập nhật`,
+        notificationType: NotificationTypeEnum.ORDER,
+        receiver: order.shopId,
       });
 
       await session.commitTransaction();

@@ -159,22 +159,18 @@ export class ProductService {
         await this.tagWithValues.model.insertMany(tagValues, { session });
       }
 
-      if (deleteUrl && deleteUrl.length > 0) {
-        await Promise.all(
-          deleteUrl.map((filePath) =>
-            this.firebaseService.deleteFile(filePath),
-          ),
-        );
-      }
+      // if (deleteUrl && deleteUrl.length > 0) {
+      //   await Promise.all(
+      //     deleteUrl.map((filePath) =>
+      //       this.firebaseService.deleteFile(filePath),
+      //     ),
+      //   );
+      // }
 
       await session.commitTransaction();
       session.endSession();
 
-      const updatedProduct = await this.productService.model.findById(
-        updateProductDto.id,
-      );
-
-      return updatedProduct;
+      return product;
     } catch (error) {
       if (uploadFile.length > 0) {
         await Promise.all(

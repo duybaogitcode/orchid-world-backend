@@ -13,6 +13,16 @@ import { OrderEvidence } from '../definition/orderEvidence.definition';
 import { UpdateOrder } from '../dto/update-order.dto';
 import { FirebaseService } from 'src/firebase/firebase.serivce';
 import { Order } from '../definition/order.definition';
+import { register } from 'module';
+import { registerEnumType } from '@nestjs/graphql';
+
+export enum OrderEvidenceEventEnum {
+  CREATED = 'OrderEvidence.created',
+}
+
+registerEnumType(OrderEvidenceEventEnum, {
+  name: 'OrderEvidenceEvent',
+});
 
 @Injectable()
 export class OrderEvidenceEvent {
@@ -22,7 +32,7 @@ export class OrderEvidenceEvent {
     private readonly firebaseService: FirebaseService,
   ) {}
 
-  @OnEvent('Order.status.updated')
+  @OnEvent(OrderEvidenceEventEnum.CREATED)
   async createEvidenceWhenOrderStatusUpdated({
     input,
     inputOrder,
