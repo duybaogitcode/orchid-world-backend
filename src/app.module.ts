@@ -131,7 +131,6 @@ console.log({ nod: configuration().NODE_ENV });
           definition: Categories,
           allowedApis: [
             'findAll',
-            'findOne',
             'create',
             'update',
             'remove',

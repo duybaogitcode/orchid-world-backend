@@ -26,6 +26,7 @@ import { Context, Ctx } from 'src/auth/ctx';
 import { ManagerOrStaff, ShopOnly, UserOnly } from 'src/guard/roles.guard';
 import { PaginationParameters } from 'dryerjs/dist/js/mongoose-paginate-v2';
 import { PaginateShopProductDTO } from './dto/paginate-shop-product.dto';
+import { Categories } from 'src/orthersDef/categories.definition';
 
 @Resolver()
 export class ProductResolver {
@@ -47,6 +48,18 @@ export class ProductResolver {
     try {
       const products = await this.productService.relatedProducts(slug);
       return products;
+    } catch (error) {
+      console.error('Failed find related product:', error);
+      throw error;
+    }
+  }
+
+  @Query(() => OutputType(Categories), { name: 'findOneCategoryBySlug' })
+  async findOneCategoryBySlug(@Args('slug') slug: string) {
+    try {
+      const categoryAndProduct =
+        await this.productService.findOneCategoryBySlug(slug);
+      return categoryAndProduct;
     } catch (error) {
       console.error('Failed find related product:', error);
       throw error;
