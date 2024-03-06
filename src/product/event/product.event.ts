@@ -14,6 +14,17 @@ import { CartShopItem } from 'src/cart/definition/cartShopItem.definition';
 import { CartItem } from 'src/cart/definition/cartItem.definiton';
 import { OrderTransaction } from 'src/order/definition/orderTransaction.definition';
 import { Product, ProductStatus } from '../product.definition';
+import { FirebaseService } from 'src/firebase/firebase.serivce';
+import { registerEnumType } from '@nestjs/graphql';
+
+export enum ProductEventEnum {
+  UPFILE = 'Product.upfile',
+  DELETEURL = 'Product.deleteURL',
+}
+
+registerEnumType(ProductEventEnum, {
+  name: 'ProductEventEnum',
+});
 
 @Injectable()
 export class ProductEvent {
@@ -22,6 +33,7 @@ export class ProductEvent {
     public product: BaseService<Product, Context>,
     @InjectBaseService(CartItem)
     public cartItem: BaseService<CartItem, Context>,
+    private readonly firebase: FirebaseService,
   ) {}
 
   @OnEvent('Orders.created')
@@ -66,6 +78,19 @@ export class ProductEvent {
       console.log(error);
       await session.abortTransaction();
       session.endSession();
+      throw error;
+    }
+  }
+
+  @OnEvent(ProductEventEnum.DELETEURL)
+  async deleteURL({ input }: AfterCreateHookInput<any, Context>) {
+    try {
+      await Promise.all(
+        input.map((filePath) => this.firebase.deleteFile(filePath)),
+      );
+    } catch (error) {
+      console.log(error);
+
       throw error;
     }
   }

@@ -14,7 +14,15 @@ import { CartShopItem } from 'src/cart/definition/cartShopItem.definition';
 import { CartItem } from 'src/cart/definition/cartItem.definiton';
 import { Transaction } from '../transaction.definition';
 import { OrderTransaction } from 'src/order/definition/orderTransaction.definition';
+import { registerEnumType } from '@nestjs/graphql';
 
+export enum TransactionEventEnum {
+  CREATED = 'Transaction.created',
+}
+
+registerEnumType(TransactionEventEnum, {
+  name: 'TransactionEvent',
+});
 @Injectable()
 export class TransactionEvent {
   constructor(
@@ -49,7 +57,7 @@ export class TransactionEvent {
     }
   }
 
-  @OnEvent('Wallet.updated')
+  @OnEvent(TransactionEventEnum.CREATED)
   async createTransactionAfterWalletUpdated({
     input,
   }: AfterCreateHookInput<any, Context>) {
