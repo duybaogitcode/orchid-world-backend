@@ -1,7 +1,8 @@
 import { Float } from '@nestjs/graphql';
-import { Definition, Property } from 'dryerjs';
+import { Definition, HasMany, Property } from 'dryerjs';
 import { BaseModel, SimpleStatus } from 'src/base/base.definition';
 import { BaseModelHasOwner } from 'src/product/product.definition';
+import { Transaction } from './transaction.definition';
 
 function generateWalletAddress() {
   return '0x' + Math.random().toString(36).slice(2, 10);
@@ -21,7 +22,7 @@ export class Wallet extends BaseModelHasOwner({
   walletAddress: string;
 
   @Property({
-    type: () => Float,
+    type: () => Number,
     db: {
       default: 0,
     },
@@ -29,7 +30,7 @@ export class Wallet extends BaseModelHasOwner({
   balance: number;
 
   @Property({
-    type: () => Float,
+    type: () => Number,
     db: {
       default: 0,
     },
@@ -41,4 +42,12 @@ export class Wallet extends BaseModelHasOwner({
     db: { default: SimpleStatus.ACTIVE },
   })
   status: SimpleStatus;
+
+  @HasMany(() => Transaction, {
+    to: 'walletId',
+    allowCreateWithin: true,
+    allowFindAll: true,
+    allowPaginate: true,
+  })
+  transaction: Transaction[];
 }

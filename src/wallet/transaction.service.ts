@@ -15,6 +15,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { PaymentService } from 'src/payment/payment.service';
 import { ServiceProvider } from 'src/payment/payment.definition';
 import { ExchangeInput } from 'src/payment/dto/exchange.input';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { SystemWalletEventEnum } from './event/system.wallet.event';
 
 @Injectable()
 export class TransactionService {
@@ -26,6 +28,7 @@ export class TransactionService {
     public walletService: BaseService<Wallet, {}>,
     private readonly paypalService: PaypalService,
     private readonly paymentService: PaymentService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async createOne(
@@ -65,6 +68,18 @@ export class TransactionService {
     }
     try {
       session.startTransaction();
+
+      this.eventEmitter.emit(SystemWalletEventEnum.CREATED, {
+        input: {
+          amount,
+          type,
+          walletId,
+          logs: description,
+          serviceProvider: ServiceProvider.paypal,
+          isTopUpOrWithdraw: true,
+        },
+      });
+
       createdTransaction = await this.transactionService.create(
         {},
         {
@@ -83,6 +98,17 @@ export class TransactionService {
           balance: receiverWallet.balance + updateAmount,
         },
       );
+
+      this.eventEmitter.emit(SystemWalletEventEnum.CREATED, {
+        input: {
+          amount,
+          type: TransactionType.DECREASE,
+          walletId,
+          logs: description,
+          serviceProvider: ServiceProvider.paypal,
+          isTopUpOrWithdraw: false,
+        },
+      });
 
       await session.commitTransaction();
       session.endSession();
@@ -194,6 +220,17 @@ export class TransactionService {
           balance: wallet.balance - amount,
         },
       );
+
+      this.eventEmitter.emit(SystemWalletEventEnum.CREATED, {
+        input: {
+          amount: amount,
+          type: TransactionType.DECREASE,
+          walletId: wallet._id,
+          logs: '',
+          serviceProvider: ServiceProvider.paypal,
+          isTopUpOrWithdraw: true,
+        },
+      });
 
       return transaction;
     } catch (error) {

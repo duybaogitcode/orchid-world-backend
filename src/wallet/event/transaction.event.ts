@@ -40,13 +40,17 @@ export class TransactionEvent {
     try {
       console.log('transaction event orders created ');
 
-      await this.transaction.model.create({
-        amount: input.newOrderTransaction.totalAmount,
-        type: '0',
-        status: 'SUCCESS',
-        description: 'Trừ phí đơn hàng ' + input.newOrderTransaction.codeBill,
-        walletId: input.wallet.id,
-      });
+      await this.transaction.model.create(
+        {
+          amount: input.newOrderTransaction.totalAmount,
+          type: '0',
+          status: 'SUCCESS',
+          description:
+            'Trừ phí theo hóa đơn ' + input.newOrderTransaction.codeBill,
+          walletId: input.wallet.id,
+        },
+        { session },
+      );
 
       await session.commitTransaction();
       session.endSession();

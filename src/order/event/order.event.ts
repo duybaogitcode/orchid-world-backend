@@ -12,6 +12,9 @@ import { CartShopItem } from 'src/cart/definition/cartShopItem.definition';
 import { CartItem } from 'src/cart/definition/cartItem.definiton';
 import { Cart } from 'src/cart/definition/cart.definition';
 import { registerEnumType } from '@nestjs/graphql';
+import { SystemWalletEventEnum } from 'src/wallet/event/system.wallet.event';
+import { TransactionType } from 'src/wallet/transaction.definition';
+import { ServiceProvider } from 'src/payment/payment.definition';
 
 export enum OrderEventEnum {
   CREATED = 'Orders.created',
@@ -62,7 +65,7 @@ export class OrderEvent {
           status: OrderStatus.PENDING,
           authorId: input.wallet.authorId,
         });
-        await newOrder.save({ session: session });
+        await newOrder.save({ session });
       }
 
       for (const shopItem of input.orders) {
@@ -80,6 +83,16 @@ export class OrderEvent {
 
       this.eventEmitter.emit(OrderEventEnum.CREATED, {
         input: input,
+      });
+      this.eventEmitter.emit(SystemWalletEventEnum.CREATED, {
+        input: {
+          amount: input.newOrderTransaction.totalAmount,
+          type: TransactionType.INCREASE,
+          walletId: input.wallet._id,
+          logs: 'Thanh toán đơn hàng',
+          serviceProvider: ServiceProvider.vnpay,
+          isTopUpOrWithdraw: false,
+        },
       });
 
       await session.commitTransaction();
