@@ -6,7 +6,4 @@ import { Types } from 'mongoose';
 export class SubscribeToSubscriptionDTO {
   @Field(() => String)
   planId: String;
-
-  @Field(() => GraphQLObjectId)
-  transactionId: Types.ObjectId;
 }

@@ -79,6 +79,9 @@ import {
 import { SubscriptionService } from './subscription/subscription.service';
 import { SubscriptionResolver } from './subscription/subscription.resolver';
 import { Auction } from './auction/auction.definition';
+import { SystemWallet } from './wallet/systems/system.wallet.definition';
+import { SystemTransaction } from './wallet/systems/system.transaction.definition';
+import { SystemWalletEvent } from './wallet/event/system.wallet.event';
 
 console.log({ nod: configuration().NODE_ENV });
 
@@ -280,6 +283,15 @@ console.log({ nod: configuration().NODE_ENV });
             remove: [ShopOnly()],
           },
         },
+
+        {
+          definition: SystemWallet,
+          allowedApis: ['findOne', 'create', 'update', 'remove'],
+        },
+
+        {
+          definition: SystemTransaction,
+        },
         // Media,
         // Auction,
         // AuctionBiddingHistory,
@@ -317,6 +329,7 @@ console.log({ nod: configuration().NODE_ENV });
         OrderEvidenceEvent,
         SubscriptionService,
         SubscriptionResolver,
+        SystemWalletEvent,
       ],
       contextDecorator: Ctx,
     }),

@@ -15,6 +15,7 @@ import { CartItem } from 'src/cart/definition/cartItem.definiton';
 import { Transaction } from '../transaction.definition';
 import { OrderTransaction } from 'src/order/definition/orderTransaction.definition';
 import { registerEnumType } from '@nestjs/graphql';
+import { OrderEventEnum } from 'src/order/event/order.event';
 
 export enum TransactionEventEnum {
   CREATED = 'Transaction.created',
@@ -30,7 +31,7 @@ export class TransactionEvent {
     public transaction: BaseService<Transaction, Context>,
   ) {}
 
-  @OnEvent('Orders.created')
+  @OnEvent(OrderEventEnum.CREATED)
   async createTransactionAfterOrderCreated({
     input,
   }: AfterCreateHookInput<any, Context>) {
@@ -39,13 +40,17 @@ export class TransactionEvent {
     try {
       console.log('transaction event orders created ');
 
-      await this.transaction.model.create({
-        amount: input.newOrderTransaction.totalAmount,
-        type: '0',
-        status: 'SUCCESS',
-        description: 'Trừ phí đơn hàng ' + input.newOrderTransaction.codeBill,
-        walletId: input.wallet.id,
-      });
+      await this.transaction.model.create(
+        {
+          amount: input.newOrderTransaction.totalAmount,
+          type: '0',
+          status: 'SUCCESS',
+          description:
+            'Trừ phí theo hóa đơn ' + input.newOrderTransaction.codeBill,
+          walletId: input.wallet.id,
+        },
+        { session },
+      );
 
       await session.commitTransaction();
       session.endSession();

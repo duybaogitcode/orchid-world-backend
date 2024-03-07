@@ -6,13 +6,9 @@ import {
   InjectBaseService,
   ObjectId,
 } from 'dryerjs';
-import { Cart } from 'src/cart/definition/cart.definition';
-import { Wallet } from 'src/wallet/wallet.definition';
 
 import { OnEvent } from '@nestjs/event-emitter';
-import { CartShopItem } from 'src/cart/definition/cartShopItem.definition';
 import { CartItem } from 'src/cart/definition/cartItem.definiton';
-import { OrderTransaction } from 'src/order/definition/orderTransaction.definition';
 import { Product, ProductStatus } from '../product.definition';
 import { FirebaseService } from 'src/firebase/firebase.serivce';
 import { registerEnumType } from '@nestjs/graphql';

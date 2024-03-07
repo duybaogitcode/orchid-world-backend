@@ -20,6 +20,10 @@ import { NotificationTypeEnum } from 'src/notification/notification.definition';
 import { NotificationEvent } from 'src/notification/notification.service';
 import { TransactionEventEnum } from 'src/wallet/event/transaction.event';
 import { OrderEvidenceEventEnum } from '../event/orderEvidence.event';
+import { OrderEventEnum } from '../event/order.event';
+import { SystemWalletEventEnum } from 'src/wallet/event/system.wallet.event';
+import { TransactionType } from 'src/wallet/transaction.definition';
+import { ServiceProvider } from 'src/payment/payment.definition';
 
 @Injectable()
 export class OrderTransactionService {
@@ -224,7 +228,7 @@ export class OrderTransactionService {
 
       await newOrderTransaction.save({ session });
 
-      this.eventEmitter.emit('OrderTransaction.created', {
+      this.eventEmitter.emit(OrderEventEnum.CREATE_BY_ORDER_TRANSACTION, {
         input: {
           wallet,
           newOrderTransaction,
@@ -438,6 +442,20 @@ export class OrderTransactionService {
       walletId: wallet._id,
     };
 
+    this.eventEmitter.emit(SystemWalletEventEnum.CREATED, {
+      input: {
+        amount: refundAmount,
+        type:
+          ctx.id === order.authorId
+            ? TransactionType.DECREASE
+            : TransactionType.INCREASE,
+        walletId: wallet._id,
+        logs: '',
+        serviceProvider: ServiceProvider.vnpay,
+        isTopUpOrWithdraw: false,
+      },
+    });
+
     this.eventEmitter.emit(TransactionEventEnum.CREATED, {
       input: inputTransaction,
     });
@@ -496,12 +514,26 @@ export class OrderTransactionService {
           throw new Error('Wallet not found');
         }
 
+        wallet.balance += order.amountNotShippingFee;
+        await wallet.save({ session });
+
         const inputTransaction = {
           message: `Nhận tiền từ đơn hàng ${order.code}`,
           amount: order.amountNotShippingFee,
           type: '1',
           walletId: wallet._id,
         };
+
+        this.eventEmitter.emit(SystemWalletEventEnum.CREATED, {
+          input: {
+            amount: order.amountNotShippingFee,
+            type: TransactionType.DECREASE,
+            walletId: wallet._id,
+            logs: '',
+            serviceProvider: ServiceProvider.paypal,
+            isTopUpOrWithdraw: false,
+          },
+        });
 
         this.eventEmitter.emit(TransactionEventEnum.CREATED, {
           input: inputTransaction,

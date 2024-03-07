@@ -3,12 +3,14 @@ import { SubscribeToSubscriptionDTO } from './dto/subscribe.dto';
 import { SubscriptionService } from './subscription.service';
 import { Context, Ctx } from 'src/auth/ctx';
 import { UserSubscription } from './subscription.definition';
-import { OutputType } from 'dryerjs';
+import { ObjectId, OutputType } from 'dryerjs';
+import { ShopOnly } from 'src/guard/roles.guard';
 
 @Resolver()
 export class SubscriptionResolver {
   constructor(private readonly subscriptionService: SubscriptionService) {}
 
+  @ShopOnly()
   @Mutation(() => OutputType(UserSubscription), {
     name: 'subscribeAuctionSubscription',
   })
@@ -17,6 +19,7 @@ export class SubscriptionResolver {
     @Ctx() ctx: Context,
   ) {
     // Logic to subscribe to a subscription
-    return this.subscriptionService.subscribe(ctx?.id, input);
+    console.log('input', ctx);
+    return this.subscriptionService.subscribe(new ObjectId(ctx?.id), input);
   }
 }

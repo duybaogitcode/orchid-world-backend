@@ -50,7 +50,7 @@ export class Transaction extends BaseModel() {
   wallet: Wallet;
 
   @Property({
-    type: () => Int,
+    type: () => Number,
   })
   amount: number;
 
