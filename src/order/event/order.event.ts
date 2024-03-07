@@ -11,6 +11,18 @@ import { Order, OrderStatus } from '../definition/order.definition';
 import { CartShopItem } from 'src/cart/definition/cartShopItem.definition';
 import { CartItem } from 'src/cart/definition/cartItem.definiton';
 import { Cart } from 'src/cart/definition/cart.definition';
+import { registerEnumType } from '@nestjs/graphql';
+
+export enum OrderEventEnum {
+  CREATED = 'Orders.created',
+  CREATED_ERROR = 'Orders.created.error',
+  CREATE_BY_ORDER_TRANSACTION = 'OrderTransaction.created',
+  CREATE_BY_AUCTION = 'Auction.created',
+}
+
+registerEnumType(OrderEventEnum, {
+  name: 'OrderEventEnum',
+});
 
 @Injectable()
 export class OrderEvent {
@@ -26,7 +38,7 @@ export class OrderEvent {
     public cart: BaseService<Cart, Context>,
   ) {}
 
-  @OnEvent('OrderTransaction.created')
+  @OnEvent(OrderEventEnum.CREATE_BY_ORDER_TRANSACTION)
   async createOrderAfterOrderCreated({
     input,
   }: AfterCreateHookInput<any, Context>) {
@@ -66,7 +78,7 @@ export class OrderEvent {
         );
       }
 
-      this.eventEmitter.emit('Orders.created', {
+      this.eventEmitter.emit(OrderEventEnum.CREATED, {
         input: input,
       });
 
@@ -74,7 +86,7 @@ export class OrderEvent {
       session.endSession();
     } catch (error) {
       console.log(error);
-      this.eventEmitter.emit('Orders.created.error', {
+      this.eventEmitter.emit(OrderEventEnum.CREATED_ERROR, {
         input: input,
       });
       await session.abortTransaction();

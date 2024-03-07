@@ -15,6 +15,7 @@ import { CartItem } from 'src/cart/definition/cartItem.definiton';
 import { Transaction } from '../transaction.definition';
 import { OrderTransaction } from 'src/order/definition/orderTransaction.definition';
 import { registerEnumType } from '@nestjs/graphql';
+import { OrderEventEnum } from 'src/order/event/order.event';
 
 export enum TransactionEventEnum {
   CREATED = 'Transaction.created',
@@ -30,7 +31,7 @@ export class TransactionEvent {
     public transaction: BaseService<Transaction, Context>,
   ) {}
 
-  @OnEvent('Orders.created')
+  @OnEvent(OrderEventEnum.CREATED)
   async createTransactionAfterOrderCreated({
     input,
   }: AfterCreateHookInput<any, Context>) {

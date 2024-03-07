@@ -20,6 +20,7 @@ import { NotificationTypeEnum } from 'src/notification/notification.definition';
 import { NotificationEvent } from 'src/notification/notification.service';
 import { TransactionEventEnum } from 'src/wallet/event/transaction.event';
 import { OrderEvidenceEventEnum } from '../event/orderEvidence.event';
+import { OrderEventEnum } from '../event/order.event';
 
 @Injectable()
 export class OrderTransactionService {
@@ -224,7 +225,7 @@ export class OrderTransactionService {
 
       await newOrderTransaction.save({ session });
 
-      this.eventEmitter.emit('OrderTransaction.created', {
+      this.eventEmitter.emit(OrderEventEnum.CREATE_BY_ORDER_TRANSACTION, {
         input: {
           wallet,
           newOrderTransaction,

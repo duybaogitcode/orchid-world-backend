@@ -11,6 +11,7 @@ import { Wallet } from 'src/wallet/wallet.definition';
 import { OnEvent } from '@nestjs/event-emitter';
 
 import { OrderTransaction } from 'src/order/definition/orderTransaction.definition';
+import { OrderEventEnum } from './order.event';
 
 @Injectable()
 export class OrderTransactionEvent {
@@ -19,7 +20,7 @@ export class OrderTransactionEvent {
     public orderTransaction: BaseService<OrderTransaction, Context>,
   ) {}
 
-  @OnEvent('Orders.created.error')
+  @OnEvent(OrderEventEnum.CREATED_ERROR)
   async deleteOrderTransactionAfterOrderCreatedFailed({
     input,
   }: AfterCreateHookInput<any, Context>) {
