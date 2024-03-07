@@ -514,6 +514,9 @@ export class OrderTransactionService {
           throw new Error('Wallet not found');
         }
 
+        wallet.balance += order.amountNotShippingFee;
+        await wallet.save({ session });
+
         const inputTransaction = {
           message: `Nhận tiền từ đơn hàng ${order.code}`,
           amount: order.amountNotShippingFee,
@@ -526,7 +529,7 @@ export class OrderTransactionService {
             amount: order.amountNotShippingFee,
             type: TransactionType.DECREASE,
             walletId: wallet._id,
-            logs: 'Thanh toán đơn hàng',
+            logs: '',
             serviceProvider: ServiceProvider.paypal,
             isTopUpOrWithdraw: false,
           },

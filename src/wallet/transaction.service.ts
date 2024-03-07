@@ -46,15 +46,9 @@ export class TransactionService {
     }
 
     const { amount, description, walletId, type } = createTransactionDto;
-    let createdTransaction: Transaction;
     const session = await this.walletService.model.startSession();
     const updateAmount = type === TransactionType.DECREASE ? -amount : amount;
-    const receiverWallet = await this.walletService.findOne(
-      {},
-      {
-        _id: walletId,
-      },
-    );
+    const receiverWallet = await this.walletService.model.findById(walletId);
     if (!receiverWallet) {
       throw new BadRequestException('Receiver wallet not found');
     }
@@ -80,35 +74,30 @@ export class TransactionService {
         },
       });
 
-      createdTransaction = await this.transactionService.create(
-        {},
-        {
-          amount: amount,
-          walletId,
-          status: TransactionStatus.SUCCESS,
-          type,
-          description: description || this.getTransactionDescription({ type }),
-          paypalOrderId: createTransactionDto.paypalOrderId,
-        },
-      );
-      await this.walletService.update(
-        {},
-        {
-          id: walletId,
-          balance: receiverWallet.balance + updateAmount,
-        },
-      );
-
-      this.eventEmitter.emit(SystemWalletEventEnum.CREATED, {
-        input: {
-          amount,
-          type: TransactionType.DECREASE,
-          walletId,
-          logs: description,
-          serviceProvider: ServiceProvider.paypal,
-          isTopUpOrWithdraw: false,
-        },
+      const createdTransaction = new this.transactionService.model({
+        amount: amount,
+        walletId,
+        status: TransactionStatus.SUCCESS,
+        type,
+        description: description || this.getTransactionDescription({ type }),
+        paypalOrderId: createTransactionDto.paypalOrderId,
       });
+      await createdTransaction.save({ session });
+      receiverWallet.balance += updateAmount;
+      await receiverWallet.save({ session });
+
+      setTimeout(() => {
+        this.eventEmitter.emit(SystemWalletEventEnum.CREATED, {
+          input: {
+            amount,
+            type: TransactionType.DECREASE,
+            walletId,
+            logs: description,
+            serviceProvider: ServiceProvider.paypal,
+            isTopUpOrWithdraw: false,
+          },
+        });
+      }, 3000);
 
       await session.commitTransaction();
       session.endSession();
@@ -116,19 +105,10 @@ export class TransactionService {
       return createdTransaction;
     } catch (error) {
       console.log('🚀 ~ TransactionService ~ error:', error);
-      if (createdTransaction) {
-        await this.transactionService.update(
-          {},
-          {
-            id: createdTransaction?.id,
-            status: TransactionStatus.FAILED,
-          },
-        );
-      }
-      if (session) {
-        await session.abortTransaction();
-        session.endSession();
-      }
+
+      await session.abortTransaction();
+      session.endSession();
+
       throw error;
     }
   }
@@ -192,6 +172,8 @@ export class TransactionService {
     const exchangeMoney = this.paymentService.exchangeMoney(exchagneInput);
 
     const batchId = uuidv4();
+    const session = await this.walletService.model.startSession();
+    session.startTransaction();
 
     try {
       await this.paypalService.createPayout(
@@ -201,40 +183,55 @@ export class TransactionService {
         ctx.id.toString(),
       );
 
-      const transaction = await this.transactionService.create(
-        {},
-        {
-          amount: amount,
-          walletId: wallet.id,
-          status: TransactionStatus.SUCCESS,
-          type: TransactionType.DECREASE,
-          paypalBatchId: batchId,
-          description: 'Rút tiền từ PayPal',
-        },
-      );
+      const transaction = new this.transactionService.model({
+        amount: amount,
+        walletId: wallet._id,
+        status: TransactionStatus.SUCCESS,
+        type: TransactionType.DECREASE,
+        description: 'Rút tiền',
+        paypalOrderId: batchId,
+      });
 
-      await this.walletService.update(
-        {},
-        {
-          id: wallet.id,
-          balance: wallet.balance - amount,
-        },
-      );
+      await transaction.save({ session });
+
+      wallet.balance -= amount;
+      if (wallet.balance < 0) {
+        throw new BadRequestException('Not enough balance');
+      }
 
       this.eventEmitter.emit(SystemWalletEventEnum.CREATED, {
         input: {
           amount: amount,
-          type: TransactionType.DECREASE,
+          type: TransactionType.INCREASE,
           walletId: wallet._id,
           logs: '',
           serviceProvider: ServiceProvider.paypal,
-          isTopUpOrWithdraw: true,
+          isTopUpOrWithdraw: false,
         },
       });
+
+      await wallet.save({ session });
+
+      setTimeout(() => {
+        this.eventEmitter.emit(SystemWalletEventEnum.CREATED, {
+          input: {
+            amount: amount,
+            type: TransactionType.DECREASE,
+            walletId: wallet._id,
+            logs: '',
+            serviceProvider: ServiceProvider.paypal,
+            isTopUpOrWithdraw: true,
+          },
+        });
+      }, 3000);
+      await session.commitTransaction();
+      session.endSession();
 
       return transaction;
     } catch (error) {
       console.log('🚀 ~ TransactionService ~ error:', error);
+      await session.abortTransaction();
+      session.endSession();
       throw error;
     }
   }

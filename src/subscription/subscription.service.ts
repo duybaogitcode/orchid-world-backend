@@ -14,7 +14,11 @@ import { PaypalService } from 'src/payment/paypal.service';
 import {
   Transaction,
   TransactionStatus,
+  TransactionType,
 } from 'src/wallet/transaction.definition';
+import { Wallet } from 'src/wallet/wallet.definition';
+import { SystemWalletEventEnum } from 'src/wallet/event/system.wallet.event';
+import { ServiceProvider } from 'src/payment/payment.definition';
 @Injectable()
 export class SubscriptionService {
   constructor(
@@ -23,90 +27,124 @@ export class SubscriptionService {
       AuctionSubscription,
       {}
     >,
-    @InjectBaseService(Transaction)
-    private readonly transactionService: BaseService<Transaction, {}>,
     @InjectBaseService(UserSubscription)
     private readonly userSubscription: BaseService<UserSubscription, {}>,
+    @InjectBaseService(Wallet)
+    private readonly walletService: BaseService<Wallet, {}>,
+    @InjectBaseService(Transaction)
+    private readonly transactionService: BaseService<Transaction, {}>,
     private readonly eventEmitter: EventEmitter2,
-    private readonly paypalService: PaypalService,
   ) {}
 
   getDateFormatter() {
     return dayjs;
   }
-  async subscribe(userId: ObjectId, input: SubscribeToSubscriptionDTO) {
-    if (!userId) throw new UnauthorizedException();
-    if (!input.transactionId) throw new Error('Payment is required');
-
-    const transaction = await this.transactionService.findOne(
-      {},
-      {
-        id: input.transactionId,
-      },
-    );
-
-    const subscription = await this.auctionSubscriptionService.findOne(
-      {},
-      {
-        planId: input.planId,
-      },
-    );
-
-    if (transaction.status !== TransactionStatus.SUCCESS) {
-      throw new Error('Invalid transaction status');
-    }
-
-    if (transaction.amount !== subscription.price) {
-      throw new Error('Invalid transaction amount');
-    }
-
-    // TODO: Does user have subscription before?
-    const userSubscription = await this.userSubscription.findOne(
-      {},
-      {
-        userId: userId,
-      },
-    );
-
-    const dateFormatter = this.getDateFormatter();
-
-    if (userSubscription) {
-      // if (!this.doesSubscriptionExpired(userSubscription.expireAt)) {
-
-      // }
-      // TODO: Handle upgrade or downgrade subscription
-      throw new Error('User already have subscription');
-    }
-
-    const startAtDayjs = dateFormatter().locale('vi');
-    const expireAt = this.getEndDate(
-      startAtDayjs,
-      subscription.registrationPeriod,
-      subscription.registrationPeriodUnit,
-    );
-
-    const createdUserSubscription = await this.userSubscription.create(
-      {},
-      {
-        subscriptionId: subscription.id,
-        startAt: startAtDayjs.toDate(),
-        expireAt: expireAt,
-        userId: userId,
-      },
-    );
-
-    this.eventEmitter.emit(NotificationEvent.SEND, {
-      href: '/shop/subscription/' + createdUserSubscription.id,
-      message: 'Đăng ký gói đấu giá thành công',
-      notificationType: NotificationTypeEnum.SYSTEM,
-      receiver: userId,
-    });
-
-    return createdUserSubscription;
-  }
 
   doesSubscriptionExpired(expireAt: Date) {
     return dayjs().isAfter(dayjs(expireAt));
+  }
+  async subscribe(userId: ObjectId, input: SubscribeToSubscriptionDTO) {
+    const session = await this.auctionSubscriptionService.model.startSession();
+    session.startTransaction();
+
+    try {
+      const subscription = await this.auctionSubscriptionService.model.findOne({
+        planId: input.planId,
+      });
+
+      const wallet = await this.walletService.model.findOne({
+        authorId: new ObjectId(userId),
+      });
+
+      if (!wallet) {
+        throw new UnauthorizedException('Wallet not found');
+      }
+
+      if (wallet.balance < subscription.price) {
+        throw new UnauthorizedException('Not enough balance');
+      }
+
+      wallet.balance -= subscription.price;
+      await wallet.save({ session });
+
+      const userSubscriptions = await this.userSubscription.model.find({
+        userId: new ObjectId(userId),
+      });
+
+      const activeSubscription = userSubscriptions.find(
+        (subscription) => !this.doesSubscriptionExpired(subscription.expireAt),
+      );
+
+      if (activeSubscription) {
+        throw new UnauthorizedException('There is an active subscription');
+      }
+
+      const transaction = new this.transactionService.model({
+        amount: subscription.price,
+        description: 'Subscribe to ' + subscription.name,
+        status: TransactionStatus.SUCCESS,
+        type: TransactionType.DECREASE,
+        walletId: wallet.id,
+      });
+
+      await transaction.save({ session });
+
+      const dateFormatter = this.getDateFormatter();
+
+      const startAtDayjs = dateFormatter().locale('vi');
+      const expireAt = this.getEndDate(
+        startAtDayjs,
+        subscription.registrationPeriod,
+        subscription.registrationPeriodUnit,
+      );
+
+      let userSubscriptionExist = userSubscriptions.find(
+        (subscription) =>
+          subscription.subscriptionId.toString() === subscription.id.toString(),
+      );
+
+      if (userSubscriptionExist) {
+        userSubscriptionExist.startAt = startAtDayjs.toDate();
+        userSubscriptionExist.expireAt = expireAt;
+      } else {
+        userSubscriptionExist = new this.userSubscription.model({
+          subscriptionId: subscription.id,
+          startAt: startAtDayjs.toDate(),
+          expireAt: expireAt,
+          userId: userId,
+        });
+      }
+
+      await userSubscriptionExist.save({ session });
+
+      this.eventEmitter.emit(NotificationEvent.SEND, {
+        href: '/shop/subscription/' + userSubscriptionExist.id,
+        message: 'Đăng ký gói đấu giá thành công',
+        notificationType: NotificationTypeEnum.SYSTEM,
+        receiver: userId,
+      });
+
+      setTimeout(() => {
+        this.eventEmitter.emit(SystemWalletEventEnum.CREATED, {
+          input: {
+            amount: subscription.price,
+            type: TransactionType.INCREASE,
+            walletId: wallet._id,
+            logs: '',
+            serviceProvider: ServiceProvider.paypal,
+            isTopUpOrWithdraw: false,
+          },
+        });
+      }, 3000);
+      await session.commitTransaction();
+      session.endSession();
+      return userSubscriptionExist;
+    } catch (error) {
+      console.log('🚀  ~ error:', error);
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
+    }
   }
 
   getEndDate(
