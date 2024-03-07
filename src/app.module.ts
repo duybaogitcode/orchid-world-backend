@@ -82,6 +82,7 @@ import { Auction } from './auction/auction.definition';
 import { SystemWallet } from './wallet/systems/system.wallet.definition';
 import { SystemTransaction } from './wallet/systems/system.transaction.definition';
 import { SystemWalletEvent } from './wallet/event/system.wallet.event';
+import { AuctionHook } from './auction/auction.hook';
 
 console.log({ nod: configuration().NODE_ENV });
 
@@ -330,6 +331,7 @@ console.log({ nod: configuration().NODE_ENV });
         SubscriptionService,
         SubscriptionResolver,
         SystemWalletEvent,
+        AuctionHook,
       ],
       contextDecorator: Ctx,
     }),

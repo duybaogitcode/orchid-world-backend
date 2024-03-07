@@ -1,5 +1,10 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { BaseService, InjectBaseService, ObjectId } from 'dryerjs';
+import {
+  BaseService,
+  FilterOperator,
+  InjectBaseService,
+  ObjectId,
+} from 'dryerjs';
 
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -281,6 +286,7 @@ export class ProductService {
     sort?: object;
     page?: number;
     limit?: number;
+    filter?: FilterOperator;
     ctx: Context;
   }) {
     const user = await this.userService.findOne(null, {
@@ -290,7 +296,6 @@ export class ProductService {
     if (!user.shopOwner || !user?.shopOwner?.shopName) {
       throw new BadRequestException('Vui lòng đăng ký bán hàng trước.');
     }
-    const filter = {};
 
     return this.productService.paginate(
       ctx,

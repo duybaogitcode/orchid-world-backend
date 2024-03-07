@@ -4,12 +4,23 @@ import {
   Definition,
   Filterable,
   GraphQLObjectId,
-  HasOne,
   ObjectId,
   Property,
 } from 'dryerjs';
 import { BaseModel, BaseStatus } from 'src/base/base.definition';
 import { BaseModelHasOwner, Product } from 'src/product/product.definition';
+export enum AuctionStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  RUNNING = 'RUNNING',
+  EXPIRED = 'EXPIRED',
+  CANCELLED = 'CANCELLED',
+  COMPLETED = 'COMPLETED',
+}
+
+registerEnumType(AuctionStatus, {
+  name: 'AuctionStatus',
+});
 
 enum AuctionDurationUnit {
   MINUTE = 'minute',
@@ -37,18 +48,6 @@ export class Auction extends BaseModelHasOwner() {
   @Filterable(() => String, {
     operators: ['eq', 'contains'],
   })
-  @Property({
-    type: () => String,
-    db: { index: true },
-  })
-  auctionName: string;
-
-  @Property({
-    type: () => String,
-    nullable: true,
-  })
-  auctionDescription: string;
-
   @Property({
     type: () => Int,
   })
@@ -101,13 +100,13 @@ export class Auction extends BaseModelHasOwner() {
     operators: ['eq', 'in', 'notIn', 'notEq'],
   })
   @Property({
-    output: { type: () => BaseStatus },
+    output: { type: () => AuctionStatus },
     db: {
-      default: BaseStatus.PENDING,
+      default: AuctionStatus.PENDING,
     },
     nullable: true,
   })
-  status: BaseStatus;
+  status: AuctionStatus;
 
   totalParticipants: number;
   //   winner: User
