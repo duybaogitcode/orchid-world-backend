@@ -1,20 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import {
-  AfterCreateHook,
-  AfterCreateHookInput,
-  AfterFindManyHook,
-  AfterFindManyHookInput,
   BaseService,
-  BeforeCreateHook,
-  BeforeCreateHookInput,
   BeforeFindManyHook,
   BeforeFindManyHookInput,
   InjectBaseService,
   ObjectId,
 } from 'dryerjs';
-import { Product, ProductStatus } from './product.definition';
 import { Context } from 'src/auth/ctx';
 import { UserRole } from 'src/guard/roles.guard';
+import { Product, ProductStatus } from './product.definition';
 
 @Injectable()
 export class ProductHook {

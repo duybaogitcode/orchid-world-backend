@@ -106,7 +106,9 @@ export class Product extends BaseModelHasOwner() {
 
   // @Embedded(() => ProductType)
   // productType: ProductType;
-
+  @Filterable(() => ProductStatus, {
+    operators: ['eq', 'in', 'notEq'],
+  })
   @Property({
     type: () => ProductStatus,
     nullable: true,
