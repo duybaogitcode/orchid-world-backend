@@ -403,6 +403,56 @@ export class OrderTransactionService {
     }
   }
 
+  private async refundMoneyForUserWhenShopCancelOrder(
+    order: Order,
+    session: any,
+    ctx: Context,
+  ) {
+    const wallet = await this.wallet.model
+      .findOne({ authorId: order.authorId })
+      .session(session);
+
+    if (!wallet) {
+      throw new Error('Wallet not found');
+    }
+
+    wallet.balance += order.amountNotShippingFee;
+
+    await wallet.save({ session });
+
+    setTimeout(() => {
+      this.eventEmitter.emit(TransactionEventEnum.CREATED, {
+        input: {
+          message: `Hoàn tiền hủy đơn hàng ${order.code} ${order.totalAmount}`,
+          amount: order.totalAmount,
+          type: '1',
+          walletId: wallet._id,
+        },
+      });
+    }, 3000);
+
+    setTimeout(() => {
+      this.eventEmitter.emit(NotificationEvent.SEND, {
+        message: `Hoàn tiền hủy đơn hàng ${order.code} ${order.totalAmount}`,
+        notificationType: NotificationTypeEnum.ORDER,
+        receiver: order.authorId,
+      });
+    }, 3000);
+
+    setTimeout(() => {
+      this.eventEmitter.emit(SystemWalletEventEnum.CREATED, {
+        input: {
+          amount: order.totalAmount,
+          type: TransactionType.DECREASE,
+          walletId: wallet._id,
+          logs: '',
+          serviceProvider: ServiceProvider.vnpay,
+          isTopUpOrWithdraw: false,
+        },
+      });
+    }, 3000);
+  }
+
   async handleOrderCancellation(order: Order, ctx: Context, session: any) {
     const wallet = await this.wallet.model
       .findOne({ authorId: new ObjectId(ctx.id) })
@@ -415,12 +465,12 @@ export class OrderTransactionService {
     let refundAmount;
     let message;
 
-    if (ctx.id === order.authorId) {
+    if (ctx.id.toString() === order.authorId.toString()) {
       // user cancels
       refundAmount = order.totalAmount * 0.9; // refund 90%
-      message = `Hoàn tiền hủy đơn hàng ${order.code} ${refundAmount}`;
+      message = `Hoàn 90% tiền hủy đơn hàng ${order.code} ${refundAmount}`;
       wallet.balance += refundAmount;
-    } else if (ctx.id === order.shopId) {
+    } else if (ctx.id.toString() === order.shopId.toString()) {
       // shop cancels
       refundAmount = order.totalAmount * 0.1; // deduct 10%
       message = `Trừ tiền hủy đơn hàng ${order.code} ${refundAmount}`;
@@ -429,6 +479,7 @@ export class OrderTransactionService {
       if (wallet.balance < 0) {
         wallet.balance = 0;
       }
+      await this.refundMoneyForUserWhenShopCancelOrder(order, session, ctx);
     } else {
       throw new Error('Invalid cancellation source');
     }
@@ -446,7 +497,7 @@ export class OrderTransactionService {
       input: {
         amount: refundAmount,
         type:
-          ctx.id === order.authorId
+          ctx.id.toString() === order.authorId.toString()
             ? TransactionType.DECREASE
             : TransactionType.INCREASE,
         walletId: wallet._id,
@@ -455,6 +506,13 @@ export class OrderTransactionService {
         isTopUpOrWithdraw: false,
       },
     });
+    setTimeout(() => {
+      this.eventEmitter.emit(NotificationEvent.SEND, {
+        message: `Biến động số dư`,
+        notificationType: NotificationTypeEnum.ORDER,
+        receiver: order.authorId,
+      });
+    }, 5000);
 
     this.eventEmitter.emit(TransactionEventEnum.CREATED, {
       input: inputTransaction,
