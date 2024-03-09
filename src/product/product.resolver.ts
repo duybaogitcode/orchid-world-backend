@@ -97,15 +97,21 @@ export class ProductResolver {
   @ShopOnly()
   @Query(() => PaginatedOutputType(Product), { name: 'paginateShopProducts' })
   async paginateShopProducts(
+    @Args('page', { type: () => Int, defaultValue: 1 }) page: number,
+    @Args('limit', { type: () => Int, defaultValue: 10 }) limit: number,
+    @Args('filter', { type: () => FilterType(Product), nullable: true })
+    filter: ReturnType<typeof FilterType>,
+    @Args('sort', { type: () => SortType(Product), nullable: true })
+    sort: ReturnType<typeof SortType>,
     @Ctx() ctx: Context,
-    @Args('input') input?: PaginateShopProductDTO,
   ) {
     try {
       const products = await this.productService.getShopProducts({
         uid: ctx?.id,
-        limit: input.limit,
-        page: input.page,
-        sort: input.sort,
+        limit: limit,
+        page: page,
+        sort: sort,
+        filter: filter,
         ctx,
       });
       return products;
