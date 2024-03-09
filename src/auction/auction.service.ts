@@ -39,10 +39,7 @@ export class AuctionService {
     userId: ObjectId,
   ) {
     console.log({ auctionId, userId });
-    const auction = await this.auctionService.findOneNullable(
-      {},
-      { id: auctionId },
-    );
+    const auction = await this.auctionService.findById({}, { _id: auctionId });
     console.log({ auction });
     if (!auction) {
       throw new Error('Auction not found');

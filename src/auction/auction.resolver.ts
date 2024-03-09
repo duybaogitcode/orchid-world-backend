@@ -6,6 +6,7 @@ import { FindBySlugDto } from './dto/find-by-slug-dto';
 import { SuccessResponse } from 'dryerjs/dist/types';
 import { Context, Ctx } from 'src/auth/ctx';
 import { AuctionRegisterDTO } from './dto/register.dto';
+import { ShopOrUserOnly, UserOnly } from 'src/guard/roles.guard';
 
 @Resolver()
 export class AuctionResolver {
@@ -16,15 +17,23 @@ export class AuctionResolver {
     return this.auctionService.findOneByProductSlug(productSlug);
   }
 
+  @UserOnly()
   @Mutation(() => SuccessResponse, { name: 'registerAuction' })
   async registerAuction(
     @Args('input') input: AuctionRegisterDTO,
     @Ctx() ctx: Context,
   ) {
     console.log({ ctx, input });
-    return this.auctionService.registerAuction(input.auctionId, ctx?.id);
+    const res = await this.auctionService.registerAuction(
+      input.auctionId,
+      ctx?.id,
+    );
+    return {
+      success: Boolean(res),
+    };
   }
 
+  @UserOnly()
   @Mutation(() => SuccessResponse, { name: 'unregisterAuction' })
   async unregisterAuction(
     @Args('input') input: AuctionRegisterDTO,
