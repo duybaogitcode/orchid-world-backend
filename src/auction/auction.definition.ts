@@ -6,6 +6,7 @@ import {
   GraphQLObjectId,
   ObjectId,
   Property,
+  Skip,
 } from 'dryerjs';
 import { BaseModel, BaseStatus } from 'src/base/base.definition';
 import { BaseModelHasOwner, Product } from 'src/product/product.definition';
@@ -108,7 +109,27 @@ export class Auction extends BaseModelHasOwner() {
   })
   status: AuctionStatus;
 
+  @Property({
+    type: () => Int,
+    db: {
+      default: 0,
+    },
+    nullable: true,
+    create: Skip,
+    update: Skip,
+  })
   totalParticipants: number;
+
+  @Property({
+    type: () => [GraphQLObjectId],
+    db: {
+      default: [],
+    },
+    nullable: true,
+    create: Skip,
+    update: Skip,
+  })
+  participantIds: ObjectId[];
   //   winner: User
   // backup_users: User[]
   deposit: number;
