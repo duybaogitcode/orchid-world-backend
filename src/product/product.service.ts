@@ -2,6 +2,7 @@ import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import {
   BaseService,
   FilterOperator,
+  Filterable,
   InjectBaseService,
   ObjectId,
 } from 'dryerjs';
@@ -24,6 +25,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ProductEventEnum } from './event/product.event';
 import { Categories } from 'src/orthersDef/categories.definition';
 import { filter } from 'rxjs';
+import { MongoQuery } from 'src/utils/mongoquery';
 
 @Injectable()
 export class ProductService {
@@ -38,6 +40,7 @@ export class ProductService {
     private readonly eventEmitter: EventEmitter2,
     @InjectBaseService(Categories)
     public categories: BaseService<Categories, Context>,
+    private mongoQuery: MongoQuery,
   ) {}
 
   async create(createProductDto: CreateProductInput, uid: ObjectId) {
@@ -282,12 +285,13 @@ export class ProductService {
     page = 1,
     limit = 10,
     ctx,
+    filter,
   }: {
     uid: ObjectId;
     sort?: object;
     page?: number;
     limit?: number;
-    filter?: FilterOperator;
+    filter?: any;
     ctx: Context;
   }) {
     const user = await this.userService.findOne(null, {
@@ -298,16 +302,13 @@ export class ProductService {
       throw new BadRequestException('Vui lòng đăng ký bán hàng trước.');
     }
 
-    return this.productService.paginate(
-      ctx,
-      {
-        ...filter,
-        authorId: new ObjectId(uid),
-      },
-      sort,
-      page,
-      limit,
-    );
+    const mongoQuery = this.mongoQuery.convertFilterToMongoQuery(filter);
+    const updateFilter = {
+      ...mongoQuery,
+      authorId: new ObjectId(uid),
+    };
+
+    return this.productService.paginate(ctx, updateFilter, sort, page, limit);
   }
 
   async pagingProducts(
@@ -317,12 +318,14 @@ export class ProductService {
     sort: any,
     ctx: Context,
   ) {
-    if (filter) {
-      filter = {
-        name: { $regex: filter?.code?.contains ?? '', $options: 'i' },
-      };
-    }
-    return await this.productService.paginate(ctx, filter, sort, page, limit);
+    const mongoQuery = this.mongoQuery.convertFilterToMongoQuery(filter);
+    return await this.productService.paginate(
+      ctx,
+      mongoQuery,
+      sort,
+      page,
+      limit,
+    );
   }
 
   async findOneCategoryBySlug(slug: string) {

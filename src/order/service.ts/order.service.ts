@@ -24,6 +24,7 @@ import { OrderEventEnum } from '../event/order.event';
 import { SystemWalletEventEnum } from 'src/wallet/event/system.wallet.event';
 import { TransactionType } from 'src/wallet/transaction.definition';
 import { ServiceProvider } from 'src/payment/payment.definition';
+import { MongoQuery } from 'src/utils/mongoquery';
 
 @Injectable()
 export class OrderTransactionService {
@@ -36,6 +37,7 @@ export class OrderTransactionService {
     public orderTransactionService: BaseService<OrderTransaction, Context>,
     @InjectBaseService(Order)
     public orderService: BaseService<Order, Context>,
+    private mongoQuery: MongoQuery,
   ) {}
 
   async createOrder(input: CreateOrder, uid: ObjectId) {
@@ -289,16 +291,12 @@ export class OrderTransactionService {
     limit: number,
     ref: string,
   ) {
-    if (filter) {
-      filter = {
-        code: { $regex: filter?.code?.contains ?? '', $options: 'i' },
-      };
-    }
+    const filterUpdate = this.mongoQuery.convertFilterToMongoQuery(filter);
 
     switch (ref) {
       case 'authorId':
         const newFilter = {
-          ...filter,
+          ...filterUpdate,
           authorId: new ObjectId(ctx.id),
         };
         return await this.orderService.paginate(
@@ -311,7 +309,7 @@ export class OrderTransactionService {
 
       case 'shopId':
         const newFilterShop = {
-          ...filter,
+          ...filterUpdate,
           shopId: new ObjectId(ctx.id),
         };
         return await this.orderService.paginate(
