@@ -1,5 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import {
+  AfterCreateHook,
+  AfterCreateHookInput,
   AfterFindManyHook,
   AfterFindManyHookInput,
   BaseService,
@@ -48,6 +50,12 @@ export class AuctionHook {
 
     input.authorId = new ObjectId(ctx.id);
     input.currentPrice = input?.initialPrice || 0;
+  }
+
+  @AfterCreateHook(() => Auction)
+  afterCreateAuction({ created }: AfterCreateHookInput<Auction, Context>) {
+    
+    return created;
   }
 
   @AfterFindManyHook(() => Auction)

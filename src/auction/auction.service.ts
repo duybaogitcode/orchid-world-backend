@@ -3,8 +3,7 @@ import { BaseService, InjectBaseService, ObjectId } from 'dryerjs';
 import { Auction, AuctionStatus } from './auction.definition';
 import { Product, ProductStatus } from 'src/product/product.definition';
 import { User } from 'src/user/user.definition';
-
-@Injectable()
+// import * as moment from 'moment';
 export class AuctionService {
   private static instance: AuctionService | null = null;
   constructor(
@@ -112,5 +111,24 @@ export class AuctionService {
         },
       },
     );
+  }
+
+  async startAuction(auctionId: ObjectId) {
+    const startAt = new Date();
+    console.log("🚀 ~ AuctionService ~ startAuction ~ startAt:", startAt)
+    // const started = await this.auctionService.model.findOneAndUpdate(
+    //   {},
+    //   {
+    //     id: auctionId,
+    //     status: AuctionStatus.RUNNING,
+    //     $currentDate: {
+    //       startedAt: true,
+    //     },
+        
+    //   },
+    // );
+
+    // started.duration
+    
   }
 }
