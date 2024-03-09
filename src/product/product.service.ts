@@ -23,6 +23,7 @@ import { stat } from 'node:fs';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ProductEventEnum } from './event/product.event';
 import { Categories } from 'src/orthersDef/categories.definition';
+import { filter } from 'rxjs';
 
 @Injectable()
 export class ProductService {
@@ -300,7 +301,8 @@ export class ProductService {
     return this.productService.paginate(
       ctx,
       {
-        authorId: user.id,
+        ...filter,
+        authorId: new ObjectId(uid),
       },
       sort,
       page,
