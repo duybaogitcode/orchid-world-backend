@@ -3,7 +3,7 @@ import { BaseService, InjectBaseService, ObjectId } from 'dryerjs';
 import { Auction, AuctionStatus } from './auction.definition';
 import { Product, ProductStatus } from 'src/product/product.definition';
 import { User } from 'src/user/user.definition';
-// import * as moment from 'moment';
+import * as moment from 'moment';
 export class AuctionService {
   private static instance: AuctionService | null = null;
   constructor(
@@ -114,8 +114,16 @@ export class AuctionService {
   }
 
   async startAuction(auctionId: ObjectId) {
-    const startAt = new Date();
-    console.log("🚀 ~ AuctionService ~ startAuction ~ startAt:", startAt)
+    const utc = moment().utc().toDate();
+    const utcFormatted = moment(utc).format('YYYY-MM-DD HH:mm:ss');
+    const current = moment().format('YYYY-MM-DD HH:mm:ss');
+    const dateNow = moment(new Date()).format('YYYY-MM-DD HH:mm:ss');
+    console.log('🚀 ~ AuctionService ~ startAuction ~ startAt:', {
+      utc,
+      utcFormatted,
+      current,
+      dateNow,
+    });
     // const started = await this.auctionService.model.findOneAndUpdate(
     //   {},
     //   {
@@ -124,11 +132,10 @@ export class AuctionService {
     //     $currentDate: {
     //       startedAt: true,
     //     },
-        
+
     //   },
     // );
 
     // started.duration
-    
   }
 }
