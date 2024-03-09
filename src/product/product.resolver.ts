@@ -100,9 +100,9 @@ export class ProductResolver {
     @Args('page', { type: () => Int, defaultValue: 1 }) page: number,
     @Args('limit', { type: () => Int, defaultValue: 10 }) limit: number,
     @Args('filter', { type: () => FilterType(Product), nullable: true })
-    filter: ReturnType<typeof FilterType>,
+    filter: any,
     @Args('sort', { type: () => SortType(Product), nullable: true })
-    sort: ReturnType<typeof SortType>,
+    sort: any,
     @Ctx() ctx: Context,
   ) {
     try {

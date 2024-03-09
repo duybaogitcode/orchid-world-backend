@@ -85,6 +85,7 @@ import { SystemWalletEvent } from './wallet/event/system.wallet.event';
 import { AuctionHook } from './auction/auction.hook';
 import { AuctionService } from './auction/auction.service';
 import { AuctionResolver } from './auction/auction.resolver';
+import { MongoQuery } from './utils/mongoquery';
 
 console.log({ nod: configuration().NODE_ENV });
 
@@ -336,6 +337,7 @@ console.log({ nod: configuration().NODE_ENV });
         AuctionHook,
         AuctionService,
         AuctionResolver,
+        MongoQuery,
       ],
       contextDecorator: Ctx,
     }),
