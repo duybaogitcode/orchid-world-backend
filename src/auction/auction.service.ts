@@ -4,6 +4,8 @@ import { Auction, AuctionStatus } from './auction.definition';
 import { Product, ProductStatus } from 'src/product/product.definition';
 import { User } from 'src/user/user.definition';
 import * as moment from 'moment';
+import { AgendaQueue, JobPriority } from 'src/queue/agenda.queue';
+
 export class AuctionService {
   private static instance: AuctionService | null = null;
   constructor(
@@ -11,6 +13,7 @@ export class AuctionService {
     private readonly auctionService: BaseService<Auction, {}>,
     @InjectBaseService(Product)
     private readonly productService: BaseService<Product, {}>,
+    private readonly agendaService: AgendaQueue,
   ) {}
 
   async findOneByProductSlug(productSlug: string) {
@@ -114,24 +117,50 @@ export class AuctionService {
   }
 
   async startAuction(auctionId: ObjectId) {
-    const utc = moment().utc().toDate();
-    const utcFormatted = moment(utc).format('YYYY-MM-DD HH:mm:ss');
-    const current = moment().format('YYYY-MM-DD HH:mm:ss');
-    const dateNow = moment(new Date()).format('YYYY-MM-DD HH:mm:ss');
-    console.log('🚀 ~ AuctionService ~ startAuction ~ startAt:', {
-      utc,
-      utcFormatted,
-      current,
-      dateNow,
+    const auction = await this.auctionService.findById({}, { _id: auctionId });
+    const utc = moment(auction.startAt).utcOffset(7).toDate();
+    const duration = auction.duration;
+    const durationUnit = auction.durationUnit;
+    const startAt = moment(utc).set({ second: 0 });
+    const formatedStartAt = startAt.format('YYYY-MM-DD HH:mm:ss');
+    const expireAt = moment(utc).add(duration, durationUnit).set({ second: 0 });
+    const formatedExpireAt = expireAt.format('YYYY-MM-DD HH:mm:ss');
+    console.log({
+      formatedExpireAt,
+      formatedStartAt,
+      duration,
+      durationUnit,
+      expireAt,
+    });
+    const agenda = await this.agendaService.getAgenda();
+    agenda.define(
+      'auction:expiration',
+      {
+        concurrency: 20,
+        priority: JobPriority?.highest,
+      },
+      async (job) => {
+        console.log('Auction expired', job.attrs.data);
+        console.log({ now: moment().format('YYYY-MM-DD HH:mm:ss') });
+        // await this.auctionService.model.findOneAndUpdate(
+        //   {},
+        //   {
+        //     id: auction.id,
+        //     status: AuctionStatus.EXPIRED,
+        //   },
+        // );
+      },
+    );
+    agenda.start();
+    agenda.schedule(expireAt, 'auction:expiration', {
+      auctionId: auction.id,
     });
     // const started = await this.auctionService.model.findOneAndUpdate(
     //   {},
     //   {
     //     id: auctionId,
     //     status: AuctionStatus.RUNNING,
-    //     $currentDate: {
-    //       startedAt: true,
-    //     },
+    // startAt: startAt,
 
     //   },
     // );

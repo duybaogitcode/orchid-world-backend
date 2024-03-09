@@ -112,7 +112,9 @@ export class Product extends BaseModelHasOwner() {
   @Property({
     type: () => ProductStatus,
     nullable: true,
-    defaultValue: ProductStatus.PENDING,
+    db: {
+      default: ProductStatus.APPROVED,
+    },
     create: Skip,
   })
   status: ProductStatus;

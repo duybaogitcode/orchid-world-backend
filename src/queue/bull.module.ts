@@ -1,6 +1,7 @@
 import { BullModule, InjectQueue } from '@nestjs/bull';
 import { Module, Global } from '@nestjs/common';
 import { Queue } from 'bull';
+import { AgendaQueue } from './agenda.queue';
 
 @Global()
 @Module({
@@ -14,6 +15,6 @@ import { Queue } from 'bull';
       },
     },
   ],
-  exports: ['BullQueue_systemWallet'],
+  exports: ['BullQueue_systemWallet', AgendaQueue],
 })
 export class BullQueueModule {}
