@@ -5,6 +5,10 @@ import { Product, ProductStatus } from 'src/product/product.definition';
 import { User } from 'src/user/user.definition';
 import * as moment from 'moment';
 import { AgendaQueue, JobPriority } from 'src/queue/agenda.queue';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { NotificationEvent } from 'src/notification/notification.service';
+import { createNotification } from 'src/notification/notification.resolver';
+import { NotificationTypeEnum } from 'src/notification/notification.definition';
 
 export class AuctionService {
   private static instance: AuctionService | null = null;
@@ -14,6 +18,7 @@ export class AuctionService {
     @InjectBaseService(Product)
     private readonly productService: BaseService<Product, {}>,
     private readonly agendaService: AgendaQueue,
+    private readonly eventEmiter: EventEmitter2,
   ) {}
 
   async findOneByProductSlug(productSlug: string) {
@@ -121,10 +126,16 @@ export class AuctionService {
     const utc = moment(auction.startAt).utcOffset(7).toDate();
     const duration = auction.duration;
     const durationUnit = auction.durationUnit;
-    const startAt = moment(utc).set({ second: 0 });
-    const formatedStartAt = startAt.format('YYYY-MM-DD HH:mm:ss');
-    const expireAt = moment(utc).add(duration, durationUnit).set({ second: 0 });
-    const formatedExpireAt = expireAt.format('YYYY-MM-DD HH:mm:ss');
+
+    const startAt = moment(utc).set({ second: 0 }).toDate();
+    const expireAt = moment(utc)
+      .add(duration, durationUnit)
+      .set({ second: 0 })
+      .toDate();
+
+    const formatedStartAt = moment(startAt).format('YYYY-MM-DD HH:mm:ss');
+    const formatedExpireAt = moment(expireAt).format('YYYY-MM-DD HH:mm:ss');
+
     console.log({
       formatedExpireAt,
       formatedStartAt,
@@ -132,6 +143,40 @@ export class AuctionService {
       durationUnit,
       expireAt,
     });
+
+    // Update auction status to running
+    const started = await this.auctionService.model.findOneAndUpdate(
+      {},
+      {
+        id: auctionId,
+        status: AuctionStatus.RUNNING,
+        startAt: startAt,
+        expireAt: expireAt,
+      },
+    );
+
+    // Setup agenda job for auction expiration
+    await this.agendaExpirationJob(auctionId, expireAt);
+
+    // Notify to all participants
+    auction.participantIds
+      .concat([auction.authorId])
+      .forEach((participantId) => {
+        this.eventEmiter.emit(
+          NotificationEvent.SEND,
+          createNotification({
+            href: '/auctions/' + auction.product.slug,
+            message: `Buổi đấu giá *${auction.product.name}* đã bắt đầu lúc **${formatedStartAt}** và sẽ kết thúc lúc **${formatedExpireAt}**. Hãy chuẩn bị sẵn sàng để tham gia đấu giá nhé.`,
+            receiver: participantId,
+            notificationType: NotificationTypeEnum.AUCTION,
+          }),
+        );
+      });
+
+    return started;
+  }
+
+  async agendaExpirationJob(auctionId: ObjectId, expireAt: Date) {
     const agenda = await this.agendaService.getAgenda();
     agenda.define(
       'auction:expiration',
@@ -140,31 +185,21 @@ export class AuctionService {
         priority: JobPriority?.highest,
       },
       async (job) => {
+        const auctionId = job.attrs.data?.auctionId;
         console.log('Auction expired', job.attrs.data);
-        console.log({ now: moment().format('YYYY-MM-DD HH:mm:ss') });
-        // await this.auctionService.model.findOneAndUpdate(
-        //   {},
-        //   {
-        //     id: auction.id,
-        //     status: AuctionStatus.EXPIRED,
-        //   },
-        // );
+        console.log({ at: moment().format('YYYY-MM-DD HH:mm:ss') });
+        await this.auctionService.model.findOneAndUpdate(
+          {},
+          {
+            id: auctionId,
+            status: AuctionStatus.EXPIRED,
+          },
+        );
       },
     );
     agenda.start();
     agenda.schedule(expireAt, 'auction:expiration', {
-      auctionId: auction.id,
+      auctionId: auctionId,
     });
-    // const started = await this.auctionService.model.findOneAndUpdate(
-    //   {},
-    //   {
-    //     id: auctionId,
-    //     status: AuctionStatus.RUNNING,
-    // startAt: startAt,
-
-    //   },
-    // );
-
-    // started.duration
   }
 }

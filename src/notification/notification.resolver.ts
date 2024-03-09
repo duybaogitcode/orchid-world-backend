@@ -20,6 +20,12 @@ import { GraphQLObjectType } from 'graphql';
 import { Types } from 'mongoose';
 import { SuccessResponse } from 'dryerjs/dist/types';
 
+export function createNotification(
+  notification: Omit<Notification, 'id' | 'isRead' | 'createdAt' | 'updatedAt'>,
+): Notification {
+  return notification as Notification;
+}
+
 @InputType()
 export class ReadNotificationDTO {
   @Field(() => GraphQLObjectId)
