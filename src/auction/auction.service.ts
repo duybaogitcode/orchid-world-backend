@@ -1,4 +1,3 @@
-import { Injectable } from '@nestjs/common';
 import { BaseService, InjectBaseService, ObjectId } from 'dryerjs';
 import { Auction, AuctionStatus } from './auction.definition';
 import { Product, ProductStatus } from 'src/product/product.definition';
@@ -9,6 +8,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { NotificationEvent } from 'src/notification/notification.service';
 import { createNotification } from 'src/notification/notification.resolver';
 import { NotificationTypeEnum } from 'src/notification/notification.definition';
+import { GraphQLError } from 'graphql';
 
 export class AuctionService {
   private static instance: AuctionService | null = null;
@@ -49,19 +49,19 @@ export class AuctionService {
     const auction = await this.auctionService.findById({}, { _id: auctionId });
     console.log({ auction });
     if (!auction) {
-      throw new Error('Auction not found');
+      throw new GraphQLError('Auction not found');
     }
 
     if (await this.isUserParticipatingInAuction(auction, userId)) {
-      throw new Error('You are already participating in this auction');
+      throw new GraphQLError('You are already participating in this auction');
     }
 
     if (await this.doesUserAreOwnerOfAuction(auction, userId)) {
-      throw new Error('You cannot participate in your own auction');
+      throw new GraphQLError('You cannot participate in your own auction');
     }
 
     if (!(await this.isAuctionAvailableForRegister(auction))) {
-      throw new Error('Auction is not available for register');
+      throw new GraphQLError('Auction is not available for register');
     }
   }
 
@@ -69,21 +69,21 @@ export class AuctionService {
     auctionId: ObjectId,
     userId: ObjectId,
   ) {
-    const auction = await this.auctionService.findOne({}, { id: auctionId });
+    const auction = await this.auctionService.findById({}, { _id: auctionId });
     if (!auction) {
-      throw new Error('Auction not found');
+      throw new GraphQLError('Auction not found');
     }
 
     if (!(await this.isUserParticipatingInAuction(auction, userId))) {
-      throw new Error('You are not participating in this auction');
+      throw new GraphQLError('You are not participating in this auction');
     }
 
     if (await this.doesUserAreOwnerOfAuction(auction, userId)) {
-      throw new Error('You cannot unregister from your own auction');
+      throw new GraphQLError('You cannot unregister from your own auction');
     }
 
     if (!(await this.isAuctionAvailableForRegister(auction))) {
-      throw new Error('Auction is not available for unregister');
+      throw new GraphQLError('Auction is not available for unregister');
     }
   }
 

@@ -78,7 +78,7 @@ export class NotificationService {
       const createdNotification = await this.notificationService.create(null, {
         message,
         notificationType,
-        receiver: receiver.toString(),
+        receiver: receiver,
       });
       this.socketEvent.emitTo(receiver.toString(), 'notification', {
         ...createdNotification,
