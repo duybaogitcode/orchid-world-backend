@@ -86,6 +86,7 @@ import { AuctionHook } from './auction/auction.hook';
 import { AuctionService } from './auction/auction.service';
 import { AuctionResolver } from './auction/auction.resolver';
 import { MongoQuery } from './utils/mongoquery';
+import { AgendaQueue } from './queue/agenda.queue';
 
 console.log({ nod: configuration().NODE_ENV });
 
@@ -124,7 +125,13 @@ console.log({ nod: configuration().NODE_ENV });
       definitions: [
         {
           definition: Product,
-          allowedApis: ['findAll', 'paginate', 'essentials'],
+          allowedApis: [
+            'findAll',
+            'paginate',
+            'essentials',
+            'findOne',
+            'remove',
+          ],
         },
 
         {
@@ -338,6 +345,7 @@ console.log({ nod: configuration().NODE_ENV });
         AuctionService,
         AuctionResolver,
         MongoQuery,
+        AgendaQueue,
       ],
       contextDecorator: Ctx,
     }),

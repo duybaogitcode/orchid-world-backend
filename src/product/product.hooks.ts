@@ -28,6 +28,7 @@ export class ProductHook {
         roleId: new ObjectId(UserRole.USER),
       };
     }
+    console.log({ role: ctx.roleId.toString() });
     switch (ctx.roleId.toString()) {
       case UserRole.ADMIN:
         break;

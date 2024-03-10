@@ -39,8 +39,11 @@ export class AuctionResolver {
     @Args('input') input: AuctionRegisterDTO,
     @Ctx() ctx: Context,
   ) {
-    console.log({ ctx });
-    return this.auctionService.unregisterAuction(input.auctionId, ctx?.id);
+    return {
+      success: Boolean(
+        this.auctionService.unregisterAuction(input.auctionId, ctx?.id),
+      ),
+    };
   }
 
   // @ShopOnly()

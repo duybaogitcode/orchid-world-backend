@@ -4,6 +4,7 @@ import {
   Embedded,
   Filterable,
   GraphQLObjectId,
+  ObjectId,
   Property,
 } from 'dryerjs';
 import { BaseModel } from 'src/base/base.definition';
@@ -49,7 +50,7 @@ export class Notification extends BaseModel() {
     type: () => GraphQLObjectId,
     nullable: true,
   })
-  receiver: string;
+  receiver: ObjectId;
 
   @Property({
     type: () => NotificationTypeEnum,
