@@ -4,13 +4,13 @@ import { GetByUidInput } from './dto/get-by-uid.dto';
 import { User } from './user.definition';
 import { UserService } from './user.service';
 import { UserProfileWithCartAndWallet } from 'src/auth/auth.definition';
-import { ShopOrUserOnly } from 'src/guard/roles.guard';
+import { AuthenticatedUser, ShopOrUserOnly } from 'src/guard/roles.guard';
 
 @Resolver()
 export class UserResolver {
   constructor(private readonly userService: UserService) {}
 
-  @ShopOrUserOnly()
+  @AuthenticatedUser()
   @Query(() => OutputType(UserProfileWithCartAndWallet), {
     name: 'userMyself',
   })

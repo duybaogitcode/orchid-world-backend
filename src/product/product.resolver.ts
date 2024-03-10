@@ -135,9 +135,9 @@ export class ProductResolver {
 
   @ShopOnly()
   @Mutation(() => OutputType(Product), { name: 'updateProduct' })
-  async update(@Args('input') input: UpdateProductInput) {
+  async update(@Args('input') input: UpdateProductInput, @Ctx() ctx: Context) {
     try {
-      const updatedProduct = await this.productService.update(input);
+      const updatedProduct = await this.productService.update(input, ctx);
 
       return updatedProduct;
     } catch (error) {

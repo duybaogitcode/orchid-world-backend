@@ -320,7 +320,13 @@ export class OrderTransactionService {
           limit,
         );
       default:
-        return await this.orderService.paginate(ctx, filter, sort, page, limit);
+        return await this.orderService.paginate(
+          ctx,
+          filterUpdate,
+          sort,
+          page,
+          limit,
+        );
     }
   }
 

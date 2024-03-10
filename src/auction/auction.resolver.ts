@@ -48,5 +48,4 @@ export class AuctionResolver {
   async startAuction(@Args('input') input: AuctionRegisterDTO) {
     return this.auctionService.startAuction(input.auctionId);
   }
-
 }
