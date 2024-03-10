@@ -51,4 +51,23 @@ export class AuctionResolver {
   async startAuction(@Args('input') input: AuctionRegisterDTO) {
     return this.auctionService.startAuction(input.auctionId);
   }
+
+  // @ShopOnly()
+  // TODO: validate owner only
+  @Mutation(() => SuccessResponse, { name: 'approveAuction' })
+  async approveAuction(@Args('input') input: AuctionRegisterDTO) {
+    try {
+      const response = await this.auctionService.approveAuction(
+        input.auctionId,
+      );
+      return {
+        success: Boolean(response),
+      };
+    } catch (error) {
+      console.log({ error });
+      return {
+        success: false,
+      };
+    }
+  }
 }

@@ -63,6 +63,18 @@ export class EventGateway
     client.emit('leftRoom', room);
   }
 
+  @SubscribeMessage('auction:join')
+  handleEvent(
+    client: Socket,
+    payload: {
+      auctionId: string;
+      userId: string;
+    },
+  ) {
+    console.log('join room auction:', { payload });
+    client.join(payload.auctionId);
+  }
+
   public afterInit(server: Server): void {
     return this.logger.log('Init');
   }

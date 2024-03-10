@@ -47,6 +47,7 @@ export enum ProductStatus {
   NOT_AVAILABLE = 'NOT_AVAILABLE',
   DISAPPROVED = 'DISAPPROVED',
   REMOVED = 'REMOVED',
+  SOLD = 'SOLD',
 }
 registerEnumType(ProductStatus, {
   name: 'ProductStatus',

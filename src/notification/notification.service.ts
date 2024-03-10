@@ -68,17 +68,20 @@ export class NotificationService {
     message,
     notificationType,
     receiver,
+    href,
   }: {
     message: string;
     notificationType: NotificationTypeEnum;
     receiver: ObjectId;
+    href?: string;
   }) {
     try {
-      console.log('receiver', message);
+      console.log('receiver', { message, receiver: receiver.toString() });
       const createdNotification = await this.notificationService.create(null, {
         message,
         notificationType,
-        receiver: receiver,
+        receiver: new ObjectId(receiver),
+        href: href || '/',
       });
       this.socketEvent.emitTo(receiver.toString(), 'notification', {
         ...createdNotification,

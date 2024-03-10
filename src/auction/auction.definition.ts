@@ -10,6 +10,7 @@ import {
 } from 'dryerjs';
 import { BaseModel, BaseStatus } from 'src/base/base.definition';
 import { BaseModelHasOwner, Product } from 'src/product/product.definition';
+import { User } from 'src/user/user.definition';
 export enum AuctionStatus {
   PENDING = 'PENDING',
   APPROVED = 'APPROVED',
@@ -130,7 +131,20 @@ export class Auction extends BaseModelHasOwner() {
     update: Skip,
   })
   participantIds: ObjectId[];
-  //   winner: User
+
+  @Property({
+    type: () => [GraphQLObjectId],
+    db: {
+      default: null,
+    },
+    nullable: true,
+    create: Skip,
+    update: Skip,
+  })
+  winnerId: ObjectId;
+
+  @BelongsTo(() => User, { from: 'winnerId' })
+  winner: User;
   // backup_users: User[]
   deposit: number;
 }
@@ -138,7 +152,10 @@ export class Auction extends BaseModelHasOwner() {
 @Definition({
   timestamps: true,
 })
-export class AuctionBiddingHistory extends BaseModel() {
+export class AuctionBiddingHistory extends BaseModelHasOwner() {
+  @Filterable(() => GraphQLObjectId, {
+    operators: ['eq', 'in', 'notIn', 'notEq'],
+  })
   @Property({
     type: () => GraphQLObjectId,
   })

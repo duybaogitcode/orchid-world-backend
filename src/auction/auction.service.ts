@@ -1,5 +1,9 @@
 import { BaseService, InjectBaseService, ObjectId } from 'dryerjs';
-import { Auction, AuctionStatus } from './auction.definition';
+import {
+  Auction,
+  AuctionBiddingHistory,
+  AuctionStatus,
+} from './auction.definition';
 import { Product, ProductStatus } from 'src/product/product.definition';
 import { User } from 'src/user/user.definition';
 import * as moment from 'moment';
@@ -17,6 +21,11 @@ export class AuctionService {
     private readonly auctionService: BaseService<Auction, {}>,
     @InjectBaseService(Product)
     private readonly productService: BaseService<Product, {}>,
+    @InjectBaseService(AuctionBiddingHistory)
+    private readonly biddingHistoryService: BaseService<
+      AuctionBiddingHistory,
+      {}
+    >,
     private readonly agendaService: AgendaQueue,
     private readonly eventEmiter: EventEmitter2,
   ) {}
@@ -83,7 +92,7 @@ export class AuctionService {
     }
 
     if (!(await this.isAuctionAvailableForRegister(auction))) {
-      throw new GraphQLError('Auction is not available for unregister');
+      throw new GraphQLError('Auction is not available for unregister ');
     }
   }
 
@@ -91,9 +100,10 @@ export class AuctionService {
     await this.checkAuctionValidityBeforeRegistration(auctionId, userId);
 
     return this.auctionService.model.findOneAndUpdate(
-      {},
       {
-        id: auctionId,
+        _id: auctionId,
+      },
+      {
         $push: {
           participantIds: userId,
         },
@@ -108,9 +118,10 @@ export class AuctionService {
     await this.checkAuctionValidityBeforeUnregistration(auctionId, userId);
 
     return this.auctionService.model.findOneAndUpdate(
-      {},
       {
-        id: auctionId,
+        _id: auctionId,
+      },
+      {
         $pull: {
           participantIds: userId,
         },
@@ -121,8 +132,65 @@ export class AuctionService {
     );
   }
 
-  async startAuction(auctionId: ObjectId) {
+  async approveAuction(auctionId: ObjectId) {
+    try {
+      const auction = await this.auctionService.update(
+        {},
+        {
+          id: auctionId,
+          status: AuctionStatus.APPROVED,
+        },
+      );
+
+      const product = await this.productService.findById(
+        {},
+        { _id: auction.productId },
+      );
+
+      if (auction.startAutomatically) {
+        await this.startAuction(auctionId, auction.status);
+        this.eventEmiter.emit(
+          NotificationEvent.SEND,
+          createNotification({
+            href: '/auctions/' + product?.slug,
+            message: `Buổi đấu giá *${product?.name}* đã được duyệt. Bạn sẽ tự động bắt đầu vào lúc **${moment(auction.startAt).utcOffset(7).format('YYYY-MM-DD HH:mm:ss')}**.`,
+            receiver: auction.authorId,
+            notificationType: NotificationTypeEnum.AUCTION,
+          }),
+        );
+      } else {
+        this.eventEmiter.emit(
+          NotificationEvent.SEND,
+          createNotification({
+            href: '/auctions/' + product?.slug,
+            message: `Buổi đấu giá *${product?.name}* đã được duyệt. Bạn có thể bắt đầu buổi đấu giá bất cứ lúc nào.`,
+            receiver: auction.authorId,
+            notificationType: NotificationTypeEnum.AUCTION,
+          }),
+        );
+      }
+
+      return true;
+    } catch (error) {
+      console.log({ error });
+    }
+  }
+
+  async startAuction(auctionId: ObjectId, auctionStatus?: AuctionStatus) {
+    console.log({ auctionId, auctionStatus });
     const auction = await this.auctionService.findById({}, { _id: auctionId });
+    const product = await this.productService.findById(
+      {},
+      { _id: auction.productId },
+    );
+
+    if (
+      auction.status !== AuctionStatus.APPROVED &&
+      auctionStatus !== AuctionStatus.APPROVED
+    ) {
+      throw new GraphQLError('Auction is not available for start');
+    }
+
     const utc = moment(auction.startAt).utcOffset(7).toDate();
     const duration = auction.duration;
     const durationUnit = auction.durationUnit;
@@ -137,18 +205,34 @@ export class AuctionService {
     const formatedExpireAt = moment(expireAt).format('YYYY-MM-DD HH:mm:ss');
 
     console.log({
-      formatedExpireAt,
       formatedStartAt,
       duration,
       durationUnit,
+      formatedExpireAt,
       expireAt,
     });
+    if (auction.startAutomatically) {
+      // Update auction status to running
+      const started = await this.auctionService.update(
+        {},
+        {
+          id: auctionId,
+          startAt: startAt,
+          expireAt: expireAt,
+        },
+      );
+
+      await this.agendaAutoStartAuction(auctionId, startAt, expireAt);
+      await this.agendaNotifyBeforeStart(auctionId, startAt);
+      return started;
+    }
 
     // Update auction status to running
     const started = await this.auctionService.model.findOneAndUpdate(
-      {},
       {
-        id: auctionId,
+        _id: auctionId,
+      },
+      {
         status: AuctionStatus.RUNNING,
         startAt: startAt,
         expireAt: expireAt,
@@ -165,8 +249,8 @@ export class AuctionService {
         this.eventEmiter.emit(
           NotificationEvent.SEND,
           createNotification({
-            href: '/auctions/' + auction.product.slug,
-            message: `Buổi đấu giá *${auction.product.name}* đã bắt đầu lúc **${formatedStartAt}** và sẽ kết thúc lúc **${formatedExpireAt}**. Hãy chuẩn bị sẵn sàng để tham gia đấu giá nhé.`,
+            href: '/auctions/' + product?.slug,
+            message: `Buổi đấu giá *${product?.name}* đã bắt đầu lúc **${formatedStartAt}** và sẽ kết thúc lúc **${formatedExpireAt}**. Hãy chuẩn bị sẵn sàng để tham gia đấu giá nhé.`,
             receiver: participantId,
             notificationType: NotificationTypeEnum.AUCTION,
           }),
@@ -174,6 +258,46 @@ export class AuctionService {
       });
 
     return started;
+  }
+
+  async agendaAutoStartAuction(
+    auctionId: ObjectId,
+    startAt: Date,
+    expireAt: Date,
+  ) {
+    const agenda = await this.agendaService.getAgenda();
+    agenda.define(
+      'auction:start',
+      {
+        concurrency: 20,
+        priority: JobPriority?.highest,
+      },
+      async (job) => {
+        const auctionId = job.attrs.data?.auctionId;
+        const _startAt = job.attrs.data?.startAt;
+        const _expireAt = job.attrs.data?.expireAt;
+        console.log('Auction start', job.attrs.data);
+        console.log({ at: moment().format('YYYY-MM-DD HH:mm:ss') });
+        await this.auctionService.model.findOneAndUpdate(
+          {
+            _id: auctionId,
+          },
+          {
+            status: AuctionStatus.RUNNING,
+            startAt: _startAt,
+            expireAt: _expireAt,
+          },
+        );
+        await this.agendaExpirationJob(auctionId, _expireAt);
+      },
+    );
+
+    await agenda.start();
+    await agenda.schedule(startAt, 'auction:start', {
+      auctionId: auctionId,
+      startAt: startAt,
+      expireAt: expireAt,
+    });
   }
 
   async agendaExpirationJob(auctionId: ObjectId, expireAt: Date) {
@@ -189,16 +313,70 @@ export class AuctionService {
         console.log('Auction expired', job.attrs.data);
         console.log({ at: moment().format('YYYY-MM-DD HH:mm:ss') });
         await this.auctionService.model.findOneAndUpdate(
-          {},
           {
-            id: auctionId,
-            status: AuctionStatus.EXPIRED,
+            _id: auctionId,
+          },
+          {
+            status: AuctionStatus.COMPLETED,
           },
         );
       },
     );
-    agenda.start();
-    agenda.schedule(expireAt, 'auction:expiration', {
+    await agenda.start();
+    await agenda.schedule(expireAt, 'auction:expiration', {
+      auctionId: auctionId,
+    });
+  }
+
+  async agendaNotifyBeforeStart(auctionId: ObjectId, startAt: Date) {
+    const agenda = await this.agendaService.getAgenda();
+    agenda.define(
+      'auction:notify-before-start',
+      {
+        concurrency: 20,
+        priority: JobPriority?.highest,
+      },
+      async (job) => {
+        const auctionId = job.attrs.data?.auctionId;
+        console.log('auction:notify-before-start', job.attrs.data);
+        console.log({ at: moment().format('YYYY-MM-DD HH:mm:ss') });
+        const auction = await this.auctionService.findById(
+          {},
+          { _id: auctionId },
+        );
+        const product = await this.productService.findById(
+          {},
+          { _id: auction.productId },
+        );
+
+        auction.participantIds
+          .concat([auction.authorId])
+          .forEach((participantId) => {
+            this.eventEmiter.emit(
+              NotificationEvent.SEND,
+              createNotification({
+                href: '/auctions/' + product?.slug,
+                message: `Buổi đấu giá *${product?.name}* sẽ bắt đầu lúc **${moment(
+                  startAt,
+                )
+                  .utcOffset(7)
+                  .format(
+                    'YYYY-MM-DD HH:mm:ss',
+                  )}**. Hãy chuẩn bị sẵn sàng để tham gia đấu giá nhé.`,
+                receiver: participantId,
+                notificationType: NotificationTypeEnum.AUCTION,
+              }),
+            );
+          });
+      },
+    );
+    await agenda.start();
+    const notifyBeforeStart = moment(startAt).isAfter(
+      moment(startAt).subtract(5, 'minutes'),
+    )
+      ? moment().toDate()
+      : moment(startAt).subtract(5, 'minutes').toDate();
+    await agenda.schedule(notifyBeforeStart, 'auction:notify-before-start', {
       auctionId: auctionId,
     });
   }

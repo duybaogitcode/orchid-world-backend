@@ -78,7 +78,7 @@ import {
 } from './subscription/subscription.definition';
 import { SubscriptionService } from './subscription/subscription.service';
 import { SubscriptionResolver } from './subscription/subscription.resolver';
-import { Auction } from './auction/auction.definition';
+import { Auction, AuctionBiddingHistory } from './auction/auction.definition';
 import { SystemWallet } from './wallet/systems/system.wallet.definition';
 import { SystemTransaction } from './wallet/systems/system.transaction.definition';
 import { SystemWalletEvent } from './wallet/event/system.wallet.event';
@@ -87,6 +87,8 @@ import { AuctionService } from './auction/auction.service';
 import { AuctionResolver } from './auction/auction.resolver';
 import { MongoQuery } from './utils/mongoquery';
 import { AgendaQueue } from './queue/agenda.queue';
+import { BiddingResolver } from './auction/bidding.resolver';
+import { BiddingService } from './auction/bidding.service';
 
 console.log({ nod: configuration().NODE_ENV });
 
@@ -237,6 +239,7 @@ console.log({ nod: configuration().NODE_ENV });
             'update',
             'remove',
             'paginate',
+            'essentials',
           ],
         },
         {
@@ -305,7 +308,10 @@ console.log({ nod: configuration().NODE_ENV });
         },
         // Media,
         // Auction,
-        // AuctionBiddingHistory,
+        {
+          definition: AuctionBiddingHistory,
+          allowedApis: ['findAll', 'findOne', 'remove', 'paginate'],
+        },
       ],
       providers: [
         FirebaseService,
@@ -346,6 +352,8 @@ console.log({ nod: configuration().NODE_ENV });
         AuctionResolver,
         MongoQuery,
         AgendaQueue,
+        BiddingResolver,
+        BiddingService,
       ],
       contextDecorator: Ctx,
     }),
