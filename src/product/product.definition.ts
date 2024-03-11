@@ -14,6 +14,7 @@ import {
 } from 'dryerjs';
 import { FileUpload, GraphQLUpload } from 'graphql-upload-ts';
 import { BaseModel } from 'src/base/base.definition';
+import { Feedbacks } from 'src/feedbacks/feedbacks.definition';
 import { Categories } from 'src/orthersDef/categories.definition';
 import { TagWithValues } from 'src/orthersDef/tagValues.definition';
 import { User } from 'src/user/user.definition';
@@ -162,4 +163,11 @@ export class Product extends BaseModelHasOwner() {
     create: Skip,
   })
   tagsUpdate: TagWithValues[];
+
+  @HasMany(() => Feedbacks, {
+    to: 'productId',
+    allowCreateWithin: true,
+    allowFindAll: true,
+  })
+  feedback: Feedbacks[];
 }

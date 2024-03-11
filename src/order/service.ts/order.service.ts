@@ -637,4 +637,81 @@ export class OrderTransactionService {
       throw error;
     }
   }
+
+  async userUpdateStatusOrder(input: UpdateOrder, ctx: Context) {
+    const session = await this.orderService.model.db.startSession();
+    session.startTransaction();
+
+    try {
+      const order = await this.orderService.model
+        .findOne({
+          code: input.code,
+        })
+        .session(session);
+
+      if (!order) {
+        throw new Error('Order not found');
+      }
+
+      if (order.status !== OrderStatus.DELIVERED || OrderStatus.PENDING) {
+        throw new Error('Order is not delivered or pending');
+      }
+
+      if (ctx.id.toString() !== order.authorId.toString()) {
+        throw new Error('Access denied');
+      }
+
+      if (
+        input.status !== OrderStatus.CONFIRMED_RECEIPT &&
+        input.status !== OrderStatus.RETURNED &&
+        input.status !== OrderStatus.CANCELED
+      ) {
+        throw new Error(
+          'Invalid status, User can only update to completed, canceled or returned status',
+        );
+      }
+
+      if (input.status === OrderStatus.RETURNED) {
+        if (!input.file) {
+          throw new Error('File is required when status is returned');
+        }
+        if (!input.description) {
+          throw new Error('Description is required when status is returned');
+        }
+      }
+
+      if (input.status === OrderStatus.CONFIRMED_RECEIPT) {
+        //handle feedback
+      }
+
+      if (input.status === OrderStatus.CANCELED) {
+        await this.handleOrderCancellation(order, ctx, session);
+      }
+
+      order.status = input.status;
+      await order.save({ session });
+
+      this.eventEmitter.emit(OrderEvidenceEventEnum.CREATED, {
+        input: input,
+        inputOrder: order,
+        ctx: ctx,
+      });
+
+      this.eventEmitter.emit(NotificationEvent.SEND, {
+        href: `/order/${order.code}`,
+        message: `Đơn hàng ${order.code} đã được cập nhật`,
+        notificationType: NotificationTypeEnum.ORDER,
+        receiver: order.shopId,
+      });
+
+      await session.commitTransaction();
+      session.endSession();
+
+      return order;
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
+    }
+  }
 }

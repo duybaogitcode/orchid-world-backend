@@ -89,6 +89,7 @@ import { MongoQuery } from './utils/mongoquery';
 import { AgendaQueue } from './queue/agenda.queue';
 import { BiddingResolver } from './auction/bidding.resolver';
 import { BiddingService } from './auction/bidding.service';
+import { GoShipService } from './utils/goship';
 
 console.log({ nod: configuration().NODE_ENV });
 
@@ -365,6 +366,6 @@ console.log({ nod: configuration().NODE_ENV });
     AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, GoShipService],
 })
 export class AppModule {}
