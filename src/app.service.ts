@@ -29,7 +29,7 @@ export class AppService {
   }
 
   getHello(): string {
-    this.getCapture('94310278VV511143N');
+    // this.getCapture('94310278VV511143N');
     // this.createPayout();
     return 'Hello World!';
   }
