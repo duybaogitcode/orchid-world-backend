@@ -7,14 +7,24 @@ import {
   ObjectId,
 } from 'dryerjs';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
-import { Order, OrderStatus } from '../definition/order.definition';
+import { Order, OrderNotId, OrderStatus } from '../definition/order.definition';
 import { CartShopItem } from 'src/cart/definition/cartShopItem.definition';
 import { CartItem } from 'src/cart/definition/cartItem.definiton';
 import { Cart } from 'src/cart/definition/cart.definition';
 import { registerEnumType } from '@nestjs/graphql';
 import { SystemWalletEventEnum } from 'src/wallet/event/system.wallet.event';
-import { TransactionType } from 'src/wallet/transaction.definition';
+import {
+  Transaction,
+  TransactionType,
+} from 'src/wallet/transaction.definition';
 import { ServiceProvider } from 'src/payment/payment.definition';
+import { GoShipService } from 'src/utils/goship';
+import { OrderTransaction } from '../definition/orderTransaction.definition';
+import { Wallet } from 'src/wallet/wallet.definition';
+import { User, address } from 'src/user/user.definition';
+import { Product } from 'src/product/product.definition';
+import { AuctionBiddingHistory } from 'src/auction/auction.definition';
+import { v4 as uuidv4 } from 'uuid';
 
 export enum OrderEventEnum {
   CREATED = 'Orders.created',
@@ -39,6 +49,15 @@ export class OrderEvent {
     public cartItem: BaseService<CartItem, Context>,
     @InjectBaseService(Cart)
     public cart: BaseService<Cart, Context>,
+    @InjectBaseService(OrderTransaction)
+    public orderTransactionService: BaseService<OrderTransaction, {}>,
+    private readonly goshipService: GoShipService,
+    @InjectBaseService(Wallet)
+    public walletService: BaseService<Wallet, {}>,
+    @InjectBaseService(Transaction)
+    public transactionService: BaseService<Transaction, {}>,
+    @InjectBaseService(User)
+    public userService: BaseService<User, {}>,
   ) {}
 
   @OnEvent(OrderEventEnum.CREATE_BY_ORDER_TRANSACTION)
@@ -89,7 +108,7 @@ export class OrderEvent {
           amount: input.newOrderTransaction.totalAmount,
           type: TransactionType.INCREASE,
           walletId: input.wallet._id,
-          logs: 'Thanh toán đơn hàng',
+          logs: 'Thanh toán hóa đơn' + input.newOrderTransaction.codeBill,
           serviceProvider: ServiceProvider.vnpay,
           isTopUpOrWithdraw: false,
         },
@@ -187,5 +206,165 @@ export class OrderEvent {
     cart.id = cart._id;
 
     return cart;
+  }
+
+  @OnEvent(OrderEventEnum.CREATE_BY_AUCTION)
+  async createOrderAfterAuctionCreated({
+    winner,
+    updatedProduct,
+    lastestBidding,
+  }: {
+    winner: User;
+    updatedProduct: Product;
+    lastestBidding: AuctionBiddingHistory;
+  }) {
+    const session = await this.order.model.db.startSession();
+    session.startTransaction();
+
+    try {
+      const shop = await this.userService.model.findById(
+        updatedProduct.authorId,
+      );
+
+      const addressFrom = await this.getAddress(shop.shopOwner.pickupAddress);
+      const addressTo = await this.getAddress(winner.address[0]);
+      const listOrder: OrderNotId[] = [];
+      listOrder.push({
+        addressFrom,
+        addressTo,
+        amountNotShippingFee: lastestBidding.bidPrice,
+        totalAmount: lastestBidding.bidPrice,
+        code: uuidv4(),
+        deliveredUnit: {
+          carrier_logo:
+            'http://sandbox.goship.io/storage/images/carriers/2023_11_21_13_58_00_1c812f1a13f8f5441837990ee16e5fcf.jpg',
+          carrier_name: 'Giao Hàng Tiết Kiệm',
+          carrier_short_name: 'ghtk',
+          expected: 'Dự kiến 3 ngày',
+          service: 'Tiết kiệm',
+        },
+        cartShopItemInput: null,
+        note: 'Hàng đấu giá, nhớ cẩn thận',
+        shippingFee: 0,
+        shop: {
+          shopName: shop.shopOwner.shopName,
+          shopPhone: shop.shopOwner.phoneShop,
+          productInOrder: [
+            {
+              media: updatedProduct.media,
+              price: lastestBidding.bidPrice,
+              name: updatedProduct.name,
+              quantity: 1,
+              slug: updatedProduct.slug,
+            },
+          ],
+        },
+      });
+
+      const orderTransaction = new this.orderTransactionService.model({
+        orders: listOrder,
+        recipientInformation: {
+          name: winner.firstName + ' ' + winner.lastName,
+          phone: winner.phone,
+        },
+        totalAmount: lastestBidding.bidPrice,
+        transactionId: new ObjectId(),
+        codeBill: uuidv4(),
+        authorId: winner.id,
+      });
+
+      await orderTransaction.save({ session });
+
+      const wallet = await this.walletService.model.findOne({
+        authorId: winner.id,
+      });
+
+      const transaction = new this.transactionService.model({
+        amount: lastestBidding.bidPrice,
+        description: 'Tiền thanh toán đấu giá ' + updatedProduct.name,
+        status: 'SUCCESS',
+        type: '1',
+        walletId: wallet._id,
+      });
+
+      await transaction.save({ session });
+
+      wallet.balance -= lastestBidding.bidPrice;
+      if (wallet.balance < 0) {
+        throw new Error('Not enough money');
+      }
+      await wallet.save({ session });
+
+      const order = new this.order.model({
+        addressFrom: addressFrom,
+        addressTo: addressTo,
+        amountNotShippingFee: lastestBidding.bidPrice,
+        totalAmount: lastestBidding.bidPrice,
+        note: 'Hang dau gia, nho can than',
+        shop: orderTransaction.orders[0].shop,
+        shippingFee: 0,
+        code: orderTransaction.orders[0].code,
+        deliveredUnit: orderTransaction.orders[0].deliveredUnit,
+        orderTransactionId: orderTransaction.id,
+        shopId: shop._id,
+        status: OrderStatus.PENDING,
+        authorId: winner.id,
+      });
+
+      await order.save({ session });
+
+      if (order) {
+        this.eventEmitter.emit(SystemWalletEventEnum.CREATED, {
+          input: {
+            amount: order.totalAmount,
+            type: TransactionType.INCREASE,
+            walletId: wallet._id,
+            logs: 'Thanh toán hóa đơn' + orderTransaction.codeBill,
+            serviceProvider: ServiceProvider.vnpay,
+            isTopUpOrWithdraw: false,
+          },
+        });
+      }
+
+      await session.commitTransaction();
+      session.endSession();
+    } catch (error) {
+      console.log(error);
+      await session.abortTransaction();
+      session.endSession();
+    }
+  }
+
+  private async getAddress(address: address) {
+    let addressString = '';
+    if (address.city) {
+      const listCity = await this.goshipService.getCities();
+      const city = listCity.data.find((c) => c.id === address.city);
+      const cityName = city?.name || '';
+      addressString += cityName;
+      if (address.district) {
+        const listDistrict = await this.goshipService.getDistricts(
+          address.city,
+        );
+        const district = listDistrict.data.find(
+          (d) => d.id === address.district,
+        );
+        const districtName = district?.name || '';
+        addressString += ' ' + districtName;
+        if (address.ward) {
+          const listWard = await this.goshipService.getWards(address.district);
+          const ward = listWard.data.find(
+            (w) => w.id.toString() === address.ward,
+          );
+          const wardName = ward?.name || '';
+          addressString += ' ' + wardName;
+          if (address.detail) {
+            addressString += ' ' + address.detail;
+          }
+        }
+      }
+    }
+
+    return addressString;
   }
 }

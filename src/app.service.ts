@@ -51,29 +51,40 @@ export class AppService {
 
       const address = {
         city: '700000',
-        district: '72030011',
-        ward: '1265411',
+        district: '720300',
+        ward: '12654',
         detail: '123/4/5',
       };
 
-      const listCity = await this.goshipService.getCities();
-      const city = listCity.data.find((c) => c.id === address.city);
-      const cityName = city?.name || '';
-
-      const listDistrict = await this.goshipService.getDistricts(address.city);
-      const district = listDistrict.data.find((d) => d.id === address.district);
-      const districtName = district?.name || '';
-
-      let wardName = '';
-      if (address.ward) {
-        const listWard = await this.goshipService.getWards(district?.id);
-        const ward = listWard?.data.find(
-          (w) => w.id.toString() === address.ward,
-        );
-        wardName = ward?.name || '';
+      let addressString = '';
+      if (address.city) {
+        const listCity = await this.goshipService.getCities();
+        const city = listCity.data.find((c) => c.id === address.city);
+        const cityName = city?.name || '';
+        addressString += cityName;
+        if (address.district) {
+          const listDistrict = await this.goshipService.getDistricts(
+            address.city,
+          );
+          const district = listDistrict.data.find(
+            (d) => d.id === address.district,
+          );
+          const districtName = district?.name || '';
+          addressString += ' ' + districtName;
+          if (address.ward) {
+            const listWard = await this.goshipService.getWards(
+              address.district,
+            );
+            const ward = listWard.data.find(
+              (w) => w.id.toString() === address.ward,
+            );
+            const wardName = ward?.name || '';
+            addressString += ' ' + wardName;
+          }
+        }
       }
 
-      console.log(cityName, districtName, wardName, address.detail);
+      console.log(addressString);
       throw new Error('Error');
     } catch (err) {
       console.error(err);

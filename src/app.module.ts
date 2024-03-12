@@ -291,7 +291,7 @@ console.log({ nod: configuration().NODE_ENV });
           ],
           decorators: {
             create: [ShopOnly()],
-            update: [ShopOnly()],
+            // update: [ShopOnly()],
             remove: [ShopOnly()],
           },
         },
@@ -358,6 +358,7 @@ console.log({ nod: configuration().NODE_ENV });
         BiddingService,
         FeedbackEvent,
         FeedbackHook,
+        GoShipService,
       ],
       contextDecorator: Ctx,
     }),
