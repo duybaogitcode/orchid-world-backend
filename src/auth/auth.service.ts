@@ -45,7 +45,9 @@ export class AuthService {
 
       if (!existUser) {
         const userRole = await this.roleModel.findOne({ name: roleName });
-        const { firstName, lastName } = getFirstAndLastName(result.name);
+        const { firstName, lastName } = getFirstAndLastName(
+          result.name || 'Im Anonymous',
+        );
         existUser = await this.userModel.create({
           address: [],
           avatar: result.picture,

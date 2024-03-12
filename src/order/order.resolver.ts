@@ -15,6 +15,7 @@ import {
   ShippingOnly,
   ShopOnly,
   ShopOrUserOnly,
+  UserOnly,
 } from 'src/guard/roles.guard';
 import { OrderTransactionService } from './service.ts/order.service';
 import { Order } from './definition/order.definition';
@@ -133,6 +134,21 @@ export class OrderTransactionResolver {
     try {
       const updatedOrder =
         await this.orderTransactionService.shipperUpdateStatusOrder(input, ctx);
+      return updatedOrder;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  @UserOnly()
+  @Mutation(() => OutputType(Order), { name: 'userUpdateOrderStatus' })
+  async userUpdateOrderStatus(
+    @Args('input') input: UpdateOrder,
+    @Ctx() ctx: Context,
+  ) {
+    try {
+      const updatedOrder =
+        await this.orderTransactionService.userUpdateStatusOrder(input, ctx);
       return updatedOrder;
     } catch (error) {
       throw error;

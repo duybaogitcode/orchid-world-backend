@@ -96,7 +96,7 @@ export class ProductService {
     }
   }
 
-  async update(updateProductDto: UpdateProductInput) {
+  async update(updateProductDto: UpdateProductInput, ctx: Context) {
     console.log('updateProductDto', updateProductDto);
     const session = await this.productService.model.startSession();
     session.startTransaction();
@@ -110,6 +110,10 @@ export class ProductService {
 
       if (!product) {
         throw new Error('Product not found');
+      }
+
+      if (ctx.id.toString() !== product.authorId.toString()) {
+        throw new Error('You are not the owner of this product');
       }
 
       const {

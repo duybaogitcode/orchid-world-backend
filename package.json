@@ -38,6 +38,7 @@
     "@paypal/payouts-sdk": "^1.1.1",
     "@prisma/client": "^5.8.1",
     "agenda": "^5.0.0",
+    "axios": "^1.6.7",
     "bull": "^4.12.2",
     "cache-manager": "^5.4.0",
     "cache-manager-ioredis": "^2.1.0",

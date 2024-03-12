@@ -32,10 +32,10 @@ export class UserService {
         authorId: user._id,
       }),
     ]);
-    console.log({ address: user?.address });
-    if (!user?.address || user?.address === null) {
-      user.address = [];
-    }
+    // console.log({ address: user?.address });
+    // if (!user?.address || user?.address === null) {
+    //   user.address = [];
+    // }
     // console.log({
     //   cart,
     //   wallet,

@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
+import { GoShipService } from './utils/goship';
+import { address } from './user/user.definition';
 const paypal = require('@paypal/checkout-server-sdk');
 const paypalout = require('@paypal/payouts-sdk');
 
@@ -8,7 +10,7 @@ export class AppService {
   private client: any;
   private clientout: any;
 
-  constructor() {
+  constructor(private readonly goshipService: GoShipService) {
     const clientId =
       'AXYpMOBg9oGL9_tWWf7P53A0XYoK-OR178XB_IQHoPkgcyhHhjDlx4j2bBSbQ0N-hwUVQimiCbkU7HHp';
     const client_secret =
@@ -27,25 +29,52 @@ export class AppService {
   }
 
   getHello(): string {
-    // this.getCapture('94310278VV511143N');
+    this.getCapture('94310278VV511143N');
     // this.createPayout();
     return 'Hello World!';
   }
 
   async getCapture(captureId: string) {
-    const request1 = new paypal.payouts.PayoutsPostRequest();
-    const request = new paypal.orders.OrdersGetRequest(captureId);
+    // const request1 = new paypal.payouts.PayoutsPostRequest();
+    // const request = new paypal.orders.OrdersGetRequest(captureId);
     try {
-      const response = await this.client.execute(request);
-      console.log(
-        response.result.status,
-        response.result.purchase_units[0].amount.value,
-        response.result.purchase_units[0].description,
-      );
-      // if (response.result.status === 'COMPLETED') {
-      //   console.log('Payment not completed');
-      // }
-      return response.result;
+      // const response = await this.client.execute(request);
+      // console.log(
+      //   response.result.status,
+      //   response.result.purchase_units[0].amount.value,
+      //   response.result.purchase_units[0].description,
+      // );
+      // // if (response.result.status === 'COMPLETED') {
+      // //   console.log('Payment not completed');
+      // // }
+      // return response.result;
+
+      const address = {
+        city: '700000',
+        district: '72030011',
+        ward: '1265411',
+        detail: '123/4/5',
+      };
+
+      const listCity = await this.goshipService.getCities();
+      const city = listCity.data.find((c) => c.id === address.city);
+      const cityName = city?.name || '';
+
+      const listDistrict = await this.goshipService.getDistricts(address.city);
+      const district = listDistrict.data.find((d) => d.id === address.district);
+      const districtName = district?.name || '';
+
+      let wardName = '';
+      if (address.ward) {
+        const listWard = await this.goshipService.getWards(district?.id);
+        const ward = listWard?.data.find(
+          (w) => w.id.toString() === address.ward,
+        );
+        wardName = ward?.name || '';
+      }
+
+      console.log(cityName, districtName, wardName, address.detail);
+      throw new Error('Error');
     } catch (err) {
       console.error(err);
       throw err;

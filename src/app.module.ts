@@ -89,6 +89,10 @@ import { MongoQuery } from './utils/mongoquery';
 import { AgendaQueue } from './queue/agenda.queue';
 import { BiddingResolver } from './auction/bidding.resolver';
 import { BiddingService } from './auction/bidding.service';
+import { GoShipService } from './utils/goship';
+import { Feedbacks } from './feedbacks/feedbacks.definition';
+import { FeedbackEvent } from './feedbacks/feedback.event';
+import { FeedbackHook } from './feedbacks/feedback.hook';
 
 console.log({ nod: configuration().NODE_ENV });
 
@@ -127,13 +131,7 @@ console.log({ nod: configuration().NODE_ENV });
       definitions: [
         {
           definition: Product,
-          allowedApis: [
-            'findAll',
-            'paginate',
-            'essentials',
-            'findOne',
-            'remove',
-          ],
+          allowedApis: ['findAll', 'paginate', 'essentials', 'findOne'],
         },
 
         {
@@ -312,6 +310,10 @@ console.log({ nod: configuration().NODE_ENV });
           definition: AuctionBiddingHistory,
           allowedApis: ['findAll', 'findOne', 'remove', 'paginate'],
         },
+        {
+          definition: Feedbacks,
+          allowedApis: ['findAll', 'findOne', 'remove', 'paginate', 'update'],
+        },
       ],
       providers: [
         FirebaseService,
@@ -354,6 +356,8 @@ console.log({ nod: configuration().NODE_ENV });
         AgendaQueue,
         BiddingResolver,
         BiddingService,
+        FeedbackEvent,
+        FeedbackHook,
       ],
       contextDecorator: Ctx,
     }),
@@ -365,6 +369,6 @@ console.log({ nod: configuration().NODE_ENV });
     AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, GoShipService],
 })
 export class AppModule {}

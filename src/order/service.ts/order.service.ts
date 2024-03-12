@@ -25,6 +25,7 @@ import { SystemWalletEventEnum } from 'src/wallet/event/system.wallet.event';
 import { TransactionType } from 'src/wallet/transaction.definition';
 import { ServiceProvider } from 'src/payment/payment.definition';
 import { MongoQuery } from 'src/utils/mongoquery';
+import { FeedbackEventEnum } from 'src/feedbacks/feedback.event';
 
 @Injectable()
 export class OrderTransactionService {
@@ -320,7 +321,13 @@ export class OrderTransactionService {
           limit,
         );
       default:
-        return await this.orderService.paginate(ctx, filter, sort, page, limit);
+        return await this.orderService.paginate(
+          ctx,
+          filterUpdate,
+          sort,
+          page,
+          limit,
+        );
     }
   }
 
@@ -506,6 +513,7 @@ export class OrderTransactionService {
     });
     setTimeout(() => {
       this.eventEmitter.emit(NotificationEvent.SEND, {
+        href: '/transactions',
         message: `Biến động số dư`,
         notificationType: NotificationTypeEnum.ORDER,
         receiver: order.authorId,
@@ -596,6 +604,7 @@ export class OrderTransactionService {
         });
 
         this.eventEmitter.emit(NotificationEvent.SEND, {
+          href: '/transactions',
           message: `Nhận tiền từ đơn hàng ${order.code}`,
           notificationType: NotificationTypeEnum.ORDER,
           receiver: order.shopId,
@@ -609,17 +618,103 @@ export class OrderTransactionService {
       });
 
       this.eventEmitter.emit(NotificationEvent.SEND, {
+        href: `/order/${order.code}`,
         message: `Đơn hàng ${order.code} đã được cập nhật`,
         notificationType: NotificationTypeEnum.ORDER,
         receiver: order.authorId,
       });
       if (input.status === OrderStatus.WAITING) {
         this.eventEmitter.emit(NotificationEvent.SEND, {
+          href: `/order/${order.code}`,
           message: `Đơn hàng ${order.code} đã được cập nhật`,
           notificationType: NotificationTypeEnum.ORDER,
           receiver: order.shopId,
         });
       }
+
+      await session.commitTransaction();
+      session.endSession();
+
+      return order;
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
+    }
+  }
+
+  async userUpdateStatusOrder(input: UpdateOrder, ctx: Context) {
+    const session = await this.orderService.model.db.startSession();
+    session.startTransaction();
+
+    try {
+      const order = await this.orderService.model
+        .findOne({
+          code: input.code,
+        })
+        .session(session);
+
+      if (!order) {
+        throw new Error('Order not found');
+      }
+
+      if (ctx.id.toString() !== order.authorId.toString()) {
+        throw new Error('Access denied');
+      }
+
+      if (
+        input.status !== OrderStatus.CONFIRMED_RECEIPT &&
+        input.status !== OrderStatus.RETURNED &&
+        input.status !== OrderStatus.CANCELED
+      ) {
+        throw new Error(
+          'Invalid status, User can only update to completed, canceled or returned status',
+        );
+      }
+
+      if (input.status === OrderStatus.RETURNED) {
+        if (order.status !== OrderStatus.DELIVERED) {
+          throw new Error('Order is not delivered');
+        }
+        if (!input.file) {
+          throw new Error('File is required when status is returned');
+        }
+        if (!input.description) {
+          throw new Error('Description is required when status is returned');
+        }
+      }
+
+      if (input.status === OrderStatus.CONFIRMED_RECEIPT) {
+        if (order.status !== OrderStatus.DELIVERED) {
+          throw new Error('Order is not delivered');
+        }
+        this.eventEmitter.emit(FeedbackEventEnum.CREATED, {
+          order: order,
+        });
+      }
+
+      if (input.status === OrderStatus.CANCELED) {
+        if (order.status !== OrderStatus.PENDING) {
+          throw new Error('Order is not pending');
+        }
+        await this.handleOrderCancellation(order, ctx, session);
+      }
+
+      order.status = input.status;
+      await order.save({ session });
+
+      this.eventEmitter.emit(OrderEvidenceEventEnum.CREATED, {
+        input: input,
+        inputOrder: order,
+        ctx: ctx,
+      });
+
+      this.eventEmitter.emit(NotificationEvent.SEND, {
+        href: `/order/${order.code}`,
+        message: `Đơn hàng ${order.code} đã được cập nhật`,
+        notificationType: NotificationTypeEnum.ORDER,
+        receiver: order.shopId,
+      });
 
       await session.commitTransaction();
       session.endSession();
