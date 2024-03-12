@@ -225,6 +225,7 @@ export class OrderEvent {
       const shop = await this.userService.model.findById(
         updatedProduct.authorId,
       );
+      let paying = false;
 
       const addressFrom = await this.getAddress(shop.shopOwner.pickupAddress);
       const addressTo = await this.getAddress(winner.address[0]);
@@ -289,11 +290,15 @@ export class OrderEvent {
 
       await transaction.save({ session });
 
-      wallet.balance -= lastestBidding.bidPrice;
-      if (wallet.balance < 0) {
-        throw new Error('Not enough money');
+      const afterMinus = wallet.balance - lastestBidding.bidPrice;
+
+      if (afterMinus < 0) {
+        wallet.balance = wallet.balance;
+        paying = true;
+      } else {
+        wallet.balance = afterMinus;
+        await wallet.save({ session });
       }
-      await wallet.save({ session });
 
       const order = new this.order.model({
         addressFrom: addressFrom,
@@ -307,24 +312,22 @@ export class OrderEvent {
         deliveredUnit: orderTransaction.orders[0].deliveredUnit,
         orderTransactionId: orderTransaction.id,
         shopId: shop._id,
-        status: OrderStatus.PENDING,
+        status: paying ? OrderStatus.PAYING : OrderStatus.PENDING,
         authorId: winner.id,
       });
 
       await order.save({ session });
 
-      if (order) {
-        this.eventEmitter.emit(SystemWalletEventEnum.CREATED, {
-          input: {
-            amount: order.totalAmount,
-            type: TransactionType.INCREASE,
-            walletId: wallet._id,
-            logs: 'Thanh toán hóa đơn' + orderTransaction.codeBill,
-            serviceProvider: ServiceProvider.vnpay,
-            isTopUpOrWithdraw: false,
-          },
-        });
-      }
+      this.eventEmitter.emit(SystemWalletEventEnum.CREATED, {
+        input: {
+          amount: order.totalAmount,
+          type: TransactionType.INCREASE,
+          walletId: wallet._id,
+          logs: 'Thanh toán hóa đơn' + orderTransaction.codeBill,
+          serviceProvider: ServiceProvider.vnpay,
+          isTopUpOrWithdraw: false,
+        },
+      });
 
       await session.commitTransaction();
       session.endSession();

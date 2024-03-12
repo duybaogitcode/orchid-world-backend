@@ -291,7 +291,7 @@ console.log({ nod: configuration().NODE_ENV });
           ],
           decorators: {
             create: [ShopOnly()],
-            // update: [ShopOnly()],
+            update: [ShopOnly()],
             remove: [ShopOnly()],
           },
         },

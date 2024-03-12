@@ -31,6 +31,7 @@ export enum OrderStatus {
   DELIVERED = 'DELIVERED',
   CONFIRMED_RECEIPT = 'CONFIRMED_RECEIPT',
   RETURNED = 'RETURNED',
+  PAYING = 'WAITING_FOR_PAYMENT',
 }
 
 registerEnumType(OrderStatus, {
