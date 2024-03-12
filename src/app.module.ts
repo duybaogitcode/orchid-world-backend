@@ -358,6 +358,7 @@ console.log({ nod: configuration().NODE_ENV });
         BiddingService,
         FeedbackEvent,
         FeedbackHook,
+        GoShipService,
       ],
       contextDecorator: Ctx,
     }),

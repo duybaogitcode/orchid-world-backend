@@ -26,7 +26,8 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { NotificationEvent } from 'src/notification/notification.service';
 import { createNotification } from 'src/notification/notification.resolver';
 import { NotificationTypeEnum } from 'src/notification/notification.definition';
-import { Order } from 'src/order/definition/order.definition';
+import { OrderEventEnum } from 'src/order/event/order.event';
+
 @Injectable()
 export class AuctionHook {
   constructor(
@@ -39,8 +40,6 @@ export class AuctionHook {
     @InjectBaseService(Product)
     public productService: BaseService<Product, {}>,
     private readonly eventEmitter: EventEmitter2,
-    @InjectBaseService(Order)
-    public orderService: BaseService<Order, {}>,
   ) {}
 
   @BeforeCreateHook(() => Auction)
@@ -88,86 +87,88 @@ export class AuctionHook {
   async afterUpdateAuction({
     updated,
   }: AfterUpdateHookInput<Auction, Context>) {
-    if (updated?.status === AuctionStatus.COMPLETED) {
-      const lastestBidding = await this.biddingHistoryService.model.findOne(
-        { auctionId: updated.id },
-        { bidPrice: 1, authorId: 1 },
-        {
-          sort: {
-            createdAt: -1,
-          },
-        },
-      );
-
-      if (lastestBidding) {
-        const winner = await this.userService.findById(
-          {},
+    const session = await this.productService.model.db.startSession();
+    session.startTransaction();
+    try {
+      if (updated?.status === AuctionStatus.COMPLETED) {
+        const lastestBidding = await this.biddingHistoryService.model.findOne(
+          { auctionId: updated.id },
+          { bidPrice: 1, authorId: 1 },
           {
-            _id: lastestBidding.authorId,
-          },
-        );
-        await this.auctionService.update(
-          {},
-          {
-            id: updated.id,
-            currentPrice: lastestBidding.bidPrice,
-            winnerId: winner.id,
+            sort: {
+              createdAt: -1,
+            },
           },
         );
 
-        const updatedProduct = await this.productService.update(
-          {},
-          {
-            id: updated.productId,
-            status: ProductStatus.SOLD,
-          },
-        );
+        if (lastestBidding) {
+          const winner = await this.userService.findById(
+            {},
+            {
+              _id: lastestBidding.authorId,
+            },
+          );
 
-        // TODO: Please help me
-        // this.orderService.create(
-        //   {},
-        //   {
-        //     addressFrom: updatedProduct.author.address[0].city,
-        //     addressTo: winner.address[0].city,
-        //     authorId: updatedProduct.authorId,
-        //   },
-        // );
+          const auction = await this.auctionService.model.findById(updated.id);
+          auction.winnerId = winner.id;
+          auction.currentPrice = lastestBidding.bidPrice;
+          await auction.save({ session });
 
-        this.eventEmitter.emit(
-          NotificationEvent.SEND,
-          createNotification({
-            href: `/auctions/${updatedProduct.slug}`,
-            message: `Đấu giá ${updatedProduct.name} đã kết thúc. Sản phẩm đã được bán với giá ${lastestBidding.bidPrice} đồng, vui lòng liên hệ với người bán để hoàn tất giao dịch`,
-            notificationType: NotificationTypeEnum.AUCTION,
-            receiver: lastestBidding.authorId,
-          }),
-        );
+          const updatedProduct = await this.productService.model.findById(
+            updated.productId,
+          );
 
-        this.eventEmitter.emit(
-          NotificationEvent.SEND,
-          createNotification({
-            href: `/auctions/${updatedProduct.slug}`,
-            message: `Đấu giá ${updatedProduct.name} đã kết thúc. Sản phẩm đã được bán với giá ${lastestBidding.bidPrice} đồng, người chiến thắng là ${winner?.firstName || 'Anonymous'} ${winner?.lastName || 'Anonymous'}. Vui lòng liên hệ với người mua để hoàn tất giao dịch`,
-            notificationType: NotificationTypeEnum.AUCTION,
-            receiver: updated.authorId,
-          }),
-        );
+          updatedProduct.status = ProductStatus.SOLD;
 
-        updated.participantIds
-          .filter((id) => id !== winner?.id)
-          .map((participantId) => {
-            this.eventEmitter.emit(
-              NotificationEvent.SEND,
-              createNotification({
-                href: `/auctions/${updatedProduct.slug}`,
-                message: `Đấu giá ${updatedProduct.name} đã kết thúc. Sản phẩm đã được bán với giá ${lastestBidding.bidPrice} đồng, người chiến thắng là ${winner?.firstName || 'Anonymous'} ${winner?.lastName || 'Anonymous'}`,
-                notificationType: NotificationTypeEnum.AUCTION,
-                receiver: participantId,
-              }),
-            );
+          await updatedProduct.save({ session });
+
+          this.eventEmitter.emit(OrderEventEnum.CREATE_BY_AUCTION, {
+            winner: winner,
+            updatedProduct: updatedProduct,
+            lastestBidding: lastestBidding,
           });
+
+          this.eventEmitter.emit(
+            NotificationEvent.SEND,
+            createNotification({
+              href: `/auctions/${updatedProduct.slug}`,
+              message: `Đấu giá ${updatedProduct.name} đã kết thúc. Sản phẩm đã được bán với giá ${lastestBidding.bidPrice} đồng, vui lòng liên hệ với người bán để hoàn tất giao dịch`,
+              notificationType: NotificationTypeEnum.AUCTION,
+              receiver: lastestBidding.authorId,
+            }),
+          );
+
+          this.eventEmitter.emit(
+            NotificationEvent.SEND,
+            createNotification({
+              href: `/auctions/${updatedProduct.slug}`,
+              message: `Đấu giá ${updatedProduct.name} đã kết thúc. Sản phẩm đã được bán với giá ${lastestBidding.bidPrice} đồng, người chiến thắng là ${winner?.firstName || 'Anonymous'} ${winner?.lastName || 'Anonymous'}. Vui lòng liên hệ với người mua để hoàn tất giao dịch`,
+              notificationType: NotificationTypeEnum.AUCTION,
+              receiver: updated.authorId,
+            }),
+          );
+
+          updated.participantIds
+            .filter((id) => id !== winner?.id)
+            .map((participantId) => {
+              this.eventEmitter.emit(
+                NotificationEvent.SEND,
+                createNotification({
+                  href: `/auctions/${updatedProduct.slug}`,
+                  message: `Đấu giá ${updatedProduct.name} đã kết thúc. Sản phẩm đã được bán với giá ${lastestBidding.bidPrice} đồng, người chiến thắng là ${winner?.firstName || 'Anonymous'} ${winner?.lastName || 'Anonymous'}`,
+                  notificationType: NotificationTypeEnum.AUCTION,
+                  receiver: participantId,
+                }),
+              );
+            });
+        }
       }
+
+      await session.commitTransaction();
+      session.endSession();
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
     }
-    return updated;
   }
 }

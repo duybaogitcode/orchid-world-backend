@@ -19,6 +19,8 @@ export class AuctionService {
   constructor(
     @InjectBaseService(Auction)
     private readonly auctionService: BaseService<Auction, {}>,
+    @InjectBaseService(User)
+    private readonly userService: BaseService<User, {}>,
     @InjectBaseService(Product)
     private readonly productService: BaseService<Product, {}>,
     @InjectBaseService(AuctionBiddingHistory)
@@ -97,6 +99,14 @@ export class AuctionService {
   }
 
   async registerAuction(auctionId: ObjectId, userId: ObjectId) {
+    const user = await this.userService.model.findById(new ObjectId(userId));
+    if (!user) {
+      throw new GraphQLError('User not found');
+    }
+    if (!user?.phone) {
+      throw new GraphQLError('User has not phone number');
+    }
+
     await this.checkAuctionValidityBeforeRegistration(auctionId, userId);
 
     return this.auctionService.model.findOneAndUpdate(
