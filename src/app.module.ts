@@ -39,6 +39,9 @@ import { CartItemService } from './cart/services/cartItem.service';
 import { CartIShopItemService } from './cart/services/cartItemShop.service';
 import {
   Admin,
+  AdminOrManager,
+  AdminOrManagerOrStaff,
+  ManagerOnly,
   ManagerOrStaff,
   ShopOnly,
   ShopOrUserOnly,
@@ -93,6 +96,8 @@ import { GoShipService } from './utils/goship';
 import { Feedbacks } from './feedbacks/feedbacks.definition';
 import { FeedbackEvent } from './feedbacks/feedback.event';
 import { FeedbackHook } from './feedbacks/feedback.hook';
+import { Tasks } from './tasks/tasks.definition';
+import { TasksHook } from './tasks/tasks.hook';
 
 console.log({ nod: configuration().NODE_ENV });
 
@@ -314,6 +319,23 @@ console.log({ nod: configuration().NODE_ENV });
           definition: Feedbacks,
           allowedApis: ['findAll', 'findOne', 'remove', 'paginate', 'update'],
         },
+
+        {
+          definition: Tasks,
+          allowedApis: [
+            'findAll',
+            'findOne',
+            'remove',
+            'paginate',
+            'update',
+            'create',
+          ],
+          decorators: {
+            create: [AdminOrManager()],
+            update: [AdminOrManagerOrStaff()],
+            remove: [AdminOrManager()],
+          },
+        },
       ],
       providers: [
         FirebaseService,
@@ -359,6 +381,7 @@ console.log({ nod: configuration().NODE_ENV });
         FeedbackEvent,
         FeedbackHook,
         GoShipService,
+        TasksHook,
       ],
       contextDecorator: Ctx,
     }),

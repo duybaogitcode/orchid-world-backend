@@ -158,6 +158,20 @@ export const AuthenticatedUser = () => {
   );
 };
 
+export const AdminOrManager = () => {
+  return applyDecorators(
+    RoleMultiCheck([UserRole.ADMIN, UserRole.MANAGER]),
+    UseGuards(RoleMultiGuard),
+  );
+};
+
+export const AdminOrManagerOrStaff = () => {
+  return applyDecorators(
+    RoleMultiCheck([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF]),
+    UseGuards(RoleMultiGuard),
+  );
+};
+
 export enum UserRole {
   USER = '65d317029abc164abb8a830b',
   SHOP_OWNER = '65d4ae42f18fa2591d75c6c8',
