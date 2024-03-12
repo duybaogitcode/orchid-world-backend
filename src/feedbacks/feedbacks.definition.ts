@@ -1,24 +1,32 @@
+import { GraphQLISODateTime, Int } from '@nestjs/graphql';
 import {
   BelongsTo,
   Definition,
   FilterType,
   Filterable,
   GraphQLObjectId,
+  Id,
+  ObjectId,
   Property,
   Skip,
+  Sortable,
 } from 'dryerjs';
 import { FileUpload, GraphQLUpload } from 'graphql-upload-ts';
 import { BaseModelHasOwner, Product } from 'src/product/product.definition';
+import { User } from 'src/user/user.definition';
 
-Definition({
+@Definition({
   timestamps: true,
-});
-export class Feedbacks extends BaseModelHasOwner() {
+})
+export class Feedbacks {
+  @Id()
+  id: ObjectId;
+
   @Property({ type: () => String, nullable: true })
   feedback: string;
 
-  @Property({ type: () => String, nullable: true })
-  rating: string;
+  @Property({ type: () => Int, nullable: true })
+  rating: number;
 
   @Property({
     type: () => [String],
@@ -36,8 +44,34 @@ export class Feedbacks extends BaseModelHasOwner() {
   file: Array<Promise<FileUpload>>;
 
   @Property({ type: () => GraphQLObjectId })
-  productId: string;
+  productId: ObjectId;
 
   @BelongsTo(() => Product, { from: 'productId' })
   product: Product;
+
+  @Property({
+    type: () => GraphQLObjectId,
+    create: Skip,
+    update: Skip,
+  })
+  authorId: ObjectId;
+
+  @BelongsTo(() => User, { from: 'authorId' })
+  author: User;
+
+  @Sortable()
+  @Property({
+    output: { type: () => GraphQLISODateTime },
+    create: Skip,
+    update: Skip,
+  })
+  createdAt: Date;
+
+  @Sortable()
+  @Property({
+    output: { type: () => GraphQLISODateTime },
+    create: Skip,
+    update: Skip,
+  })
+  updatedAt: Date;
 }

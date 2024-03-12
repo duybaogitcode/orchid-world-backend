@@ -25,6 +25,7 @@ import { SystemWalletEventEnum } from 'src/wallet/event/system.wallet.event';
 import { TransactionType } from 'src/wallet/transaction.definition';
 import { ServiceProvider } from 'src/payment/payment.definition';
 import { MongoQuery } from 'src/utils/mongoquery';
+import { FeedbackEventEnum } from 'src/feedbacks/feedback.event';
 
 @Injectable()
 export class OrderTransactionService {
@@ -512,6 +513,7 @@ export class OrderTransactionService {
     });
     setTimeout(() => {
       this.eventEmitter.emit(NotificationEvent.SEND, {
+        href: '/transactions',
         message: `Biến động số dư`,
         notificationType: NotificationTypeEnum.ORDER,
         receiver: order.authorId,
@@ -602,6 +604,7 @@ export class OrderTransactionService {
         });
 
         this.eventEmitter.emit(NotificationEvent.SEND, {
+          href: '/transactions',
           message: `Nhận tiền từ đơn hàng ${order.code}`,
           notificationType: NotificationTypeEnum.ORDER,
           receiver: order.shopId,
@@ -615,12 +618,14 @@ export class OrderTransactionService {
       });
 
       this.eventEmitter.emit(NotificationEvent.SEND, {
+        href: `/order/${order.code}`,
         message: `Đơn hàng ${order.code} đã được cập nhật`,
         notificationType: NotificationTypeEnum.ORDER,
         receiver: order.authorId,
       });
       if (input.status === OrderStatus.WAITING) {
         this.eventEmitter.emit(NotificationEvent.SEND, {
+          href: `/order/${order.code}`,
           message: `Đơn hàng ${order.code} đã được cập nhật`,
           notificationType: NotificationTypeEnum.ORDER,
           receiver: order.shopId,
@@ -653,10 +658,6 @@ export class OrderTransactionService {
         throw new Error('Order not found');
       }
 
-      if (order.status !== OrderStatus.DELIVERED || OrderStatus.PENDING) {
-        throw new Error('Order is not delivered or pending');
-      }
-
       if (ctx.id.toString() !== order.authorId.toString()) {
         throw new Error('Access denied');
       }
@@ -672,6 +673,9 @@ export class OrderTransactionService {
       }
 
       if (input.status === OrderStatus.RETURNED) {
+        if (order.status !== OrderStatus.DELIVERED) {
+          throw new Error('Order is not delivered');
+        }
         if (!input.file) {
           throw new Error('File is required when status is returned');
         }
@@ -681,10 +685,18 @@ export class OrderTransactionService {
       }
 
       if (input.status === OrderStatus.CONFIRMED_RECEIPT) {
-        //handle feedback
+        if (order.status !== OrderStatus.DELIVERED) {
+          throw new Error('Order is not delivered');
+        }
+        this.eventEmitter.emit(FeedbackEventEnum.CREATED, {
+          order: order,
+        });
       }
 
       if (input.status === OrderStatus.CANCELED) {
+        if (order.status !== OrderStatus.PENDING) {
+          throw new Error('Order is not pending');
+        }
         await this.handleOrderCancellation(order, ctx, session);
       }
 

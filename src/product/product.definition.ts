@@ -170,4 +170,8 @@ export class Product extends BaseModelHasOwner() {
     allowFindAll: true,
   })
   feedback: Feedbacks[];
+
+  @Sortable()
+  @Property({ type: () => Number, nullable: true })
+  rating: number;
 }
