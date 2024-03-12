@@ -5,9 +5,13 @@ import {
   BaseService,
   BeforeCreateHook,
   BeforeCreateHookInput,
+  BeforeUpdateHook,
+  BeforeUpdateHookInput,
   InjectBaseService,
   ObjectId,
 } from 'dryerjs';
+import { User } from 'src/user/user.definition';
+import { UserRole } from 'src/guard/roles.guard';
 
 @Injectable()
 export class TasksHook {
@@ -16,10 +20,18 @@ export class TasksHook {
   ) {}
 
   @BeforeCreateHook(() => Tasks)
+  async addingAssigner({ input, ctx }: BeforeCreateHookInput<Tasks, Context>) {
+    input.assignerFromUserId = new ObjectId(ctx.id);
+  }
+
+  @BeforeUpdateHook(() => Tasks)
   async throwErrorIfNameAlreadyExists({
     input,
     ctx,
-  }: BeforeCreateHookInput<Tasks, Context>) {
-    input.assignerFromUserId = new ObjectId(ctx.id);
+  }: BeforeUpdateHookInput<Tasks, Context>) {
+    const task = await this.tasksService.model.findById(input.id);
+    if (!task) {
+      throw new Error('Task not found');
+    }
   }
 }
