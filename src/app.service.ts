@@ -34,63 +34,63 @@ export class AppService {
     return 'Hello World!';
   }
 
-  async getCapture(captureId: string) {
-    // const request1 = new paypal.payouts.PayoutsPostRequest();
-    // const request = new paypal.orders.OrdersGetRequest(captureId);
-    try {
-      // const response = await this.client.execute(request);
-      // console.log(
-      //   response.result.status,
-      //   response.result.purchase_units[0].amount.value,
-      //   response.result.purchase_units[0].description,
-      // );
-      // // if (response.result.status === 'COMPLETED') {
-      // //   console.log('Payment not completed');
-      // // }
-      // return response.result;
+  // async getCapture(captureId: string) {
+  //   // const request1 = new paypal.payouts.PayoutsPostRequest();
+  //   // const request = new paypal.orders.OrdersGetRequest(captureId);
+  //   try {
+  //     // const response = await this.client.execute(request);
+  //     // console.log(
+  //     //   response.result.status,
+  //     //   response.result.purchase_units[0].amount.value,
+  //     //   response.result.purchase_units[0].description,
+  //     // );
+  //     // // if (response.result.status === 'COMPLETED') {
+  //     // //   console.log('Payment not completed');
+  //     // // }
+  //     // return response.result;
 
-      const address = {
-        city: '700000',
-        district: '720300',
-        ward: '12654',
-        detail: '123/4/5',
-      };
+  //     const address = {
+  //       city: '700000',
+  //       district: '720300',
+  //       ward: '12654',
+  //       detail: '123/4/5',
+  //     };
 
-      let addressString = '';
-      if (address.city) {
-        const listCity = await this.goshipService.getCities();
-        const city = listCity.data.find((c) => c.id === address.city);
-        const cityName = city?.name || '';
-        addressString += cityName;
-        if (address.district) {
-          const listDistrict = await this.goshipService.getDistricts(
-            address.city,
-          );
-          const district = listDistrict.data.find(
-            (d) => d.id === address.district,
-          );
-          const districtName = district?.name || '';
-          addressString += ' ' + districtName;
-          if (address.ward) {
-            const listWard = await this.goshipService.getWards(
-              address.district,
-            );
-            const ward = listWard.data.find(
-              (w) => w.id.toString() === address.ward,
-            );
-            const wardName = ward?.name || '';
-            addressString += ' ' + wardName;
-          }
-        }
-      }
+  //     let addressString = '';
+  //     if (address.city) {
+  //       const listCity = await this.goshipService.getCities();
+  //       const city = listCity.data.find((c) => c.id === address.city);
+  //       const cityName = city?.name || '';
+  //       addressString += cityName;
+  //       if (address.district) {
+  //         const listDistrict = await this.goshipService.getDistricts(
+  //           address.city,
+  //         );
+  //         const district = listDistrict.data.find(
+  //           (d) => d.id === address.district,
+  //         );
+  //         const districtName = district?.name || '';
+  //         addressString += ' ' + districtName;
+  //         if (address.ward) {
+  //           const listWard = await this.goshipService.getWards(
+  //             address.district,
+  //           );
+  //           const ward = listWard.data.find(
+  //             (w) => w.id.toString() === address.ward,
+  //           );
+  //           const wardName = ward?.name || '';
+  //           addressString += ' ' + wardName;
+  //         }
+  //       }
+  //     }
 
-      console.log(addressString);
-      throw new Error('Error');
-    } catch (err) {
-      console.error(err);
-      throw err;
-    }
-  }
+  //     console.log(addressString);
+  //     throw new Error('Error');
+  //   } catch (err) {
+  //     console.error(err);
+  //     throw err;
+  //   }
+  // }
 
   async createPayout() {
     const bactchId = uuidv4();
