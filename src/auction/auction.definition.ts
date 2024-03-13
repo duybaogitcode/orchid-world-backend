@@ -98,7 +98,7 @@ export class Auction extends BaseModelHasOwner() {
   })
   startAutomatically: boolean;
 
-  @Filterable(() => BaseStatus, {
+  @Filterable(() => AuctionStatus, {
     operators: ['eq', 'in', 'notIn', 'notEq'],
   })
   @Property({
