@@ -1,4 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   AfterCreateHook,
   AfterCreateHookInput,
@@ -9,24 +10,21 @@ import {
   BaseService,
   BeforeCreateHook,
   BeforeCreateHookInput,
-  BeforeFindManyHook,
-  BeforeFindManyHookInput,
   InjectBaseService,
   ObjectId,
 } from 'dryerjs';
+import { Context } from 'src/auth/ctx';
+import { NotificationTypeEnum } from 'src/notification/notification.definition';
+import { createNotification } from 'src/notification/notification.resolver';
+import { NotificationEvent } from 'src/notification/notification.service';
+import { OrderEventEnum } from 'src/order/event/order.event';
+import { Product, ProductStatus } from 'src/product/product.definition';
+import { User } from 'src/user/user.definition';
 import {
   Auction,
   AuctionBiddingHistory,
   AuctionStatus,
 } from './auction.definition';
-import { Context } from 'src/auth/ctx';
-import { User } from 'src/user/user.definition';
-import { Product, ProductStatus } from 'src/product/product.definition';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { NotificationEvent } from 'src/notification/notification.service';
-import { createNotification } from 'src/notification/notification.resolver';
-import { NotificationTypeEnum } from 'src/notification/notification.definition';
-import { OrderEventEnum } from 'src/order/event/order.event';
 
 @Injectable()
 export class AuctionHook {

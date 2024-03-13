@@ -15,7 +15,6 @@ import { NotificationTypeEnum } from 'src/notification/notification.definition';
 import { GraphQLError } from 'graphql';
 
 export class AuctionService {
-  private static instance: AuctionService | null = null;
   constructor(
     @InjectBaseService(Auction)
     private readonly auctionService: BaseService<Auction, {}>,
