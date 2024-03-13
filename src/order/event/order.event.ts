@@ -15,6 +15,7 @@ import { registerEnumType } from '@nestjs/graphql';
 import { SystemWalletEventEnum } from 'src/wallet/event/system.wallet.event';
 import {
   Transaction,
+  TransactionStatus,
   TransactionType,
 } from 'src/wallet/transaction.definition';
 import { ServiceProvider } from 'src/payment/payment.definition';
@@ -25,6 +26,7 @@ import { User, address } from 'src/user/user.definition';
 import { Product } from 'src/product/product.definition';
 import { AuctionBiddingHistory } from 'src/auction/auction.definition';
 import { v4 as uuidv4 } from 'uuid';
+import { doesWalletAffordable } from 'src/wallet/wallet.service';
 
 export enum OrderEventEnum {
   CREATED = 'Orders.created',
@@ -283,22 +285,28 @@ export class OrderEvent {
       const transaction = new this.transactionService.model({
         amount: lastestBidding.bidPrice,
         description: 'Tiền thanh toán đấu giá ' + updatedProduct.name,
-        status: 'SUCCESS',
+        status: TransactionStatus.SUCCESS,
         type: '1',
         walletId: wallet._id,
       });
 
-      await transaction.save({ session });
+      const isAffordable = doesWalletAffordable(
+        wallet,
+        lastestBidding.bidPrice,
+      );
 
-      const afterMinus = wallet.balance - lastestBidding.bidPrice;
-
-      if (afterMinus < 0) {
+      if (!isAffordable) {
         wallet.balance = wallet.balance;
+        transaction.status = TransactionStatus.FAILED;
+        transaction.description =
+          'Thanh toán thất bại, số dư không đủ. ' + transaction.description;
         paying = true;
       } else {
-        wallet.balance = afterMinus;
+        wallet.balance = wallet.balance - lastestBidding.bidPrice;
         await wallet.save({ session });
       }
+
+      await transaction.save({ session });
 
       const order = new this.order.model({
         addressFrom: addressFrom,

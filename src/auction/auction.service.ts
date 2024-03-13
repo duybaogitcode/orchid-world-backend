@@ -13,6 +13,8 @@ import { NotificationEvent } from 'src/notification/notification.service';
 import { createNotification } from 'src/notification/notification.resolver';
 import { NotificationTypeEnum } from 'src/notification/notification.definition';
 import { GraphQLError } from 'graphql';
+import { WalletEvent } from 'src/wallet/event/wallet.event';
+import { WalletEventPayload, WalletEvents } from 'src/wallet/wallet.service';
 
 export class AuctionService {
   constructor(
@@ -107,8 +109,7 @@ export class AuctionService {
     }
 
     await this.checkAuctionValidityBeforeRegistration(auctionId, userId);
-
-    return this.auctionService.model.findOneAndUpdate(
+    const auction = await this.auctionService.model.findOneAndUpdate(
       {
         _id: auctionId,
       },
@@ -121,12 +122,25 @@ export class AuctionService {
         },
       },
     );
+
+    // Lock funds
+    this.eventEmiter.emit(
+      WalletEvents.LOCK_FUNDS,
+      WalletEventPayload.getLockFundsPayload({
+        payload: {
+          authorId: userId,
+          amount: auction.initialPrice,
+        },
+      }),
+    );
+
+    return auction;
   }
 
   async unregisterAuction(auctionId: ObjectId, userId: ObjectId) {
     await this.checkAuctionValidityBeforeUnregistration(auctionId, userId);
 
-    return this.auctionService.model.findOneAndUpdate(
+    const auction = await this.auctionService.model.findOneAndUpdate(
       {
         _id: auctionId,
       },
@@ -139,6 +153,19 @@ export class AuctionService {
         },
       },
     );
+
+    // Unlock funds
+    this.eventEmiter.emit(
+      WalletEvents.UNLOCK_FUNDS,
+      WalletEventPayload.getUnlockFundsPayload({
+        payload: {
+          authorId: userId,
+          amount: auction.initialPrice,
+        },
+      }),
+    );
+
+    return auction;
   }
 
   async approveAuction(auctionId: ObjectId) {

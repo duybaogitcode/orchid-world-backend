@@ -19,6 +19,7 @@ import {
 import { Wallet } from 'src/wallet/wallet.definition';
 import { SystemWalletEventEnum } from 'src/wallet/event/system.wallet.event';
 import { ServiceProvider } from 'src/payment/payment.definition';
+import { doesWalletAffordable } from 'src/wallet/wallet.service';
 @Injectable()
 export class SubscriptionService {
   constructor(
@@ -60,7 +61,9 @@ export class SubscriptionService {
         throw new UnauthorizedException('Wallet not found');
       }
 
-      if (wallet.balance < subscription.price) {
+      const isAffordable = doesWalletAffordable(wallet, subscription.price);
+
+      if (!isAffordable) {
         throw new UnauthorizedException('Not enough balance');
       }
 

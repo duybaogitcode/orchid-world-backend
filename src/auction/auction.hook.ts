@@ -25,6 +25,7 @@ import {
   AuctionBiddingHistory,
   AuctionStatus,
 } from './auction.definition';
+import { WalletEventPayload, WalletEvents } from 'src/wallet/wallet.service';
 
 @Injectable()
 export class AuctionHook {
@@ -119,6 +120,21 @@ export class AuctionHook {
           updatedProduct.status = ProductStatus.SOLD;
 
           await updatedProduct.save({ session });
+
+          // Unlock funds for all participants, except the winner
+          auction.participantIds
+            .filter((id) => id !== winner.id)
+            .map((participantId) => {
+              this.eventEmitter.emit(
+                WalletEvents.UNLOCK_FUNDS,
+                WalletEventPayload.getUnlockFundsPayload({
+                  payload: {
+                    authorId: participantId,
+                    amount: auction.initialPrice,
+                  },
+                }),
+              );
+            });
 
           this.eventEmitter.emit(OrderEventEnum.CREATE_BY_AUCTION, {
             winner: winner,
