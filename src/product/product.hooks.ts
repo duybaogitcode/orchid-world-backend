@@ -17,35 +17,35 @@ export class ProductHook {
     public productService: BaseService<Product>,
   ) {}
 
-  @BeforeFindManyHook(() => Product)
-  async beforeFindManyProduct({
-    filter,
-    ctx,
-  }: BeforeFindManyHookInput<Product, Context>) {
-    if (ctx === null) {
-      ctx = {
-        id: new ObjectId(),
-        roleId: new ObjectId(UserRole.USER),
-      };
-    }
-    console.log({ role: ctx.roleId.toString() });
-    switch (ctx.roleId.toString()) {
-      case UserRole.ADMIN:
-        break;
-      case UserRole.SHOP_OWNER:
-        break;
-      case UserRole.MANAGER:
-        break;
-      case UserRole.STAFF:
-        break;
-      case UserRole.USER:
-        filter.status = ProductStatus.APPROVED;
-        break;
-      default:
-        filter.status = ProductStatus.APPROVED;
-        break;
-    }
-  }
+  // @BeforeFindManyHook(() => Product)
+  // async beforeFindManyProduct({
+  //   filter,
+  //   ctx,
+  // }: BeforeFindManyHookInput<Product, Context>) {
+  //   if (ctx === null) {
+  //     ctx = {
+  //       id: new ObjectId(),
+  //       roleId: new ObjectId(UserRole.USER),
+  //     };
+  //   }
+  //   console.log({ role: ctx.roleId.toString() });
+  //   switch (ctx.roleId.toString()) {
+  //     case UserRole.ADMIN:
+  //       break;
+  //     case UserRole.SHOP_OWNER:
+  //       break;
+  //     case UserRole.MANAGER:
+  //       break;
+  //     case UserRole.STAFF:
+  //       break;
+  //     case UserRole.USER:
+  //       filter.status = ProductStatus.APPROVED;
+  //       break;
+  //     default:
+  //       filter.status = ProductStatus.APPROVED;
+  //       break;
+  //   }
+  // }
 
   // @AfterFindManyHook(() => Product)
   // async afterFindManyProduct({
