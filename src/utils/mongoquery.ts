@@ -10,6 +10,8 @@ export class MongoQuery {
         query[key] = { $regex: filter[key].contains, $options: 'i' };
       } else if (filter[key].eq) {
         query[key] = filter[key].eq;
+      } else if (filter[key].in) {
+        query[key] = { $in: filter[key].in };
       } else {
         query[key] = filter[key];
       }

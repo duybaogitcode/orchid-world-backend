@@ -306,6 +306,8 @@ export class ProductService {
       throw new BadRequestException('Vui lòng đăng ký bán hàng trước.');
     }
 
+    console.log('filter', filter);
+
     const mongoQuery = this.mongoQuery.convertFilterToMongoQuery(filter);
     const updateFilter = {
       ...mongoQuery,

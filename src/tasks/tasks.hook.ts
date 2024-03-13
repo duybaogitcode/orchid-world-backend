@@ -33,5 +33,15 @@ export class TasksHook {
     if (!task) {
       throw new Error('Task not found');
     }
+
+    if (task.assignedToUserId) {
+      if (
+        ctx.id.toString() !== task.assignedToUserId.toString() &&
+        ctx.id.toString() !== task.assignerFromUserId.toString() &&
+        ctx.roleId.toString() !== UserRole.ADMIN.toString()
+      ) {
+        throw new Error('You are not authorized to edit this task');
+      }
+    }
   }
 }
