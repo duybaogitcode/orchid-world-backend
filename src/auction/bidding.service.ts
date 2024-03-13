@@ -101,6 +101,9 @@ export class BiddingService {
       {},
       { _id: input.auctionId },
     );
+    if (!auction.participantIds.includes(userId)) {
+      throw new Error('User is not participant');
+    }
     if (auction.status !== 'RUNNING') {
       throw new Error('Auction is not running');
     }
