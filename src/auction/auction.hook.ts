@@ -140,6 +140,7 @@ export class AuctionHook {
             winner: winner,
             updatedProduct: updatedProduct,
             lastestBidding: lastestBidding,
+            auction: auction,
           });
 
           this.eventEmitter.emit(

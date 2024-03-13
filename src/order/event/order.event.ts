@@ -24,7 +24,7 @@ import { OrderTransaction } from '../definition/orderTransaction.definition';
 import { Wallet } from 'src/wallet/wallet.definition';
 import { User, address } from 'src/user/user.definition';
 import { Product } from 'src/product/product.definition';
-import { AuctionBiddingHistory } from 'src/auction/auction.definition';
+import { Auction, AuctionBiddingHistory } from 'src/auction/auction.definition';
 import { v4 as uuidv4 } from 'uuid';
 import { doesWalletAffordable } from 'src/wallet/wallet.service';
 
@@ -215,10 +215,12 @@ export class OrderEvent {
     winner,
     updatedProduct,
     lastestBidding,
+    auction,
   }: {
     winner: User;
     updatedProduct: Product;
     lastestBidding: AuctionBiddingHistory;
+    auction: Auction;
   }) {
     const session = await this.order.model.db.startSession();
     session.startTransaction();
@@ -227,6 +229,7 @@ export class OrderEvent {
       const shop = await this.userService.model.findById(
         updatedProduct.authorId,
       );
+
       let paying = false;
 
       const addressFrom = await this.getAddress(shop.shopOwner.pickupAddress);
@@ -302,7 +305,10 @@ export class OrderEvent {
           'Thanh toán thất bại, số dư không đủ. ' + transaction.description;
         paying = true;
       } else {
-        wallet.balance = wallet.balance - lastestBidding.bidPrice;
+        // Unlock funds and pay for the won product
+        wallet.lockFunds = wallet.lockFunds - auction.initialPrice;
+        wallet.balance =
+          wallet.balance + auction.initialPrice - lastestBidding.bidPrice;
         await wallet.save({ session });
       }
 

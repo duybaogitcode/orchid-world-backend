@@ -29,7 +29,10 @@ export const WalletEventPayload = {
 };
 
 export function doesWalletAffordable(wallet: Wallet, amount: number) {
-  return wallet.balance - wallet.lockFunds >= amount;
+  return (
+    wallet.balance - wallet.lockFunds >= amount ||
+    wallet.balance + wallet.lockFunds >= amount
+  );
 }
 
 @Injectable()

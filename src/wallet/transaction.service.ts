@@ -17,6 +17,7 @@ import { ServiceProvider } from 'src/payment/payment.definition';
 import { ExchangeInput } from 'src/payment/dto/exchange.input';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { SystemWalletEventEnum } from './event/system.wallet.event';
+import { doesWalletAffordable } from './wallet.service';
 
 @Injectable()
 export class TransactionService {
@@ -53,7 +54,7 @@ export class TransactionService {
       throw new BadRequestException('Receiver wallet not found');
     }
 
-    if (receiverWallet.balance + updateAmount < 0) {
+    if (receiverWallet.balance - receiverWallet.lockFunds + updateAmount < 0) {
       throw new BadRequestException('Not enough balance');
     }
 
