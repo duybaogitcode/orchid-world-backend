@@ -1,12 +1,17 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { Auction } from './auction.definition';
 import { AuctionService } from './auction.service';
-import { OutputType } from 'dryerjs';
+import { ObjectId, OutputType } from 'dryerjs';
 import { FindBySlugDto } from './dto/find-by-slug-dto';
 import { SuccessResponse } from 'dryerjs/dist/types';
 import { Context, Ctx } from 'src/auth/ctx';
 import { AuctionRegisterDTO } from './dto/register.dto';
-import { ShopOnly, ShopOrUserOnly, UserOnly } from 'src/guard/roles.guard';
+import {
+  ManagerOrStaff,
+  ShopOnly,
+  ShopOrUserOnly,
+  UserOnly,
+} from 'src/guard/roles.guard';
 
 @Resolver()
 export class AuctionResolver {
@@ -60,6 +65,22 @@ export class AuctionResolver {
       const response = await this.auctionService.approveAuction(
         input.auctionId,
       );
+      return {
+        success: Boolean(response),
+      };
+    } catch (error) {
+      console.log({ error });
+      return {
+        success: false,
+      };
+    }
+  }
+
+  @ManagerOrStaff()
+  @Mutation(() => SuccessResponse, { name: 'staffStopAuction' })
+  async staffStopAuction(@Args('auctionId') auctionId: ObjectId) {
+    try {
+      const response = await this.auctionService.stopAuction(auctionId);
       return {
         success: Boolean(response),
       };
