@@ -462,4 +462,26 @@ export class AuctionService {
       auctionId: auctionId,
     });
   }
+
+  async stopAuction(auctionId: ObjectId) {
+    const auction = await this.auctionService.model.findById(auctionId);
+
+    auction.status = AuctionStatus.CANCELLED;
+
+    await auction.save();
+
+    auction.participantIds.map((participantId) => {
+      this.eventEmiter.emit(
+        NotificationEvent.SEND,
+        createNotification({
+          href: '/auctions/' + auction.productId,
+          message: `Buổi đấu giá *${auction.productId}* đã bị hủy.`,
+          receiver: participantId,
+          notificationType: NotificationTypeEnum.AUCTION,
+        }),
+      );
+    });
+
+    return auction;
+  }
 }
