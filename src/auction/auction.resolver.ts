@@ -17,7 +17,7 @@ export class AuctionResolver {
     return this.auctionService.findOneByProductSlug(productSlug);
   }
 
-  @UserOnly()
+  @ShopOrUserOnly()
   @Mutation(() => SuccessResponse, { name: 'registerAuction' })
   async registerAuction(
     @Args('input') input: AuctionRegisterDTO,
@@ -33,7 +33,7 @@ export class AuctionResolver {
     };
   }
 
-  @UserOnly()
+  @ShopOrUserOnly()
   @Mutation(() => SuccessResponse, { name: 'unregisterAuction' })
   async unregisterAuction(
     @Args('input') input: AuctionRegisterDTO,

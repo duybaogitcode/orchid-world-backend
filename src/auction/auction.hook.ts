@@ -26,6 +26,7 @@ import {
   AuctionStatus,
 } from './auction.definition';
 import { WalletEventPayload, WalletEvents } from 'src/wallet/wallet.service';
+import { AuctionEventPayload, AuctionEvents } from './auction.service';
 
 @Injectable()
 export class AuctionHook {
@@ -89,6 +90,19 @@ export class AuctionHook {
     const session = await this.productService.model.db.startSession();
     session.startTransaction();
     try {
+      if (
+        updated?.status === AuctionStatus.APPROVED &&
+        updated.startAt &&
+        !updated.expireAt &&
+        updated.startAutomatically
+      ) {
+        this.eventEmitter.emit(
+          AuctionEvents.AUCTION_START,
+          AuctionEventPayload.getStartPayload({
+            auctionId: updated.id,
+          }),
+        );
+      }
       if (updated?.status === AuctionStatus.COMPLETED) {
         const lastestBidding = await this.biddingHistoryService.model.findOne(
           { auctionId: updated.id },

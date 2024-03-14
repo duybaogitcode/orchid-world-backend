@@ -8,7 +8,7 @@ import { Product, ProductStatus } from 'src/product/product.definition';
 import { User } from 'src/user/user.definition';
 import * as moment from 'moment';
 import { AgendaQueue, JobPriority } from 'src/queue/agenda.queue';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { NotificationEvent } from 'src/notification/notification.service';
 import { createNotification } from 'src/notification/notification.resolver';
 import { NotificationTypeEnum } from 'src/notification/notification.definition';
@@ -16,6 +16,43 @@ import { GraphQLError } from 'graphql';
 import { WalletEvent } from 'src/wallet/event/wallet.event';
 import { WalletEventPayload, WalletEvents } from 'src/wallet/wallet.service';
 
+export const AuctionEvents = {
+  AUCTION_START: 'AUCTION_START',
+  AUCTION_EXPIRE: 'AUCTION_EXPIRE',
+  AUCTION_COMPLETE: 'AUCTION_COMPLETE',
+  AUCTION_BID: 'AUCTION_BID',
+};
+
+export const AuctionEventPayload = {
+  getStartPayload: (payload: { auctionId: ObjectId }) => {
+    return {
+      event: AuctionEvents.AUCTION_START,
+      payload,
+    };
+  },
+  getExpirePayload: (payload: { auctionId: ObjectId }) => {
+    return {
+      event: AuctionEvents.AUCTION_EXPIRE,
+      payload,
+    };
+  },
+  getCompletePayload: (payload: { auctionId: ObjectId }) => {
+    return {
+      event: AuctionEvents.AUCTION_COMPLETE,
+      payload,
+    };
+  },
+  getBidPayload: (payload: {
+    auctionId: ObjectId;
+    authorId: ObjectId;
+    amount: number;
+  }) => {
+    return {
+      event: AuctionEvents.AUCTION_BID,
+      payload,
+    };
+  },
+};
 export class AuctionService {
   constructor(
     @InjectBaseService(Auction)
@@ -168,6 +205,8 @@ export class AuctionService {
     return auction;
   }
 
+  async;
+
   async approveAuction(auctionId: ObjectId) {
     try {
       const auction = await this.auctionService.update(
@@ -183,7 +222,7 @@ export class AuctionService {
         { _id: auction.productId },
       );
 
-      if (auction.startAutomatically) {
+      if (auction.startAutomatically && auction.startAt) {
         await this.startAuction(auctionId, auction.status);
         this.eventEmiter.emit(
           NotificationEvent.SEND,
@@ -210,6 +249,11 @@ export class AuctionService {
     } catch (error) {
       console.log({ error });
     }
+  }
+
+  @OnEvent(AuctionEvents.AUCTION_START)
+  async startAuctionEvent({ payload }: { payload: { auctionId: ObjectId } }) {
+    await this.startAuction(payload.auctionId);
   }
 
   async startAuction(auctionId: ObjectId, auctionStatus?: AuctionStatus) {
@@ -247,7 +291,9 @@ export class AuctionService {
       formatedExpireAt,
       expireAt,
     });
-    if (auction.startAutomatically) {
+
+    // If auction start automatically, setup agenda job for auction start
+    if (auction.startAutomatically && startAt) {
       // Update auction status to running
       const started = await this.auctionService.update(
         {},
