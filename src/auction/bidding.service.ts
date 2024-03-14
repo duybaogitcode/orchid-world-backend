@@ -134,8 +134,8 @@ export class BiddingService {
       throw new Error('Price is lower than last bid');
     }
 
-    if (input.bidPrice % auction.stepPrice !== 0) {
-      throw new Error('Price is not a multiple of step price');
+    if ((input.bidPrice - auction.initialPrice) % auction.stepPrice !== 0) {
+      throw new Error('Price is not a valid bidding price');
     }
 
     return auction;
