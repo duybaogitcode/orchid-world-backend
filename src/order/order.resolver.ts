@@ -154,4 +154,22 @@ export class OrderTransactionResolver {
       throw error;
     }
   }
+
+  @UserOnly()
+  @Mutation(() => OutputType(Order), { name: 'userAcceptPayingAuctionOrder' })
+  async userAcceptPayingAuctionOrder(
+    @Args('code') code: string,
+    @Ctx() ctx: Context,
+  ) {
+    try {
+      const updatedOrder =
+        await this.orderTransactionService.userAcceptPayingForAuctionOrder(
+          code,
+          ctx,
+        );
+      return updatedOrder;
+    } catch (error) {
+      throw error;
+    }
+  }
 }

@@ -737,4 +737,77 @@ export class OrderTransactionService {
       throw error;
     }
   }
+
+  async userAcceptPayingForAuctionOrder(code: string, ctx: Context) {
+    const session = await this.orderService.model.db.startSession();
+    session.startTransaction();
+
+    try {
+      const order = await this.orderService.model.findOne({
+        code: code,
+      });
+
+      if (
+        order.status !== OrderStatus.PAYING ||
+        order.authorId.toString() !== ctx.id.toString() ||
+        !order
+      ) {
+        throw new Error('Order is not available');
+      }
+
+      const wallet = await this.wallet.model.findOne({
+        authorId: new ObjectId(ctx.id),
+      });
+
+      if (!wallet) {
+        throw new Error('Wallet not found');
+      }
+
+      if (wallet.balance < order.totalAmount) {
+        throw new Error('Not enough money');
+      }
+
+      wallet.balance -= order.totalAmount;
+      await wallet.save({ session });
+      order.status = OrderStatus.PENDING;
+      await order.save({ session });
+
+      this.eventEmitter.emit(NotificationEvent.SEND, {
+        href: `/order/${order.code}`,
+        message: `Đơn hàng ${order.code} đã được cập nhật`,
+        notificationType: NotificationTypeEnum.ORDER,
+        receiver: order.shopId,
+      });
+
+      const inputTransaction = {
+        message: `Trừ tiền đơn hàng ${order.code}`,
+        amount: order.amountNotShippingFee,
+        type: '1',
+        walletId: wallet._id,
+      };
+
+      this.eventEmitter.emit(TransactionEventEnum.CREATED, {
+        input: inputTransaction,
+      });
+
+      this.eventEmitter.emit(SystemWalletEventEnum.CREATED, {
+        input: {
+          amount: order.amountNotShippingFee,
+          type: TransactionType.DECREASE,
+          walletId: wallet._id,
+          logs: '',
+          serviceProvider: ServiceProvider.vnpay,
+          isTopUpOrWithdraw: false,
+        },
+      });
+
+      await session.commitTransaction();
+      session.endSession();
+      return order;
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
+    }
+  }
 }
