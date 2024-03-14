@@ -149,4 +149,17 @@ export class AuthService {
       });
     } catch (error) {}
   }
+
+  async logout(sessionId: string) {
+    console.log('logout', sessionId);
+    try {
+      const session = await this.sessionModel.findById(sessionId);
+      session.accessToken = null;
+      session.refreshToken = null;
+      await session.save();
+      return session;
+    } catch (error) {
+      throw error;
+    }
+  }
 }

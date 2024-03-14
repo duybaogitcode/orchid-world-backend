@@ -211,7 +211,7 @@ export class OrderEvent {
   }
 
   @OnEvent(OrderEventEnum.CREATE_BY_AUCTION)
-  async createOrderAfterAuctionCreated({
+  async createOrderAfterAuctionUpdatedCompleted({
     winner,
     updatedProduct,
     lastestBidding,
