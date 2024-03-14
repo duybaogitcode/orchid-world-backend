@@ -5,7 +5,7 @@ import { ObjectId, OutputType } from 'dryerjs';
 import { FindBySlugDto } from './dto/find-by-slug-dto';
 import { SuccessResponse } from 'dryerjs/dist/types';
 import { Context, Ctx } from 'src/auth/ctx';
-import { AuctionRegisterDTO } from './dto/register.dto';
+import { AuctionInputStop, AuctionRegisterDTO } from './dto/register.dto';
 import {
   ManagerOrStaff,
   ShopOnly,
@@ -78,9 +78,9 @@ export class AuctionResolver {
 
   @ManagerOrStaff()
   @Mutation(() => SuccessResponse, { name: 'staffStopAuction' })
-  async staffStopAuction(@Args('auctionId') auctionId: ObjectId) {
+  async staffStopAuction(@Args('input') input: AuctionInputStop) {
     try {
-      const response = await this.auctionService.stopAuction(auctionId);
+      const response = await this.auctionService.stopAuction(input.auctionId);
       return {
         success: Boolean(response),
       };
