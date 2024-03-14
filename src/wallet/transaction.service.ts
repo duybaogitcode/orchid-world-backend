@@ -17,6 +17,7 @@ import { ServiceProvider } from 'src/payment/payment.definition';
 import { ExchangeInput } from 'src/payment/dto/exchange.input';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { SystemWalletEventEnum } from './event/system.wallet.event';
+import { doesWalletAffordable } from './wallet.service';
 
 @Injectable()
 export class TransactionService {
@@ -162,6 +163,13 @@ export class TransactionService {
 
     if (Number(amount) > wallet.balance) {
       throw new BadRequestException('Not enough balance');
+    }
+
+    const isAffordable = doesWalletAffordable(wallet, amount);
+    if (!isAffordable) {
+      throw new BadRequestException(
+        'Not enough balance because of your lock funds',
+      );
     }
 
     const exchagneInput: ExchangeInput = {
