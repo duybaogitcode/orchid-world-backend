@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { Context } from 'src/auth/ctx';
 import { Cart } from 'src/cart/definition/cart.definition';
 import { CreateOrder } from '../dto/create-order.dto';
@@ -26,6 +26,7 @@ import { TransactionType } from 'src/wallet/transaction.definition';
 import { ServiceProvider } from 'src/payment/payment.definition';
 import { MongoQuery } from 'src/utils/mongoquery';
 import { FeedbackEventEnum } from 'src/feedbacks/feedback.event';
+import { doesWalletAffordable } from 'src/wallet/wallet.service';
 
 @Injectable()
 export class OrderTransactionService {
@@ -221,6 +222,16 @@ export class OrderTransactionService {
 
       if (wallet.balance < newOrderTransaction.totalAmount) {
         throw new Error('Not enough money');
+      }
+
+      const isAffordable = doesWalletAffordable(
+        wallet,
+        newOrderTransaction.totalAmount,
+      );
+      if (!isAffordable) {
+        throw new BadRequestException(
+          'Not enough balance because of your lock funds',
+        );
       }
 
       wallet.balance -= newOrderTransaction.totalAmount;

@@ -146,6 +146,19 @@ export class ProductResolver {
     }
   }
 
+  @ManagerOrStaff()
+  @Mutation(() => OutputType(Product), { name: 'approveProduct' })
+  async approve(@Args('slug') slug: string, @Ctx() ctx: Context) {
+    try {
+      const approvedProduct = await this.productService.approveProduct(slug);
+
+      return approvedProduct;
+    } catch (error) {
+      console.error('Failed update product:', error);
+      throw error;
+    }
+  }
+
   @ShopOnly()
   @Mutation(() => Boolean, { name: 'removeProduct' })
   async remove(@Args('id') id: string) {

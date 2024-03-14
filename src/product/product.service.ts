@@ -345,4 +345,16 @@ export class ProductService {
       throw error;
     }
   }
+
+  async approveProduct(slug: string) {
+    const product = await this.productService.model.findOne({
+      slug: slug,
+    });
+    if (!product) {
+      throw new Error('Product not found');
+    }
+    product.status = ProductStatus.APPROVED;
+    await product.save();
+    return product;
+  }
 }

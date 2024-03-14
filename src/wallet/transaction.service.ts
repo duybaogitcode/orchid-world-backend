@@ -165,6 +165,13 @@ export class TransactionService {
       throw new BadRequestException('Not enough balance');
     }
 
+    const isAffordable = doesWalletAffordable(wallet, amount);
+    if (!isAffordable) {
+      throw new BadRequestException(
+        'Not enough balance because of your lock funds',
+      );
+    }
+
     const exchagneInput: ExchangeInput = {
       amount: amount,
       serviceProvider: ServiceProvider.paypal,

@@ -29,10 +29,7 @@ export const WalletEventPayload = {
 };
 
 export function doesWalletAffordable(wallet: Wallet, amount: number) {
-  return (
-    wallet.balance - wallet.lockFunds >= amount ||
-    wallet.balance + wallet.lockFunds >= amount
-  );
+  return wallet.balance - wallet.lockFunds >= amount;
 }
 
 @Injectable()
@@ -56,9 +53,8 @@ export class WalletService {
   @OnEvent(WalletEvents.LOCK_FUNDS)
   async handleLockFunds({ payload }: MutateLockFundsInput) {
     const authorId = payload.authorId;
-    console.log({ authorId });
     const wallet = await this.walletService.model.findOne({
-      authorId,
+      authorId: new ObjectId(authorId),
     });
     wallet.lockFunds += payload.amount;
     await this.walletService.update(null, wallet);
@@ -71,7 +67,9 @@ export class WalletService {
   @OnEvent(WalletEvents.UNLOCK_FUNDS)
   async handleUnlockFunds({ payload }: MutateLockFundsInput) {
     const authorId = payload.authorId;
-    const wallet = await this.walletService.findOne(null, { authorId });
+    const wallet = await this.walletService.model.findOne({
+      authorId: new ObjectId(authorId),
+    });
     wallet.lockFunds -= payload.amount;
     await this.walletService.update(null, wallet);
     console.log(
