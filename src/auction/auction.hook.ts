@@ -190,6 +190,19 @@ export class AuctionHook {
                 }),
               );
             });
+        } else {
+          // Unlock funds for all participants, except the winner
+          updated.participantIds.map((participantId) => {
+            this.eventEmitter.emit(
+              WalletEvents.UNLOCK_FUNDS,
+              WalletEventPayload.getUnlockFundsPayload({
+                payload: {
+                  authorId: participantId,
+                  amount: updated.initialPrice,
+                },
+              }),
+            );
+          });
         }
       }
 
