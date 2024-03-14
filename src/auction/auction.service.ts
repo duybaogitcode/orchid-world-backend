@@ -15,6 +15,7 @@ import { NotificationTypeEnum } from 'src/notification/notification.definition';
 import { GraphQLError } from 'graphql';
 import { WalletEvent } from 'src/wallet/event/wallet.event';
 import { WalletEventPayload, WalletEvents } from 'src/wallet/wallet.service';
+import { OrderEventEnum } from 'src/order/event/order.event';
 
 export const AuctionEvents = {
   AUCTION_START: 'AUCTION_START',
@@ -137,6 +138,8 @@ export class AuctionService {
   }
 
   async registerAuction(auctionId: ObjectId, userId: ObjectId) {
+    // TODO: validate user's wallet before bidding
+
     const user = await this.userService.model.findById(new ObjectId(userId));
     if (!user) {
       throw new GraphQLError('User not found');
@@ -394,7 +397,7 @@ export class AuctionService {
         const auctionId = job.attrs.data?.auctionId;
         console.log('Auction expired', job.attrs.data);
         console.log({ at: moment().format('YYYY-MM-DD HH:mm:ss') });
-        await this.auctionService.model.findOneAndUpdate(
+        const updated = await this.auctionService.model.findOneAndUpdate(
           {
             _id: auctionId,
           },
@@ -402,6 +405,123 @@ export class AuctionService {
             status: AuctionStatus.COMPLETED,
           },
         );
+
+        const session = await this.productService.model.db.startSession();
+        session.startTransaction();
+        try {
+          if (updated?.status === AuctionStatus.COMPLETED) {
+            const lastestBidding =
+              await this.biddingHistoryService.model.findOne(
+                { auctionId: updated.id },
+                { bidPrice: 1, authorId: 1 },
+                {
+                  sort: {
+                    createdAt: -1,
+                  },
+                },
+              );
+            console.log({ lastestBidding });
+            if (lastestBidding) {
+              const winner = await this.userService.findById(
+                {},
+                {
+                  _id: lastestBidding.authorId,
+                },
+              );
+
+              const auction = await this.auctionService.model.findById(
+                updated.id,
+              );
+              auction.winnerId = winner.id;
+              auction.currentPrice = lastestBidding.bidPrice;
+              await auction.save({ session });
+
+              const updatedProduct = await this.productService.model.findById(
+                updated.productId,
+              );
+
+              updatedProduct.status = ProductStatus.SOLD;
+
+              await updatedProduct.save({ session });
+
+              // Unlock funds for all participants, except the winner
+              auction.participantIds
+                .filter((id) => id !== winner.id)
+                .map((participantId) => {
+                  this.eventEmiter.emit(
+                    WalletEvents.UNLOCK_FUNDS,
+                    WalletEventPayload.getUnlockFundsPayload({
+                      payload: {
+                        authorId: participantId,
+                        amount: auction.initialPrice,
+                      },
+                    }),
+                  );
+                });
+
+              this.eventEmiter.emit(OrderEventEnum.CREATE_BY_AUCTION, {
+                winner: winner,
+                updatedProduct: updatedProduct,
+                lastestBidding: lastestBidding,
+                auction: auction,
+              });
+
+              this.eventEmiter.emit(
+                NotificationEvent.SEND,
+                createNotification({
+                  href: `/auctions/${updatedProduct.slug}`,
+                  message: `Đấu giá ${updatedProduct.name} đã kết thúc. Sản phẩm đã được bán với giá ${lastestBidding.bidPrice} đồng, vui lòng liên hệ với người bán để hoàn tất giao dịch`,
+                  notificationType: NotificationTypeEnum.AUCTION,
+                  receiver: lastestBidding.authorId,
+                }),
+              );
+
+              this.eventEmiter.emit(
+                NotificationEvent.SEND,
+                createNotification({
+                  href: `/auctions/${updatedProduct.slug}`,
+                  message: `Đấu giá ${updatedProduct.name} đã kết thúc. Sản phẩm đã được bán với giá ${lastestBidding.bidPrice} đồng, người chiến thắng là ${winner?.firstName || 'Anonymous'} ${winner?.lastName || 'Anonymous'}. Vui lòng liên hệ với người mua để hoàn tất giao dịch`,
+                  notificationType: NotificationTypeEnum.AUCTION,
+                  receiver: updated.authorId,
+                }),
+              );
+
+              updated.participantIds
+                .filter((id) => id !== winner?.id)
+                .map((participantId) => {
+                  this.eventEmiter.emit(
+                    NotificationEvent.SEND,
+                    createNotification({
+                      href: `/auctions/${updatedProduct.slug}`,
+                      message: `Đấu giá ${updatedProduct.name} đã kết thúc. Sản phẩm đã được bán với giá ${lastestBidding.bidPrice} đồng, người chiến thắng là ${winner?.firstName || 'Anonymous'} ${winner?.lastName || 'Anonymous'}`,
+                      notificationType: NotificationTypeEnum.AUCTION,
+                      receiver: participantId,
+                    }),
+                  );
+                });
+            } else {
+              console.log('No winner');
+              // Unlock funds for all participants, except the winner
+              updated.participantIds.map((participantId) => {
+                this.eventEmiter.emit(
+                  WalletEvents.UNLOCK_FUNDS,
+                  WalletEventPayload.getUnlockFundsPayload({
+                    payload: {
+                      authorId: participantId,
+                      amount: updated.initialPrice,
+                    },
+                  }),
+                );
+              });
+            }
+          }
+
+          await session.commitTransaction();
+          session.endSession();
+        } catch (error) {
+          await session.abortTransaction();
+          session.endSession();
+        }
       },
     );
     await agenda.start();
