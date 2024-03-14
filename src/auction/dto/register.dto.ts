@@ -6,3 +6,9 @@ export class AuctionRegisterDTO {
   @Field(() => GraphQLObjectId)
   auctionId: Types.ObjectId;
 }
+
+@InputType()
+export class AuctionInputStop {
+  @Field(() => GraphQLObjectId)
+  auctionId: Types.ObjectId;
+}
