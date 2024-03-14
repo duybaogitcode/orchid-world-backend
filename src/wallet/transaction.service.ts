@@ -18,6 +18,7 @@ import { ExchangeInput } from 'src/payment/dto/exchange.input';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { SystemWalletEventEnum } from './event/system.wallet.event';
 import { doesWalletAffordable } from './wallet.service';
+import { filter } from 'rxjs';
 
 @Injectable()
 export class TransactionService {
@@ -120,30 +121,26 @@ export class TransactionService {
 
   async findAllMyTransactions(
     userId: ObjectId,
-    { page = 1, limit = 10, sort },
+    sort: any,
+    page: number,
+    limit: number,
   ) {
-    console.log(
-      '🚀 ~ TransactionService ~ findAllMyTransactions ~ userId:',
-      userId,
-    );
-    const userWallet = await this.walletService.findOne(
-      {},
-      {
-        userId,
-      },
-    );
+    const userWallet = await this.walletService.model.findOne({
+      authorId: new ObjectId(userId),
+    });
 
-    return this.transactionService.paginate(
-      {},
-      {
-        walletId: userWallet.id,
-      },
-      {
-        ...sort,
-      },
+    if (!userWallet) {
+      throw new BadRequestException('Wallet not found');
+    }
+
+    const transaction = await this.transactionService.paginate(
+      null,
+      { walletId: userWallet._id },
+      sort,
       page,
       limit,
     );
+    return transaction;
   }
 
   async withDrawPayPal(input: WithdrawPaypalInput, ctx: Context) {
