@@ -7,7 +7,7 @@ import { User } from 'src/user/user.definition';
 import { Session } from './auth.definition';
 import { Request, Response } from 'express';
 import { configuration } from 'src/config';
-import { UserOnly } from 'src/guard/roles.guard';
+import { AuthenticatedUser, UserOnly } from 'src/guard/roles.guard';
 import { ShopOwnerInput } from './dto/shopOwner.input';
 import { Ctx } from './ctx';
 
@@ -118,5 +118,44 @@ export class AuthResolver {
       });
       return session;
     } catch (error) {}
+  }
+
+  @Mutation(() => String, {
+    name: 'logOut',
+  })
+  async logOut(
+    @Context()
+    context: {
+      res: Response;
+      req: Request;
+    },
+  ) {
+    try {
+      if (!context.req.cookies.session_id) {
+        throw new Error('No session found');
+      }
+      this.authService.logout(context.req.cookies.session_id);
+      console.log(
+        '🚀 ~ file: auth.resolver.ts ~ line 123 ~ AuthResolver ~ context',
+        context,
+      );
+      const cookies = context.req.cookies;
+      for (const cookieName in cookies) {
+        context.res.clearCookie(cookieName, {
+          domain:
+            configuration().NODE_ENV === 'dev'
+              ? 'localhost'
+              : '.movie-world.store',
+          secure: true,
+          sameSite: 'none',
+          path: '/',
+        });
+      }
+      return 'LOGGED OUT';
+    } catch (error) {
+      // Log the error or handle it appropriately
+      console.error(error);
+      return 'LOG OUT FAILED';
+    }
   }
 }
