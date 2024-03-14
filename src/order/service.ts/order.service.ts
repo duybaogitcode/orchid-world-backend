@@ -254,8 +254,8 @@ export class OrderTransactionService {
       });
 
       this.eventEmitter.emit(NotificationEvent.SEND, {
-        message:
-          'Đơn hàng ' + newOrderTransaction.codeBill + ' đã được cập nhật',
+        href: `/order`,
+        message: 'Bạn có đơn hàng mới',
         notificationType: NotificationTypeEnum.ORDER,
         receiver: new ObjectId(uid),
       });
@@ -403,6 +403,7 @@ export class OrderTransactionService {
       });
 
       this.eventEmitter.emit(NotificationEvent.SEND, {
+        href: `/order/${order.code}`,
         message: `Đơn hàng ${order.code} đã được cập nhật`,
         notificationType: NotificationTypeEnum.ORDER,
         receiver: order.authorId,
