@@ -27,6 +27,8 @@ import { Product } from 'src/product/product.definition';
 import { Auction, AuctionBiddingHistory } from 'src/auction/auction.definition';
 import { v4 as uuidv4 } from 'uuid';
 import { doesWalletAffordable } from 'src/wallet/wallet.service';
+import { NotificationEvent } from 'src/notification/notification.service';
+import { NotificationTypeEnum } from 'src/notification/notification.definition';
 
 export enum OrderEventEnum {
   CREATED = 'Orders.created',
@@ -341,6 +343,12 @@ export class OrderEvent {
           serviceProvider: ServiceProvider.vnpay,
           isTopUpOrWithdraw: false,
         },
+      });
+      this.eventEmitter.emit(NotificationEvent.SEND, {
+        href: `/order/${order.code}`,
+        message: 'Bạn có đơn hàng mới',
+        notificationType: NotificationTypeEnum.ORDER,
+        receiver: order.authorId,
       });
 
       await session.commitTransaction();
