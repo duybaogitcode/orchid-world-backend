@@ -68,7 +68,7 @@ export class ProductService {
         name: createProductDto.name,
         price: createProductDto.price,
         slug: `${slugify(createProductDto.name, { lower: true, strict: true })}-${Math.random().toString(36)}`,
-        status: 'PENDING',
+        status: 'APPROVED',
         tags: createProductDto.tags,
         quantity: createProductDto.quantity,
       });
