@@ -527,7 +527,7 @@ export class OrderTransactionService {
       this.eventEmitter.emit(NotificationEvent.SEND, {
         href: '/transactions',
         message: `Biến động số dư`,
-        notificationType: NotificationTypeEnum.ORDER,
+        notificationType: NotificationTypeEnum.TRANSACTION,
         receiver: order.authorId,
       });
     }, 5000);
@@ -618,7 +618,7 @@ export class OrderTransactionService {
         this.eventEmitter.emit(NotificationEvent.SEND, {
           href: '/transactions',
           message: `Nhận tiền từ đơn hàng ${order.code}`,
-          notificationType: NotificationTypeEnum.ORDER,
+          notificationType: NotificationTypeEnum.TRANSACTION,
           receiver: order.shopId,
         });
       }

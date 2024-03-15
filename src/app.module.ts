@@ -318,6 +318,10 @@ console.log({ nod: configuration().NODE_ENV });
         {
           definition: Feedbacks,
           allowedApis: ['findAll', 'findOne', 'remove', 'paginate', 'update'],
+          decorators: {
+            update: [ShopOrUserOnly()],
+            remove: [ShopOrUserOnly()],
+          },
         },
 
         {
