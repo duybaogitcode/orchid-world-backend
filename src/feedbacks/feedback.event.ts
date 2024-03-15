@@ -8,13 +8,15 @@ import {
 } from 'dryerjs';
 import { Wallet } from 'src/wallet/wallet.definition';
 
-import { OnEvent } from '@nestjs/event-emitter';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 
 import { register } from 'module';
 import { registerEnumType } from '@nestjs/graphql';
 import { Feedbacks } from './feedbacks.definition';
 import { Order } from 'src/order/definition/order.definition';
 import { Product } from 'src/product/product.definition';
+import { NotificationEvent } from 'src/notification/notification.service';
+import { NotificationTypeEnum } from 'src/notification/notification.definition';
 
 export enum FeedbackEventEnum {
   CREATED = 'Feedback.created',
@@ -27,6 +29,7 @@ registerEnumType(FeedbackEventEnum, {
 @Injectable()
 export class FeedbackEvent {
   constructor(
+    private readonly eventEmitter: EventEmitter2,
     @InjectBaseService(Feedbacks)
     public feedback: BaseService<Feedbacks, Context>,
     @InjectBaseService(Product)
@@ -52,6 +55,13 @@ export class FeedbackEvent {
         const newFeedbacks = new this.feedback.model({
           productId: new ObjectId(productId),
           authorId: new ObjectId(order.authorId),
+        });
+        this.eventEmitter.emit(NotificationEvent.SEND, {
+          href: `/feedback/${newFeedbacks._id}`,
+          message:
+            'Feedback của bạn đã được tạo thành công!, hãy đánh giá sản phẩm mà bạn vừa mua!',
+          notificationType: NotificationTypeEnum.FEEDBACK,
+          receiver: newFeedbacks.authorId,
         });
         await newFeedbacks.save({ session });
       }

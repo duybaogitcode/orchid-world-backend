@@ -19,6 +19,7 @@ export enum NotificationTypeEnum {
   PRODUCT = 'PRODUCT',
   OTHER = 'OTHER',
   ERROR = 'ERROR',
+  FEEDBACK = 'FEEDBACK',
 }
 
 registerEnumType(NotificationTypeEnum, {
