@@ -71,7 +71,6 @@ export class FeedbackHook {
   async afterUpdateFeedback({ updated }: AfterUpdateHookInput) {
     const product = await this.productService.model.findById(updated.productId);
     const category = await this.category.model.findById(product.category_id);
-    const categoryName = category.name;
     const feedbacks = await this.feedbacksService.model.find({
       productId: updated.productId,
     });
@@ -86,7 +85,7 @@ export class FeedbackHook {
     await product.save();
 
     this.eventEmitter.emit(NotificationEvent.SEND, {
-      href: `/${categoryName}/${product.slug}`,
+      href: `/${category.slug}/${product.slug}`,
       message: 'Bạn có feedback mới về đơn hàng của mình, hãy kiểm tra ngay!',
       notificationType: NotificationTypeEnum.PRODUCT,
       receiver: product.authorId,
