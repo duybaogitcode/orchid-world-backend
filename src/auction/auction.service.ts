@@ -16,6 +16,7 @@ import { GraphQLError } from 'graphql';
 import { WalletEvent } from 'src/wallet/event/wallet.event';
 import { WalletEventPayload, WalletEvents } from 'src/wallet/wallet.service';
 import { OrderEventEnum } from 'src/order/event/order.event';
+import { UserSubscription } from 'src/subscription/subscription.definition';
 
 export const AuctionEvents = {
   AUCTION_START: 'AUCTION_START',

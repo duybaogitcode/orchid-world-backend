@@ -1,5 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import * as dayjs from 'dayjs';
 import { BaseService, InjectBaseService, ObjectId } from 'dryerjs';
 import { NotificationTypeEnum } from 'src/notification/notification.definition';
@@ -20,6 +20,24 @@ import { Wallet } from 'src/wallet/wallet.definition';
 import { SystemWalletEventEnum } from 'src/wallet/event/system.wallet.event';
 import { ServiceProvider } from 'src/payment/payment.definition';
 import { doesWalletAffordable } from 'src/wallet/wallet.service';
+import moment from 'moment';
+
+export enum SubscriptionEvents {
+  SUBSCRIBE = 'SUBSCRIBE',
+  UNSUBSCRIBE = 'UNSUBSCRIBE',
+  MINUS_ONE = 'MINUS_ONE',
+}
+
+export const SubscriptionPayload = {
+  getMinusOnePayload: (userId: ObjectId) => {
+    return {
+      payload: {
+        userId,
+      },
+    };
+  },
+};
+
 @Injectable()
 export class SubscriptionService {
   constructor(
@@ -109,12 +127,15 @@ export class SubscriptionService {
       if (userSubscriptionExist) {
         userSubscriptionExist.startAt = startAtDayjs.toDate();
         userSubscriptionExist.expireAt = expireAt;
+        userSubscriptionExist.auctionTime =
+          userSubscriptionExist.auctionTime + subscription.auctionTime;
       } else {
         userSubscriptionExist = new this.userSubscription.model({
           subscriptionId: subscription.id,
           startAt: startAtDayjs.toDate(),
           expireAt: expireAt,
           userId: userId,
+          auctionTime: subscription.auctionTime,
         });
       }
 
@@ -177,5 +198,122 @@ export class SubscriptionService {
         throw new Error('Invalid subscription period unit');
     }
     return endDate.toDate();
+  }
+
+  async unsubscribe(userId: ObjectId) {
+    const session = await this.userSubscription.model.startSession();
+    session.startTransaction();
+    try {
+      const userSubscription = await this.userSubscription.model.findOne({
+        userId,
+      });
+      if (!userSubscription) {
+        throw new UnauthorizedException('Subscription not found');
+      }
+      await userSubscription.save({ session });
+
+      this.eventEmitter.emit('refund', {
+        payload: {
+          userId,
+        },
+      });
+
+      // Notify user
+      this.eventEmitter.emit(NotificationEvent.SEND, {
+        href: '/shop/auctions/pricing',
+        message: 'Hủy gói đấu giá thành công',
+        notificationType: NotificationTypeEnum.SYSTEM,
+        receiver: userId,
+      });
+
+      await session.commitTransaction();
+      session.endSession();
+      return userSubscription;
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
+    }
+  }
+
+  @OnEvent('refund')
+  async handleRefund({ payload }: { payload: { userId: ObjectId } }) {
+    const session = await this.userSubscription.model.startSession();
+    session.startTransaction();
+    try {
+      const userSubscription = await this.userSubscription.model.findOne({
+        userId: payload.userId,
+      });
+      if (userSubscription) {
+        const wallet = await this.walletService.model.findOne({
+          authorId: payload.userId,
+        });
+        const refund = this.getRefundBaseOnExpireTime(userSubscription);
+        wallet.balance += refund;
+        await wallet.save();
+        const transaction = new this.transactionService.model({
+          amount: refund,
+          description: 'Refund from subscription',
+          status: TransactionStatus.SUCCESS,
+          type: TransactionType.INCREASE,
+          walletId: wallet.id,
+        });
+        await transaction.save();
+      }
+
+      await session.commitTransaction();
+      session.endSession();
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
+    }
+  }
+
+  // Calculate the refund base on expire time. This will be the rest money that will be returned to the wallet when the user unsubscribe before the expire time
+  getRefundBaseOnExpireTime(userSubscription: UserSubscription) {
+    const expireAt = moment(userSubscription.expireAt).utcOffset(7);
+    const now = moment().utcOffset(7);
+
+    const diff = expireAt.diff(now, 'days');
+    console.log(
+      '🚀 ~ SubscriptionService ~ getRefundBaseOnExpireTime ~ diff:',
+      diff,
+    );
+    // if the diff is lower than 4 days, we will return a half
+    if (diff <= 4) {
+      const refund = userSubscription.subscription.price / 2;
+      return refund;
+    }
+
+    const price = userSubscription.subscription.price;
+    const refund = price - price * (diff / 30);
+    return refund;
+  }
+
+  async findUserSubscriptions(userId: ObjectId) {
+    const response = await this.userSubscription.model.findOne({ userId });
+    return response;
+  }
+
+  @OnEvent(SubscriptionEvents.MINUS_ONE)
+  async handleMinusOne({
+    payload,
+  }: {
+    payload: {
+      userId: ObjectId;
+    };
+  }) {
+    const userSubscription = await this.userSubscription.model.findOne({
+      userId: new ObjectId(payload.userId),
+    });
+    if (userSubscription) {
+      userSubscription.auctionTime = userSubscription.auctionTime - 1;
+      console.log(
+        '🚀 ~ file: subscription.service.ts ~ line 198 ~ SubscriptionService ~ handleMinusOne ~ userSubscription.auctionTime',
+        userSubscription.auctionTime,
+      );
+      await userSubscription.save();
+    }
   }
 }

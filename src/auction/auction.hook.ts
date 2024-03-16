@@ -1,4 +1,9 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   AfterCreateHook,
@@ -27,6 +32,11 @@ import {
 } from './auction.definition';
 import { WalletEventPayload, WalletEvents } from 'src/wallet/wallet.service';
 import { AuctionEventPayload, AuctionEvents } from './auction.service';
+import { UserSubscription } from 'src/subscription/subscription.definition';
+import {
+  SubscriptionEvents,
+  SubscriptionPayload,
+} from 'src/subscription/subscription.service';
 
 @Injectable()
 export class AuctionHook {
@@ -39,6 +49,8 @@ export class AuctionHook {
     public biddingHistoryService: BaseService<AuctionBiddingHistory, {}>,
     @InjectBaseService(Product)
     public productService: BaseService<Product, {}>,
+    @InjectBaseService(UserSubscription)
+    private readonly userSubscriptionService: BaseService<UserSubscription, {}>,
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
@@ -69,12 +81,34 @@ export class AuctionHook {
       throw new Error('Product has been auctioned');
     }
 
+    const userSubscription = await this.userSubscriptionService.findOne(
+      {},
+      {
+        userId: new ObjectId(ctx.id),
+      },
+    );
+
+    if (!userSubscription) {
+      throw new BadRequestException(
+        'User must have subscription to create an auction',
+      );
+    }
+
     input.authorId = new ObjectId(ctx.id);
     input.currentPrice = input?.initialPrice || 0;
   }
 
   @AfterCreateHook(() => Auction)
   afterCreateAuction({ created }: AfterCreateHookInput<Auction, Context>) {
+    const sentEvent = this.eventEmitter.emit(
+      SubscriptionEvents.MINUS_ONE,
+      SubscriptionPayload.getMinusOnePayload(created.authorId),
+    );
+
+    if (!sentEvent) {
+      throw new InternalServerErrorException('Failed to emit event');
+    }
+
     return created;
   }
 

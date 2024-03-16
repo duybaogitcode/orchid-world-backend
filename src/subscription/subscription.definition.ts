@@ -111,6 +111,12 @@ export class UserSubscription extends BaseModel() {
   @Property({ type: () => GraphQLObjectId })
   subscriptionId: ObjectId;
 
+  @BelongsTo(() => AuctionSubscription, { from: 'subscriptionId' })
+  subscription: AuctionSubscription;
+
+  @Property({ type: () => Int })
+  auctionTime: number;
+
   @Property({ type: () => Date })
   startAt: Date;
 
