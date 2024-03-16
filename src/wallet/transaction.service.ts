@@ -107,7 +107,16 @@ export class TransactionService {
       return createdTransaction;
     } catch (error) {
       console.log('🚀 ~ TransactionService ~ error:', error);
+      const createdTransaction = new this.transactionService.model({
+        amount: amount,
+        walletId,
+        status: TransactionStatus.FAILED,
+        type,
+        description: description || this.getTransactionDescription({ type }),
+        paypalOrderId: createTransactionDto.paypalOrderId,
+      });
 
+      await createdTransaction.save();
       await session.abortTransaction();
       session.endSession();
 
@@ -235,6 +244,16 @@ export class TransactionService {
       return transaction;
     } catch (error) {
       console.log('🚀 ~ TransactionService ~ error:', error);
+      const transaction = new this.transactionService.model({
+        amount: amount,
+        walletId: wallet._id,
+        status: TransactionStatus.FAILED,
+        type: TransactionType.DECREASE,
+        description: 'Rút tiền',
+        paypalOrderId: batchId,
+      });
+
+      await transaction.save({ session });
       await session.abortTransaction();
       session.endSession();
       throw error;
