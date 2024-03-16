@@ -36,8 +36,13 @@ export class SubscriptionResolver {
     name: 'unsubscribeAuctionSubscription',
   })
   async unsubscribe(@Ctx() ctx: Context) {
+    const success = await this.subscriptionService.unsubscribe(
+      new ObjectId(ctx?.id),
+    );
     // Logic to unsubscribe from a subscription
-    return this.subscriptionService.unsubscribe(new ObjectId(ctx?.id));
+    return {
+      success: Boolean(success),
+    };
   }
 
   @ShopOnly()
@@ -49,11 +54,6 @@ export class SubscriptionResolver {
     const response = await this.subscriptionService.findUserSubscriptions(
       new ObjectId(ctx?.id),
     );
-    console.log(
-      '🚀 ~ SubscriptionResolver ~ findUserSubscription ~ response:',
-      response,
-    );
-
     return response;
   }
 }

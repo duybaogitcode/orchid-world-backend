@@ -125,9 +125,6 @@ export class UserSubscription extends BaseModel() {
 
   @Property({
     type: () => GraphQLObjectId,
-    db: {
-      unique: true,
-    },
   })
   userId: ObjectId;
 
