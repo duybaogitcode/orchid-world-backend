@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { BaseService, InjectBaseService } from 'dryerjs';
+import {
+  AfterFindManyHook,
+  AfterFindManyHookInput,
+  BaseService,
+  InjectBaseService,
+} from 'dryerjs';
 import { Product } from './product.definition';
 
 @Injectable()
@@ -9,17 +14,13 @@ export class ProductHook {
     public productService: BaseService<Product>,
   ) {}
 
-  // @AfterFindManyHook(() => Product)
-  // async afterFindManyProduct({
-  //   items,
-  // }: AfterFindManyHookInput<Product, Context>) {
-  //   for (let i = items.length - 1; i >= 0; i--) {
-  //     if (items[i].status !== ProductStatus.APPROVED) {
-  //       items.splice(i, 1);
-  //     }
-  //   }
-  //   return items;
-  // }
+  @AfterFindManyHook(() => Product)
+  async afterFindManyProduct({
+    items,
+    filter,
+  }: AfterFindManyHookInput<Product>) {
+    console.log('items', filter);
+  }
 
   // @BeforeCreateHook(() => Product)
   // async upLoadFileToFirebase({

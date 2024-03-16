@@ -176,7 +176,7 @@ export class Product extends BaseModelHasOwner() {
   rating: number;
 
   @Filterable(() => Boolean, {
-    operators: ['eq'],
+    operators: ['eq', 'in', 'notIn', 'notEq'],
   })
   @Property({ type: () => Boolean, nullable: true, defaultValue: false })
   isAuction: boolean;
