@@ -174,4 +174,10 @@ export class Product extends BaseModelHasOwner() {
   @Sortable()
   @Property({ type: () => Number, nullable: true })
   rating: number;
+
+  @Filterable(() => Boolean, {
+    operators: ['eq'],
+  })
+  @Property({ type: () => Boolean, nullable: true, defaultValue: false })
+  isAuction: boolean;
 }
