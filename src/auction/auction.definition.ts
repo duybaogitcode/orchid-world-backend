@@ -143,7 +143,7 @@ export class Auction extends BaseModelHasOwner() {
   })
   winnerId: ObjectId;
 
-  @BelongsTo(() => User, { from: 'winnerId' })
+  @BelongsTo(() => User, { from: 'winnerId', skipExistenceCheck: true })
   winner: User;
   // backup_users: User[]
   deposit: number;

@@ -16,6 +16,8 @@ import {
   BeforeCreateHook,
   BeforeCreateHookInput,
   InjectBaseService,
+  AfterFindOneHook,
+  AfterFindOneHookInput,
   ObjectId,
 } from 'dryerjs';
 import { Context } from 'src/auth/ctx';

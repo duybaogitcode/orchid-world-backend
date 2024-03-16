@@ -73,10 +73,17 @@ export class AuctionService {
   ) {}
 
   async findOneByProductSlug(productSlug: string) {
-    const product = await this.productService.findOne(
-      {},
-      { slug: productSlug, status: ProductStatus.APPROVED },
-    );
+    const product = await this.productService.model.findOne({
+      slug: productSlug,
+      $or: [
+        {
+          status: ProductStatus.APPROVED,
+        },
+        {
+          status: ProductStatus.SOLD,
+        },
+      ],
+    });
     return this.auctionService.findOne({}, { productId: product.id });
   }
 
