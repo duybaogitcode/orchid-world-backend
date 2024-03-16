@@ -70,6 +70,7 @@ export class ProductService {
         slug: `${slugify(createProductDto.name, { lower: true, strict: true })}-${Math.random().toString(36)}`,
         status: 'APPROVED',
         tags: createProductDto.tags,
+        isAuction: createProductDto.isAuction,
         quantity: createProductDto.quantity,
       });
 
