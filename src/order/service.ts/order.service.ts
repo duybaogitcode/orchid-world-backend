@@ -442,7 +442,7 @@ export class OrderTransactionService {
         input: {
           message: `Hoàn tiền hủy đơn hàng ${order.code} ${order.totalAmount}`,
           amount: order.totalAmount,
-          type: '1',
+          type: TransactionType.INCREASE,
           walletId: wallet._id,
         },
       });
@@ -506,7 +506,7 @@ export class OrderTransactionService {
     const inputTransaction = {
       message: message,
       amount: refundAmount,
-      type: '0',
+      type: '0', //  TODO: this place is increase or decrease. Try to use TransactionType?
       walletId: wallet._id,
     };
 
@@ -596,7 +596,7 @@ export class OrderTransactionService {
         const inputTransaction = {
           message: `Nhận tiền từ đơn hàng ${order.code}`,
           amount: order.amountNotShippingFee,
-          type: '1',
+          type: TransactionType.INCREASE,
           walletId: wallet._id,
         };
 
@@ -783,7 +783,7 @@ export class OrderTransactionService {
       const inputTransaction = {
         message: `Trừ tiền đơn hàng ${order.code}`,
         amount: order.amountNotShippingFee,
-        type: '1',
+        type: TransactionType.DECREASE,
         walletId: wallet._id,
       };
 

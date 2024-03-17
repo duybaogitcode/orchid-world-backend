@@ -291,7 +291,7 @@ export class OrderEvent {
         amount: lastestBidding.bidPrice,
         description: 'Tiền thanh toán đấu giá ' + updatedProduct.name,
         status: TransactionStatus.SUCCESS,
-        type: '1',
+        type: TransactionType.DECREASE,
         walletId: wallet._id,
       });
 
@@ -308,6 +308,12 @@ export class OrderEvent {
         paying = true;
       } else {
         // Unlock funds and pay for the won product
+        console.log({
+          wallet,
+          auction,
+          initialPrice: auction.initialPrice,
+          lockFunds: wallet.lockFunds,
+        });
         wallet.lockFunds = wallet.lockFunds - auction.initialPrice;
         wallet.balance =
           wallet.balance + auction.initialPrice - lastestBidding.bidPrice;

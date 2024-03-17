@@ -23,8 +23,14 @@ export class ProductHook {
         $ne: 'REMOVED',
       };
     }
-    console.log('beforeFindManyHook', filter);
   }
+  // @AfterFindManyHook(() => Product)
+  // async afterFindManyProduct({
+  //   items,
+  //   filter,
+  // }: AfterFindManyHookInput<Product>) {
+  //   return items;
+  // }
 
   // @BeforeCreateHook(() => Product)
   // async upLoadFileToFirebase({

@@ -11,4 +11,7 @@ export class AuctionRegisterDTO {
 export class AuctionInputStop {
   @Field(() => GraphQLObjectId)
   auctionId: Types.ObjectId;
+
+  @Field(() => String)
+  stopReason: string;
 }

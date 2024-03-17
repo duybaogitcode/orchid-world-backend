@@ -17,6 +17,7 @@ import { WalletEvent } from 'src/wallet/event/wallet.event';
 import { WalletEventPayload, WalletEvents } from 'src/wallet/wallet.service';
 import { OrderEventEnum } from 'src/order/event/order.event';
 import { UserSubscription } from 'src/subscription/subscription.definition';
+import { EventGateway } from 'src/gateway/event.gateway';
 
 export const AuctionEvents = {
   AUCTION_START: 'AUCTION_START',
@@ -70,6 +71,7 @@ export class AuctionService {
     >,
     private readonly agendaService: AgendaQueue,
     private readonly eventEmiter: EventEmitter2,
+    private readonly socketEmitter: EventGateway,
   ) {}
 
   async findOneByProductSlug(productSlug: string) {
@@ -203,6 +205,7 @@ export class AuctionService {
     );
 
     // Unlock funds
+    console.log({ auctionBEforeInitial: auction?.initialPrice });
     this.eventEmiter.emit(
       WalletEvents.UNLOCK_FUNDS,
       WalletEventPayload.getUnlockFundsPayload({
@@ -215,8 +218,6 @@ export class AuctionService {
 
     return auction;
   }
-
-  async;
 
   async approveAuction(auctionId: ObjectId) {
     try {
@@ -332,6 +333,7 @@ export class AuctionService {
       },
     );
 
+    this.socketEmitter.emitTo(started.id, 'auction:force-refresh', {});
     // Setup agenda job for auction expiration
     await this.agendaExpirationJob(auctionId, expireAt);
 
@@ -382,6 +384,7 @@ export class AuctionService {
           },
         );
         await this.agendaExpirationJob(auctionId, _expireAt);
+        this.socketEmitter.emitTo(auctionId, 'auction:force-refresh', {});
       },
     );
 
@@ -508,17 +511,7 @@ export class AuctionService {
           } else {
             console.log('No winner');
             // Unlock funds for all participants, except the winner
-            updated.participantIds.map((participantId) => {
-              this.eventEmiter.emit(
-                WalletEvents.UNLOCK_FUNDS,
-                WalletEventPayload.getUnlockFundsPayload({
-                  payload: {
-                    authorId: participantId,
-                    amount: updated.initialPrice,
-                  },
-                }),
-              );
-            });
+            this.unlockFundsForParticipants(updated);
           }
 
           await session.commitTransaction();
@@ -532,6 +525,20 @@ export class AuctionService {
     await agenda.start();
     await agenda.schedule(expireAt, 'auction:expiration', {
       auctionId: auctionId,
+    });
+  }
+
+  unlockFundsForParticipants(auction: Auction) {
+    auction.participantIds.map((participantId) => {
+      this.eventEmiter.emit(
+        WalletEvents.UNLOCK_FUNDS,
+        WalletEventPayload.getUnlockFundsPayload({
+          payload: {
+            authorId: participantId,
+            amount: auction.initialPrice,
+          },
+        }),
+      );
     });
   }
 
@@ -588,13 +595,32 @@ export class AuctionService {
     });
   }
 
-  async stopAuction(auctionId: ObjectId) {
+  async cancelExpirationJob(auctionId: ObjectId) {
+    const agenda = await this.agendaService.getAgenda();
+    agenda.cancel({ name: 'auction:expiration', 'data.auctionId': auctionId });
+  }
+
+  async stopAuction(auctionId: ObjectId, reason?: string) {
+    console.log('🚀 ~ AuctionService ~ stopAuction ~ reason:', reason);
     const auction = await this.auctionService.model.findById(auctionId);
 
     auction.status = AuctionStatus.CANCELLED;
-
+    auction.cancelReason = reason;
+    auction.cancelAt = moment().utcOffset(7).toDate();
     await auction.save();
 
+    // Cancel expiration job
+    const resultExpiration = await this.cancelExpirationJob(auctionId);
+    console.log(
+      '🚀 ~ AuctionService ~ stopAuction ~ resultExpiration:',
+      resultExpiration,
+    );
+
+    // Unlock funds for all participants
+    console.log('STEP: unlockFundsForParticipants');
+    this.unlockFundsForParticipants(auction);
+
+    console.log('STEP: emit notifications for participants and author');
     auction.participantIds.map((participantId) => {
       this.eventEmiter.emit(
         NotificationEvent.SEND,
@@ -606,6 +632,16 @@ export class AuctionService {
         }),
       );
     });
+
+    this.eventEmiter.emit(
+      NotificationEvent.SEND,
+      createNotification({
+        href: '/auctions/' + auction.productId,
+        message: `Buổi đấu giá *${auction.productId}* đã bị hủy.`,
+        receiver: auction.authorId,
+        notificationType: NotificationTypeEnum.AUCTION,
+      }),
+    );
 
     return auction;
   }
