@@ -185,6 +185,9 @@ export class ProductService {
           input: deleteUrl,
         });
       }
+      this.eventEmitter.emit(ProductEventEnum.PRODUCTUPDATE, {
+        productSlug: product.slug,
+      });
 
       await session.commitTransaction();
       session.endSession();
@@ -228,6 +231,9 @@ export class ProductService {
       }
       product.status = ProductStatus.REMOVED;
       await product.save();
+      this.eventEmitter.emit(ProductEventEnum.PRODUCTUPDATE, {
+        productSlug: product.slug,
+      });
       return true;
     } catch (error) {
       throw error;
