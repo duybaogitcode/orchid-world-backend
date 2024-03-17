@@ -78,6 +78,9 @@ export class Tasks extends BaseModel() {
   @Property({ type: () => String, nullable: true })
   target: string;
 
+  @Property({ type: () => String, nullable: true })
+  note: string;
+
   @Sortable()
   @Property({
     output: { type: () => GraphQLISODateTime },
