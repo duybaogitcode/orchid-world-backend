@@ -101,7 +101,28 @@ export class AuctionHook {
   }
 
   @AfterCreateHook(() => Auction)
-  afterCreateAuction({ created }: AfterCreateHookInput<Auction, Context>) {
+  async afterCreateAuction({
+    created,
+  }: AfterCreateHookInput<Auction, Context>) {
+    const authorSubscription = await this.userSubscriptionService.findOne(
+      {},
+      {
+        userId: created.authorId,
+      },
+    );
+
+    if (!authorSubscription) {
+      throw new BadRequestException(
+        'Author must have subscription to create an auction',
+      );
+    }
+
+    if (authorSubscription.auctionTime <= 0) {
+      throw new BadRequestException(
+        'Author must have subscription to create an auction',
+      );
+    }
+
     const sentEvent = this.eventEmitter.emit(
       SubscriptionEvents.MINUS_ONE,
       SubscriptionPayload.getMinusOnePayload(created.authorId),

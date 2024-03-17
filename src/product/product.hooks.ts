@@ -19,7 +19,6 @@ export class ProductHook {
     items,
     filter,
   }: AfterFindManyHookInput<Product>) {
-    console.log('items', filter);
     return items;
   }
 

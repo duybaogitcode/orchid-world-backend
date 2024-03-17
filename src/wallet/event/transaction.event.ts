@@ -12,7 +12,7 @@ import { Wallet } from 'src/wallet/wallet.definition';
 import { OnEvent } from '@nestjs/event-emitter';
 import { CartShopItem } from 'src/cart/definition/cartShopItem.definition';
 import { CartItem } from 'src/cart/definition/cartItem.definiton';
-import { Transaction } from '../transaction.definition';
+import { Transaction, TransactionType } from '../transaction.definition';
 import { OrderTransaction } from 'src/order/definition/orderTransaction.definition';
 import { registerEnumType } from '@nestjs/graphql';
 import { OrderEventEnum } from 'src/order/event/order.event';
@@ -43,7 +43,7 @@ export class TransactionEvent {
       await this.transaction.model.create(
         {
           amount: input.newOrderTransaction.totalAmount,
-          type: '0',
+          type: TransactionType.DECREASE,
           status: 'SUCCESS',
           description:
             'Trừ phí theo hóa đơn ' + input.newOrderTransaction.codeBill,
