@@ -203,6 +203,7 @@ export class AuctionService {
     );
 
     // Unlock funds
+    console.log({ auctionBEforeInitial: auction?.initialPrice });
     this.eventEmiter.emit(
       WalletEvents.UNLOCK_FUNDS,
       WalletEventPayload.getUnlockFundsPayload({
@@ -215,8 +216,6 @@ export class AuctionService {
 
     return auction;
   }
-
-  async;
 
   async approveAuction(auctionId: ObjectId) {
     try {
