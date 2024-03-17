@@ -39,6 +39,10 @@ export class CartService {
         throw new Error('Product not found or out of stock');
       }
 
+      if (product?.isAuction === true) {
+        throw new Error('Product is auction');
+      }
+
       if (product.authorId.toString() === uid.toString()) {
         throw new Error('You cannot add your own product to cart');
       }

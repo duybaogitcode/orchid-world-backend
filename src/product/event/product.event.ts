@@ -16,6 +16,7 @@ import { registerEnumType } from '@nestjs/graphql';
 export enum ProductEventEnum {
   UPFILE = 'Product.upfile',
   DELETEURL = 'Product.deleteURL',
+  PRODUCTUPDATE = 'Product.update',
 }
 
 registerEnumType(ProductEventEnum, {
@@ -87,6 +88,51 @@ export class ProductEvent {
     } catch (error) {
       console.log(error);
 
+      throw error;
+    }
+  }
+
+  @OnEvent(ProductEventEnum.PRODUCTUPDATE)
+  async afterProductUpdated({ productSlug }: { productSlug: string }) {
+    const session = await this.product.model.db.startSession();
+    session.startTransaction();
+    try {
+      const product = await this.product.model
+        .findOne({
+          slug: productSlug,
+        })
+        .session(session);
+
+      if (product.quantity < 0) {
+        product.status = ProductStatus.NOT_AVAILABLE;
+        await product.save({ session: session });
+      }
+
+      const cartItem = await this.cartItem.model.find({
+        productId: product.id,
+      });
+
+      if (cartItem.length > 0) {
+        for (const item of cartItem) {
+          if (
+            item.quantity > product.quantity ||
+            product.status === ProductStatus.NOT_AVAILABLE ||
+            product.status === ProductStatus.REMOVED ||
+            product.status === ProductStatus.SOLD ||
+            product.status === ProductStatus.PENDING
+          ) {
+            item.isAvailableProduct = false;
+            await item.save({ session: session });
+          }
+        }
+      }
+
+      await session.commitTransaction();
+      session.endSession();
+    } catch (error) {
+      console.log(error);
+      await session.abortTransaction();
+      session.endSession();
       throw error;
     }
   }

@@ -3,6 +3,8 @@ import {
   AfterFindManyHook,
   AfterFindManyHookInput,
   BaseService,
+  BeforeFindManyHook,
+  BeforeFindManyHookInput,
   InjectBaseService,
 } from 'dryerjs';
 import { Product } from './product.definition';
@@ -14,12 +16,14 @@ export class ProductHook {
     public productService: BaseService<Product>,
   ) {}
 
-  @AfterFindManyHook(() => Product)
-  async afterFindManyProduct({
-    items,
-    filter,
-  }: AfterFindManyHookInput<Product>) {
-    console.log('items', filter);
+  @BeforeFindManyHook(() => Product)
+  async beforeFindManyHook({ filter }: BeforeFindManyHookInput<Product>) {
+    if (!filter.status) {
+      filter.status = {
+        $ne: 'REMOVED',
+      };
+    }
+    console.log('beforeFindManyHook', filter);
   }
 
   // @BeforeCreateHook(() => Product)
