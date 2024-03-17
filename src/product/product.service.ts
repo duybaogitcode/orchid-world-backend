@@ -310,6 +310,7 @@ export class ProductService {
     console.log('filter', filter);
 
     const mongoQuery = this.mongoQuery.convertFilterToMongoQuery(filter);
+    console.log('🚀 ~ ProductService ~ mongoQuery:', mongoQuery);
     const updateFilter = {
       ...mongoQuery,
       authorId: new ObjectId(uid),

@@ -80,7 +80,10 @@ export class AuctionResolver {
   @Mutation(() => SuccessResponse, { name: 'staffStopAuction' })
   async staffStopAuction(@Args('input') input: AuctionInputStop) {
     try {
-      const response = await this.auctionService.stopAuction(input.auctionId);
+      const response = await this.auctionService.stopAuction(
+        input.auctionId,
+        input.stopReason,
+      );
       return {
         success: Boolean(response),
       };

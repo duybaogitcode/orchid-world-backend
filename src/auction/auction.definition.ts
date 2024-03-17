@@ -92,6 +92,12 @@ export class Auction extends BaseModelHasOwner() {
   startAt: Date;
 
   @Property({
+    output: { type: () => GraphQLISODateTime },
+    nullable: true,
+  })
+  cancelAt: Date;
+
+  @Property({
     type: () => Boolean,
     db: { default: false },
     nullable: true,
@@ -120,6 +126,13 @@ export class Auction extends BaseModelHasOwner() {
     update: Skip,
   })
   totalParticipants: number;
+
+  @Property({
+    type: () => String,
+    nullable: true,
+    create: Skip,
+  })
+  cancelReason: string;
 
   @Property({
     type: () => [GraphQLObjectId],

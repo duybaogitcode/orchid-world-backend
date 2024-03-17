@@ -20,6 +20,7 @@ export class ProductHook {
     filter,
   }: AfterFindManyHookInput<Product>) {
     console.log('items', filter);
+    return items;
   }
 
   // @BeforeCreateHook(() => Product)

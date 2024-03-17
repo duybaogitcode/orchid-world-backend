@@ -587,12 +587,26 @@ export class AuctionService {
     });
   }
 
-  async stopAuction(auctionId: ObjectId) {
+  async cancelExpirationJob(auctionId: ObjectId) {
+    const agenda = await this.agendaService.getAgenda();
+    agenda.cancel({ name: 'auction:expiration', 'data.auctionId': auctionId });
+  }
+
+  async stopAuction(auctionId: ObjectId, reason?: string) {
+    console.log('🚀 ~ AuctionService ~ stopAuction ~ reason:', reason);
     const auction = await this.auctionService.model.findById(auctionId);
 
     auction.status = AuctionStatus.CANCELLED;
-
+    auction.cancelReason = reason;
+    auction.cancelAt = moment().utcOffset(7).toDate();
     await auction.save();
+
+    // Cancel expiration job
+    const resultExpiration = await this.cancelExpirationJob(auctionId);
+    console.log(
+      '🚀 ~ AuctionService ~ stopAuction ~ resultExpiration:',
+      resultExpiration,
+    );
 
     auction.participantIds.map((participantId) => {
       this.eventEmiter.emit(
@@ -605,6 +619,16 @@ export class AuctionService {
         }),
       );
     });
+
+    this.eventEmiter.emit(
+      NotificationEvent.SEND,
+      createNotification({
+        href: '/auctions/' + auction.productId,
+        message: `Buổi đấu giá *${auction.productId}* đã bị hủy.`,
+        receiver: auction.authorId,
+        notificationType: NotificationTypeEnum.AUCTION,
+      }),
+    );
 
     return auction;
   }
