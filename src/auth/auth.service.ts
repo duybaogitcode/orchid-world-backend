@@ -132,6 +132,19 @@ export class AuthService {
 
       const userId = sessionExist.userId;
 
+      const existingUser = await this.userModel.findOne({
+        $or: [
+          { 'shopOwner.email': shopOwner.emailShop },
+          { 'shopOwner.phoneNumber': shopOwner.phoneShop },
+        ],
+      });
+
+      if (existingUser) {
+        throw new Error(
+          'A user with this shopOwner email or phone number already exists',
+        );
+      }
+
       const user = await this.userModel.findOneAndUpdate(
         { _id: userId },
         {

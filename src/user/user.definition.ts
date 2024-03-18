@@ -2,6 +2,7 @@ import {
   BelongsTo,
   Definition,
   Embedded,
+  Filterable,
   GraphQLObjectId,
   ObjectId,
   Property,
@@ -98,6 +99,7 @@ export class User extends BaseModel() {
   })
   avatar: String;
 
+  @Filterable(() => GraphQLObjectId, { operators: ['eq'] })
   @Property({
     type: () => GraphQLObjectId,
     update: Skip,
