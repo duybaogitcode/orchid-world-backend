@@ -98,6 +98,8 @@ import { FeedbackEvent } from './feedbacks/feedback.event';
 import { FeedbackHook } from './feedbacks/feedback.hook';
 import { Tasks } from './tasks/tasks.definition';
 import { TasksHook } from './tasks/tasks.hook';
+import { TaskResolver } from './tasks/task.resolver';
+import { TasksService } from './tasks/task.service';
 
 console.log({ nod: configuration().NODE_ENV });
 
@@ -162,7 +164,7 @@ console.log({ nod: configuration().NODE_ENV });
           definition: User,
           allowedApis: ['findAll', 'findOne', 'bulkRemove', 'update', 'create'],
           decorators: {
-            findAll: [Admin()],
+            findAll: [AdminOrManager()],
             create: [Admin()],
             bulkRemove: [Admin()],
           },
@@ -326,15 +328,10 @@ console.log({ nod: configuration().NODE_ENV });
 
         {
           definition: Tasks,
-          allowedApis: [
-            'findAll',
-            'findOne',
-            'remove',
-            'paginate',
-            'update',
-            'create',
-          ],
+          allowedApis: ['findAll', 'findOne', 'paginate', 'update', 'create'],
           decorators: {
+            findAll: [AdminOrManagerOrStaff()],
+            paginate: [AdminOrManagerOrStaff()],
             create: [AdminOrManager()],
             update: [AdminOrManagerOrStaff()],
             remove: [AdminOrManager()],
@@ -386,6 +383,8 @@ console.log({ nod: configuration().NODE_ENV });
         FeedbackHook,
         GoShipService,
         TasksHook,
+        TaskResolver,
+        TasksService,
       ],
       contextDecorator: Ctx,
     }),

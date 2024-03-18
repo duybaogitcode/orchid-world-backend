@@ -5,6 +5,7 @@ import {
   BaseService,
   BeforeCreateHook,
   BeforeCreateHookInput,
+  BeforeFindManyHook,
   BeforeUpdateHook,
   BeforeUpdateHookInput,
   InjectBaseService,
@@ -43,5 +44,24 @@ export class TasksHook {
         throw new Error('You are not authorized to edit this task');
       }
     }
+  }
+
+  @BeforeFindManyHook(() => Tasks)
+  async filterTasksByRole({
+    filter,
+    ctx,
+  }: {
+    filter: any;
+    ctx: Context;
+  }): Promise<any> {
+    filter.isRemoved = false;
+    if (ctx.roleId.toString() === UserRole.ADMIN.toString()) {
+      return filter;
+    }
+    filter.$or = [
+      { assignerFromUserId: new ObjectId(ctx.id) },
+      { assignedToUserId: new ObjectId(ctx.id) },
+    ];
+    return filter;
   }
 }
