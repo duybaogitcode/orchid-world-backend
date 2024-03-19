@@ -3,6 +3,7 @@ import { OnEvent } from '@nestjs/event-emitter';
 import { registerEnumType } from '@nestjs/graphql';
 import { BaseService, InjectBaseService, ObjectId } from 'dryerjs';
 import { Context } from 'src/auth/ctx';
+import { Report } from './definition/report.definition';
 
 export enum ReportEventEnum {
   CREATED = 'ReportEventEnum_CREATED',
@@ -27,11 +28,15 @@ export class ReportEvent {
   }: {
     title: string;
     content: string;
-    reportTypeId: ObjectId;
+    reportTypeId?: ObjectId;
   }) {
     const session = await this.report.model.db.startSession();
     session.startTransaction();
     try {
+      //other type
+      if (!reportTypeId) {
+        reportTypeId = new ObjectId('65f586bd3150c6c009511524');
+      }
       const report = new this.report.model({
         title,
         content,
