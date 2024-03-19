@@ -52,8 +52,12 @@ registerEnumType(TaskTags, {
 
 @Definition({
   timestamps: true,
+  enableTextSearch: true,
 })
 export class Tasks extends BaseModel() {
+  @Filterable(() => String, {
+    operators: ['contains'],
+  })
   @Property({ type: () => String })
   taskName: string;
 
@@ -88,7 +92,7 @@ export class Tasks extends BaseModel() {
   deadline: Date;
 
   @Filterable(() => TaskStatus, {
-    operators: ['eq'],
+    operators: ['eq', 'notEq'],
   })
   @Property({ type: () => TaskStatus, defaultValue: TaskStatus.NOT_STARTED })
   status: TaskStatus;
