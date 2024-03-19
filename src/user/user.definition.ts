@@ -99,7 +99,7 @@ export class User extends BaseModel() {
   })
   avatar: String;
 
-  @Filterable(() => GraphQLObjectId, { operators: ['eq'] })
+  @Filterable(() => GraphQLObjectId, { operators: ['eq', 'in'] })
   @Property({
     type: () => GraphQLObjectId,
     update: Skip,

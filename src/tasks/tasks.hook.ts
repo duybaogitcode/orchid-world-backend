@@ -2,6 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { Tasks } from './tasks.definition';
 import { Context } from 'src/auth/ctx';
 import {
+  AfterCreateHook,
+  AfterCreateHookInput,
+  AfterUpdateHook,
+  AfterUpdateHookInput,
   BaseService,
   BeforeCreateHook,
   BeforeCreateHookInput,
@@ -13,11 +17,17 @@ import {
 } from 'dryerjs';
 import { User } from 'src/user/user.definition';
 import { UserRole } from 'src/guard/roles.guard';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { NotificationEvent } from 'src/notification/notification.service';
+import { NotificationTypeEnum } from 'src/notification/notification.definition';
 
 @Injectable()
 export class TasksHook {
   constructor(
     @InjectBaseService(Tasks) public tasksService: BaseService<Tasks, Context>,
+    @InjectBaseService(User) public userService: BaseService<User, Context>,
+
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   @BeforeCreateHook(() => Tasks)
@@ -25,8 +35,32 @@ export class TasksHook {
     input.assignerFromUserId = new ObjectId(ctx.id);
   }
 
+  @AfterCreateHook(() => Tasks)
+  async assignTaskToUser({ created }: AfterCreateHookInput<Tasks, Context>) {
+    const user = await this.userService.model.findById(
+      created.assignedToUserId,
+    );
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    let role = '';
+    if (user.roleId.toString() === UserRole.MANAGER.toString()) {
+      role = 'manager';
+    } else if (user.roleId.toString() === UserRole.STAFF.toString()) {
+      role = 'staff';
+    }
+
+    this.eventEmitter.emit(NotificationEvent.SEND, {
+      href: `/${role}/tasks`,
+      message: 'Bạn có một công việc mới vừa được thêm vào',
+      notificationType: NotificationTypeEnum.SYSTEM,
+      receiver: created.assignedToUserId,
+    });
+  }
+
   @BeforeUpdateHook(() => Tasks)
-  async throwErrorIfNameAlreadyExists({
+  async beforeUpdateTask({
     input,
     ctx,
   }: BeforeUpdateHookInput<Tasks, Context>) {
@@ -43,6 +77,48 @@ export class TasksHook {
       ) {
         throw new Error('You are not authorized to edit this task');
       }
+    }
+  }
+
+  @AfterUpdateHook(() => Tasks)
+  async afterUpdateTask({
+    updated,
+    ctx,
+  }: AfterUpdateHookInput<Tasks, Context>) {
+    const assigned = await this.userService.model.findById(
+      updated.assignedToUserId,
+    );
+
+    if (ctx.id.toString() === updated.assignedToUserId.toString()) {
+      const assigner = await this.userService.model.findById(
+        updated.assignerFromUserId,
+      );
+      let role = '';
+      if (assigner.roleId.toString() === UserRole.MANAGER.toString()) {
+        role = 'manager';
+      } else if (assigner.roleId.toString() === UserRole.ADMIN.toString()) {
+        role = 'admin';
+      }
+      this.eventEmitter.emit(NotificationEvent.SEND, {
+        href: `/${role}/tasks`,
+        message: 'Công việc của bạn vừa được cập nhật',
+        notificationType: NotificationTypeEnum.SYSTEM,
+        receiver: updated.assignerFromUserId,
+      });
+    }
+    if (ctx.id.toString() === updated.assignerFromUserId.toString()) {
+      let role = '';
+      if (assigned.roleId.toString() === UserRole.MANAGER.toString()) {
+        role = 'manager';
+      } else if (assigned.roleId.toString() === UserRole.STAFF.toString()) {
+        role = 'staff';
+      }
+      this.eventEmitter.emit(NotificationEvent.SEND, {
+        href: `/${role}/tasks`,
+        message: 'Công việc của bạn vừa được cập nhật',
+        notificationType: NotificationTypeEnum.SYSTEM,
+        receiver: updated.assignedToUserId,
+      });
     }
   }
 
