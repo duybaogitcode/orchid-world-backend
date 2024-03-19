@@ -162,11 +162,19 @@ console.log({ nod: configuration().NODE_ENV });
         },
         {
           definition: User,
-          allowedApis: ['findAll', 'findOne', 'bulkRemove', 'update', 'create'],
+          allowedApis: [
+            'findAll',
+            'findOne',
+            'bulkRemove',
+            'update',
+            'create',
+            'paginate',
+          ],
           decorators: {
             findAll: [AdminOrManager()],
             create: [Admin()],
             bulkRemove: [Admin()],
+            paginate: [Admin()],
           },
         },
         {

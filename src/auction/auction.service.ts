@@ -18,6 +18,11 @@ import { WalletEventPayload, WalletEvents } from 'src/wallet/wallet.service';
 import { OrderEventEnum } from 'src/order/event/order.event';
 import { UserSubscription } from 'src/subscription/subscription.definition';
 import { EventGateway } from 'src/gateway/event.gateway';
+import { Wallet } from 'src/wallet/wallet.definition';
+import { TransactionEventEnum } from 'src/wallet/event/transaction.event';
+import { TransactionType } from 'src/wallet/transaction.definition';
+import { SystemWalletEventEnum } from 'src/wallet/event/system.wallet.event';
+import { ServiceProvider } from 'src/payment/payment.definition';
 
 export const AuctionEvents = {
   AUCTION_START: 'AUCTION_START',
@@ -69,6 +74,8 @@ export class AuctionService {
       AuctionBiddingHistory,
       {}
     >,
+    @InjectBaseService(Wallet)
+    private readonly walletService: BaseService<Wallet, {}>,
     private readonly agendaService: AgendaQueue,
     private readonly eventEmiter: EventEmitter2,
     private readonly socketEmitter: EventGateway,
@@ -148,43 +155,95 @@ export class AuctionService {
   }
 
   async registerAuction(auctionId: ObjectId, userId: ObjectId) {
-    // TODO: validate user's wallet before bidding
+    const session = await this.auctionService.model.db.startSession();
+    session.startTransaction();
+    try {
+      // TODO: validate user's wallet before bidding
 
-    const user = await this.userService.model.findById(new ObjectId(userId));
-    if (!user) {
-      throw new GraphQLError('User not found');
+      const user = await this.userService.model.findById(new ObjectId(userId));
+      if (!user) {
+        throw new GraphQLError('User not found');
+      }
+      if (!user?.phone) {
+        throw new GraphQLError('User has not phone number');
+      }
+
+      await this.checkAuctionValidityBeforeRegistration(auctionId, userId);
+      const auction = await this.auctionService.model.findOneAndUpdate(
+        {
+          _id: auctionId,
+        },
+        {
+          $push: {
+            participantIds: userId,
+          },
+          $inc: {
+            totalParticipants: 1,
+          },
+        },
+        {
+          session,
+        },
+      );
+
+      // Lock funds
+      this.eventEmiter.emit(
+        WalletEvents.LOCK_FUNDS,
+        WalletEventPayload.getLockFundsPayload({
+          payload: {
+            authorId: userId,
+            amount: auction.initialPrice,
+          },
+        }),
+      );
+
+      // Get 2% of initial price as a cost for system.
+      const cost = auction.initialPrice * 0.02;
+      const userWallet = await this.walletService.model.findOne({
+        authorId: new ObjectId(userId),
+      });
+
+      if (userWallet.balance < cost) {
+        throw new GraphQLError('Not enough balance');
+      }
+
+      userWallet.balance -= cost;
+
+      await userWallet.save({ session });
+
+      setTimeout(() => {
+        this.eventEmiter.emit(TransactionEventEnum.CREATED, {
+          input: {
+            message: `Thu phí tham giá đấu giá 2%: ${cost}đ`,
+            amount: cost,
+            type: TransactionType.DECREASE,
+            walletId: userWallet._id,
+          },
+        });
+      }, 3000);
+
+      setTimeout(() => {
+        this.eventEmiter.emit(SystemWalletEventEnum.CREATED, {
+          input: {
+            amount: cost,
+            type: TransactionType.INCREASE,
+            walletId: userWallet._id,
+            logs: '',
+            serviceProvider: ServiceProvider.vnpay,
+            isTopUpOrWithdraw: false,
+          },
+        });
+      }, 3000);
+
+      await session.commitTransaction();
+      session.endSession();
+
+      return auction;
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
     }
-    if (!user?.phone) {
-      throw new GraphQLError('User has not phone number');
-    }
-
-    await this.checkAuctionValidityBeforeRegistration(auctionId, userId);
-    const auction = await this.auctionService.model.findOneAndUpdate(
-      {
-        _id: auctionId,
-      },
-      {
-        $push: {
-          participantIds: userId,
-        },
-        $inc: {
-          totalParticipants: 1,
-        },
-      },
-    );
-
-    // Lock funds
-    this.eventEmiter.emit(
-      WalletEvents.LOCK_FUNDS,
-      WalletEventPayload.getLockFundsPayload({
-        payload: {
-          authorId: userId,
-          amount: auction.initialPrice,
-        },
-      }),
-    );
-
-    return auction;
   }
 
   async unregisterAuction(auctionId: ObjectId, userId: ObjectId) {
@@ -239,7 +298,7 @@ export class AuctionService {
         this.eventEmiter.emit(
           NotificationEvent.SEND,
           createNotification({
-            href: '/auctions/' + product?.slug,
+            href: '/auctions/' + auction?.id,
             message: `Buổi đấu giá *${product?.name}* đã được duyệt. Bạn sẽ tự động bắt đầu vào lúc **${moment(auction.startAt).utcOffset(7).format('YYYY-MM-DD HH:mm:ss')}**.`,
             receiver: auction.authorId,
             notificationType: NotificationTypeEnum.AUCTION,
@@ -249,13 +308,15 @@ export class AuctionService {
         this.eventEmiter.emit(
           NotificationEvent.SEND,
           createNotification({
-            href: '/auctions/' + product?.slug,
+            href: '/auctions/' + auction?.id,
             message: `Buổi đấu giá *${product?.name}* đã được duyệt. Bạn có thể bắt đầu buổi đấu giá bất cứ lúc nào.`,
             receiver: auction.authorId,
             notificationType: NotificationTypeEnum.AUCTION,
           }),
         );
       }
+
+      this.eventEmiter.emit('auction:force-refresh', {});
 
       return true;
     } catch (error) {
@@ -344,7 +405,7 @@ export class AuctionService {
         this.eventEmiter.emit(
           NotificationEvent.SEND,
           createNotification({
-            href: '/auctions/' + product?.slug,
+            href: '/auctions/' + started?.id,
             message: `Buổi đấu giá *${product?.name}* đã bắt đầu lúc **${formatedStartAt}** và sẽ kết thúc lúc **${formatedExpireAt}**. Hãy chuẩn bị sẵn sàng để tham gia đấu giá nhé.`,
             receiver: participantId,
             notificationType: NotificationTypeEnum.AUCTION,
@@ -478,7 +539,7 @@ export class AuctionService {
             this.eventEmiter.emit(
               NotificationEvent.SEND,
               createNotification({
-                href: `/auctions/${updatedProduct.slug}`,
+                href: `/auctions/${updated?.id}`,
                 message: `Đấu giá ${updatedProduct.name} đã kết thúc. Sản phẩm đã được bán với giá ${lastestBidding.bidPrice} đồng, vui lòng liên hệ với người bán để hoàn tất giao dịch`,
                 notificationType: NotificationTypeEnum.AUCTION,
                 receiver: lastestBidding.authorId,
@@ -488,7 +549,7 @@ export class AuctionService {
             this.eventEmiter.emit(
               NotificationEvent.SEND,
               createNotification({
-                href: `/auctions/${updatedProduct.slug}`,
+                href: `/auctions/${updated?.id}`,
                 message: `Đấu giá ${updatedProduct.name} đã kết thúc. Sản phẩm đã được bán với giá ${lastestBidding.bidPrice} đồng, người chiến thắng là ${winner?.firstName || 'Anonymous'} ${winner?.lastName || 'Anonymous'}. Vui lòng liên hệ với người mua để hoàn tất giao dịch`,
                 notificationType: NotificationTypeEnum.AUCTION,
                 receiver: updated.authorId,
@@ -501,7 +562,7 @@ export class AuctionService {
                 this.eventEmiter.emit(
                   NotificationEvent.SEND,
                   createNotification({
-                    href: `/auctions/${updatedProduct.slug}`,
+                    href: `/auctions/${updated?.id}`,
                     message: `Đấu giá ${updatedProduct.name} đã kết thúc. Sản phẩm đã được bán với giá ${lastestBidding.bidPrice} đồng, người chiến thắng là ${winner?.firstName || 'Anonymous'} ${winner?.lastName || 'Anonymous'}`,
                     notificationType: NotificationTypeEnum.AUCTION,
                     receiver: participantId,
@@ -569,7 +630,7 @@ export class AuctionService {
             this.eventEmiter.emit(
               NotificationEvent.SEND,
               createNotification({
-                href: '/auctions/' + product?.slug,
+                href: '/auctions/' + auction?.id,
                 message: `Buổi đấu giá *${product?.name}* sẽ bắt đầu lúc **${moment(
                   startAt,
                 )
@@ -625,7 +686,7 @@ export class AuctionService {
       this.eventEmiter.emit(
         NotificationEvent.SEND,
         createNotification({
-          href: '/auctions/' + auction.productId,
+          href: '/auctions/' + auction?.id,
           message: `Buổi đấu giá *${auction.productId}* đã bị hủy.`,
           receiver: participantId,
           notificationType: NotificationTypeEnum.AUCTION,
@@ -636,7 +697,7 @@ export class AuctionService {
     this.eventEmiter.emit(
       NotificationEvent.SEND,
       createNotification({
-        href: '/auctions/' + auction.productId,
+        href: '/auctions/' + auction?.id,
         message: `Buổi đấu giá *${auction.productId}* đã bị hủy.`,
         receiver: auction.authorId,
         notificationType: NotificationTypeEnum.AUCTION,

@@ -16,29 +16,22 @@ import {
   BeforeCreateHook,
   BeforeCreateHookInput,
   InjectBaseService,
-  AfterFindOneHook,
-  AfterFindOneHookInput,
   ObjectId,
 } from 'dryerjs';
 import { Context } from 'src/auth/ctx';
-import { NotificationTypeEnum } from 'src/notification/notification.definition';
-import { createNotification } from 'src/notification/notification.resolver';
-import { NotificationEvent } from 'src/notification/notification.service';
-import { OrderEventEnum } from 'src/order/event/order.event';
-import { Product, ProductStatus } from 'src/product/product.definition';
+import { Product } from 'src/product/product.definition';
+import { UserSubscription } from 'src/subscription/subscription.definition';
+import {
+  SubscriptionEvents,
+  SubscriptionPayload,
+} from 'src/subscription/subscription.service';
 import { User } from 'src/user/user.definition';
 import {
   Auction,
   AuctionBiddingHistory,
   AuctionStatus,
 } from './auction.definition';
-import { WalletEventPayload, WalletEvents } from 'src/wallet/wallet.service';
 import { AuctionEventPayload, AuctionEvents } from './auction.service';
-import { UserSubscription } from 'src/subscription/subscription.definition';
-import {
-  SubscriptionEvents,
-  SubscriptionPayload,
-} from 'src/subscription/subscription.service';
 
 @Injectable()
 export class AuctionHook {
