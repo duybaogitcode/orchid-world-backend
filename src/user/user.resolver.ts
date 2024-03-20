@@ -4,10 +4,15 @@ import { GetByUidInput } from './dto/get-by-uid.dto';
 import { User } from './user.definition';
 import { UserService } from './user.service';
 import { UserProfileWithCartAndWallet } from 'src/auth/auth.definition';
-import { AuthenticatedUser, ShopOrUserOnly } from 'src/guard/roles.guard';
+import {
+  Admin,
+  AuthenticatedUser,
+  ShopOrUserOnly,
+} from 'src/guard/roles.guard';
 import { SuccessResponse } from 'dryerjs/dist/types';
 import { UpdateRoleDTO } from './dto/update-role.dto';
 import { Context, Ctx } from 'src/auth/ctx';
+import { CreateUserDTO } from './dto/create-user.dto';
 
 @Resolver()
 export class UserResolver {
@@ -21,6 +26,7 @@ export class UserResolver {
     return this.userService.getByGoogleId(input.googleId);
   }
 
+  @Admin()
   @Mutation(() => SuccessResponse, {
     name: 'updateUserRole',
   })
@@ -36,6 +42,21 @@ export class UserResolver {
       );
       return {
         success: response,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  @Admin()
+  @Mutation(() => SuccessResponse, {
+    name: 'createNewUser',
+  })
+  async createNewUser(@Args('input') input: CreateUserDTO) {
+    try {
+      const response = await this.userService.createUser(input);
+      return {
+        success: Boolean(response),
       };
     } catch (error) {
       throw error;

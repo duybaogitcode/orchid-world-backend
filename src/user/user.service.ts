@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { User } from './user.definition';
 import { Context } from 'src/auth/ctx';
 import { BaseService, InjectBaseService, ObjectId } from 'dryerjs';
@@ -9,6 +9,8 @@ import { Cache } from 'cache-manager';
 import { Role } from 'src/auth/auth.definition';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { EventGateway } from 'src/gateway/event.gateway';
+import { CreateUserDTO } from './dto/create-user.dto';
+import { FirebaseAdmin, InjectFirebaseAdmin } from 'nestjs-firebase';
 
 export const USER_EVENTS = {
   UPDATE_ROLE: 'user:update.role',
@@ -33,6 +35,7 @@ export class UserService {
     public roleService: BaseService<Role, Context>,
     private readonly eventEmitter: EventEmitter2,
     private readonly socketEmitter: EventGateway,
+    @InjectFirebaseAdmin() private readonly firebaseService: FirebaseAdmin,
   ) {}
 
   async getByGoogleId(googleId: string) {
@@ -147,5 +150,57 @@ export class UserService {
       },
     );
     return true;
+  }
+
+  async createUser(userDto: CreateUserDTO) {
+    console.log('🚀 ~ UserService ~ createUser ~ userDto:', userDto);
+    const session = await this.userService.model.startSession();
+    session.startTransaction();
+    let uid = '';
+    try {
+      const firebaseCredential = await this.firebaseService.auth.createUser({
+        displayName: `${userDto.firstName} ${userDto.lastName}`,
+        email: userDto.email,
+        password: userDto.password,
+        phoneNumber: userDto.phone,
+      });
+      console.log(
+        '🚀 ~ UserService ~ createUser ~ firebaseCredential:',
+        firebaseCredential,
+      );
+      uid = firebaseCredential.uid;
+      delete userDto?.password;
+      const created = await this.userService.model.create(
+        {
+          ...userDto,
+          roleId: new ObjectId(userDto.roleId),
+          googleId: firebaseCredential.uid,
+        },
+        {
+          session: [session],
+        },
+        {
+          id: 1,
+        },
+      );
+      console.log('🚀 ~ UserService ~ createUser ~ created:', created);
+
+      await session.commitTransaction();
+      session.endSession();
+      return created;
+    } catch (error) {
+      console.log('🚀 ~ UserService ~ createUser ~ error:', error);
+      if (uid) {
+        await this.firebaseService.auth.deleteUser(uid);
+      }
+      await session.abortTransaction();
+      session.endSession();
+
+      // if firebase error, then throw error with message from firebase
+      if (error?.code) {
+        throw new BadRequestException(error?.message);
+      }
+      throw new BadRequestException('Create user failed');
+    }
   }
 }

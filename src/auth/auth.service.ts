@@ -7,7 +7,6 @@ import { Response } from 'express';
 import { Model } from 'mongoose';
 import { FirebaseAdmin, InjectFirebaseAdmin } from 'nestjs-firebase';
 import { UserRole } from 'src/guard/roles.guard';
-import { NotificationTypeEnum } from 'src/notification/notification.definition';
 import { User } from 'src/user/user.definition';
 import { Role, Session } from './auth.definition';
 import { LoginInput } from './dto/create-auth.input';

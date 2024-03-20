@@ -51,6 +51,11 @@ export class Transaction extends BaseModel() {
 
   @Property({
     type: () => Number,
+    nullable: true,
+    defaultValue: -1,
+    db: {
+      default: -1,
+    },
   })
   amount: number;
 
@@ -70,6 +75,7 @@ export class Transaction extends BaseModel() {
 
   @Property({
     type: () => TransactionType,
+    nullable: true,
   })
   type: TransactionType;
 
