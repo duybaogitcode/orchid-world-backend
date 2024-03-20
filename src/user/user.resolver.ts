@@ -1,11 +1,10 @@
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Args, Query, Resolver } from '@nestjs/graphql';
 import { OutputType } from 'dryerjs';
 import { GetByUidInput } from './dto/get-by-uid.dto';
 import { User } from './user.definition';
 import { UserService } from './user.service';
 import { UserProfileWithCartAndWallet } from 'src/auth/auth.definition';
 import { AuthenticatedUser, ShopOrUserOnly } from 'src/guard/roles.guard';
-import { SuccessResponse } from 'dryerjs/dist/types';
 
 @Resolver()
 export class UserResolver {
@@ -17,15 +16,5 @@ export class UserResolver {
   })
   async getByGoogleId(@Args('input') input: GetByUidInput) {
     return this.userService.getByGoogleId(input.googleId);
-  }
-
-  @ShopOrUserOnly()
-  @Mutation(() => SuccessResponse, { name: 'sendEmailOtp' })
-  async sendEmailOtp(@Args('email') email: string) {
-    try {
-      return this.userService.sendEmailOtp(email);
-    } catch (error) {
-      throw new Error(error);
-    }
   }
 }
