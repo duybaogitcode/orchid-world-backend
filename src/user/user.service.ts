@@ -7,7 +7,7 @@ import { Wallet } from 'src/wallet/wallet.definition';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { MailEventEnum } from 'src/email/email.event';
-import { Role } from 'src/auth/auth.definition';
+import { Role, Session } from 'src/auth/auth.definition';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { EventGateway } from 'src/gateway/event.gateway';
 
@@ -33,6 +33,8 @@ export class UserService {
     private readonly eventEmitter: EventEmitter2,
     @InjectBaseService(Role)
     public roleService: BaseService<Role, Context>,
+    @InjectBaseService(Session)
+    public sessionService: BaseService<Session, Context>,
     private readonly socketEmitter: EventGateway,
   ) {}
 
