@@ -6,6 +6,8 @@ import { Cart } from 'src/cart/definition/cart.definition';
 import { Wallet } from 'src/wallet/wallet.definition';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { MailEventEnum } from 'src/email/email.event';
 
 @Injectable()
 export class UserService {
@@ -17,6 +19,7 @@ export class UserService {
     public cartService: BaseService<Cart, Context>,
     @InjectBaseService(Wallet)
     public walletService: BaseService<Wallet, Context>,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async getByGoogleId(googleId: string) {
@@ -45,6 +48,14 @@ export class UserService {
       profile: user,
       cart,
       wallet,
+    };
+  }
+
+  async sendEmailOtp(email: string) {
+    this.eventEmitter.emit(MailEventEnum.SEND_EMAIL_OTP, email, 'OTP', '1234');
+    return {
+      success: true,
+      message: 'OTP sent to your email',
     };
   }
 }

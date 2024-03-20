@@ -23,6 +23,8 @@ import { TransactionEventEnum } from 'src/wallet/event/transaction.event';
 import { TransactionType } from 'src/wallet/transaction.definition';
 import { SystemWalletEventEnum } from 'src/wallet/event/system.wallet.event';
 import { ServiceProvider } from 'src/payment/payment.definition';
+import { TasksEventEnum } from 'src/tasks/task.event';
+import { Context } from 'src/auth/ctx';
 
 export const AuctionEvents = {
   AUCTION_START: 'AUCTION_START',
@@ -278,7 +280,7 @@ export class AuctionService {
     return auction;
   }
 
-  async approveAuction(auctionId: ObjectId) {
+  async approveAuction(auctionId: ObjectId, ctx: Context) {
     try {
       const auction = await this.auctionService.update(
         {},
@@ -317,6 +319,14 @@ export class AuctionService {
       }
 
       this.eventEmiter.emit('auction:force-refresh', {});
+
+      this.eventEmiter.emit(TasksEventEnum.AUTO_CREATE_AUTO_ASSIGN, {
+        taskName: 'Quản lí buổi đấu giá',
+        taskDetails: 'Quản lí buổi đấu giá có id: ' + auction.id,
+        assignerFromUserId: new ObjectId(ctx.id),
+        target: auction.id,
+        deadline: moment(auction.startAt).subtract(1, 'days').toDate(),
+      });
 
       return true;
     } catch (error) {

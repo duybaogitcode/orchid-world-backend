@@ -43,6 +43,7 @@ export enum TaskTags {
   PAYMENT = 'PAYMENT',
   FEEDBACK = 'FEEDBACK',
   REPORT = 'REPORT',
+  AUCTION = 'AUCTION',
   OTHERS = 'OTHERS',
 }
 
