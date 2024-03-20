@@ -71,12 +71,35 @@ export class UserService {
   }
 
   async sendEmailOtp(email: string) {
-    this.eventEmitter.emit(MailEventEnum.SEND_EMAIL_OTP, email, 'OTP', '1234');
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    await this.cacheManager.set(email, otp, 120);
+
+    this.eventEmitter.emit(MailEventEnum.SEND_EMAIL_OTP, email, 'OTP', otp);
+
     return {
       success: true,
       message: 'OTP sent to your email',
     };
   }
+
+  async verifyEmailOtp(email: string, otp: string) {
+    const otpCache = await this.cacheManager.get(email);
+
+    if (!otp) {
+      throw new BadRequestException('OTP expired or not found');
+    }
+
+    if (otp !== otpCache) {
+      throw new BadRequestException('Invalid OTP');
+    }
+
+    return {
+      success: true,
+      message: 'OTP sent to your email',
+    };
+  }
+
   async updateUserRole(
     userId: ObjectId,
     roleId: ObjectId,
@@ -156,10 +179,12 @@ export class UserService {
     const session = await this.sessionService.model.findOne({
       userId: user._id,
     });
-    session.roleId = new ObjectId(roleId);
-    session.accessToken = null;
-    session.refreshToken = null;
-    await session.save();
+    if (session) {
+      session.roleId = new ObjectId(roleId);
+      session.accessToken = null;
+      session.refreshToken = null;
+      await session.save();
+    }
     this.socketEmitter.emitTo(
       payload.actionAuthor.toString(),
       USER_SOCKET_EVENTS.UPDATE_ROLE_ERROR,

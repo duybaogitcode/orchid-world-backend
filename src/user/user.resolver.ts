@@ -8,6 +8,7 @@ import {
   Admin,
   AuthenticatedUser,
   ShopOrUserOnly,
+  UserOnly,
 } from 'src/guard/roles.guard';
 import { SuccessResponse } from 'dryerjs/dist/types';
 import { UpdateRoleDTO } from './dto/update-role.dto';
@@ -55,6 +56,36 @@ export class UserResolver {
   async createNewUser(@Args('input') input: CreateUserDTO) {
     try {
       const response = await this.userService.createUser(input);
+      return {
+        success: Boolean(response),
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  @UserOnly()
+  @Mutation(() => SuccessResponse, {
+    name: 'sendOtp',
+  })
+  async sendOtp(@Args('email') email: string) {
+    try {
+      const response = await this.userService.sendEmailOtp(email);
+      return {
+        success: Boolean(response),
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  @UserOnly()
+  @Query(() => SuccessResponse, {
+    name: 'verifyOtp',
+  })
+  async verify(@Args('email') email: string, @Args('otp') otp: string) {
+    try {
+      const response = await this.userService.verifyEmailOtp(email, otp);
       return {
         success: Boolean(response),
       };

@@ -125,7 +125,7 @@ console.log({ nod: configuration().NODE_ENV });
       port: 11152,
       username: 'default',
       password: 'hwHMty4zzVV9hes1qGiEPqqDTt1nrlZo',
-      ttl: 3600,
+      ttl: 120,
     }),
     MongooseModule.forRoot(
       'mongodb+srv://admin:fng8LrZdG2BqKbh2@clusterqueue.knjjwp9.mongodb.net/OrchidSample?retryWrites=true&w=majority',
