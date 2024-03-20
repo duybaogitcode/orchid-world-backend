@@ -2,6 +2,7 @@ import { Field, InputType, ObjectType, OmitType } from '@nestjs/graphql';
 import {
   CreateInputType,
   Definition,
+  Filterable,
   GraphQLObjectId,
   ObjectId,
   OutputType,
@@ -25,6 +26,9 @@ export class Permission extends BaseModel() {
   timestamps: true,
 })
 export class Role extends BaseModel() {
+  @Filterable(() => String, {
+    operators: ['eq', 'in', 'notIn', 'notEq'],
+  })
   @Property({
     db: {
       unique: true,

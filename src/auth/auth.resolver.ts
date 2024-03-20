@@ -1,15 +1,12 @@
 import { Args, Context, Mutation, Resolver } from '@nestjs/graphql';
-import { AuthService } from './auth.service';
-import { LoginInput } from './dto/create-auth.input';
-import { Res } from '@nestjs/common';
 import { OutputType } from 'dryerjs';
-import { User } from 'src/user/user.definition';
-import { Session } from './auth.definition';
 import { Request, Response } from 'express';
 import { configuration } from 'src/config';
-import { AuthenticatedUser, UserOnly } from 'src/guard/roles.guard';
+import { User } from 'src/user/user.definition';
+import { Session } from './auth.definition';
+import { AuthService } from './auth.service';
+import { LoginInput } from './dto/create-auth.input';
 import { ShopOwnerInput } from './dto/shopOwner.input';
-import { Ctx } from './ctx';
 
 const UserEntity = OutputType(User);
 const SessionEntity = OutputType(Session);
