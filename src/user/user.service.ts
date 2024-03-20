@@ -152,6 +152,14 @@ export class UserService {
 
     user.roleId = new ObjectId(roleId);
     await user.save();
+
+    const session = await this.sessionService.model.findOne({
+      userId: user._id,
+    });
+    session.roleId = new ObjectId(roleId);
+    session.accessToken = null;
+    session.refreshToken = null;
+    await session.save();
     this.socketEmitter.emitTo(
       payload.actionAuthor.toString(),
       USER_SOCKET_EVENTS.UPDATE_ROLE_ERROR,
@@ -193,6 +201,8 @@ export class UserService {
           id: 1,
         },
       );
+
+      this.eventEmitter.emit('User.created', { input: created });
       console.log('🚀 ~ UserService ~ createUser ~ created:', created);
 
       await session.commitTransaction();

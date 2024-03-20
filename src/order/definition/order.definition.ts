@@ -59,7 +59,6 @@ class DeliveredUnit {
 
 @Definition()
 export class ProductInOrder {
-  @Filterable(() => String, { operators: ['contains'] })
   @Property({ type: () => String })
   name: string;
 
@@ -87,9 +86,10 @@ class CartShopItemInput {
 
 const CartShopItemInputType = CreateInputType(CartShopItemInput);
 
-@Definition()
+@Definition({
+  enableTextSearch: true,
+})
 export class Shop {
-  @Filterable(() => String, { operators: ['contains'] })
   @Property({ type: () => String })
   shopName: string;
 
