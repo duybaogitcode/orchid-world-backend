@@ -27,6 +27,7 @@ import { ServiceProvider } from 'src/payment/payment.definition';
 import { MongoQuery } from 'src/utils/mongoquery';
 import { FeedbackEventEnum } from 'src/feedbacks/feedback.event';
 import { doesWalletAffordable } from 'src/wallet/wallet.service';
+import { ReportEventEnum } from 'src/report/report.event';
 
 @Injectable()
 export class OrderTransactionService {
@@ -676,7 +677,7 @@ export class OrderTransactionService {
 
       if (
         input.status !== OrderStatus.CONFIRMED_RECEIPT &&
-        input.status !== OrderStatus.RETURNED &&
+        input.status !== OrderStatus.RETURNING &&
         input.status !== OrderStatus.CANCELED
       ) {
         throw new Error(
@@ -684,7 +685,7 @@ export class OrderTransactionService {
         );
       }
 
-      if (input.status === OrderStatus.RETURNED) {
+      if (input.status === OrderStatus.RETURNING) {
         if (order.status !== OrderStatus.DELIVERED) {
           throw new Error('Order is not delivered');
         }
@@ -694,6 +695,12 @@ export class OrderTransactionService {
         if (!input.description) {
           throw new Error('Description is required when status is returned');
         }
+
+        this.eventEmitter.emit(ReportEventEnum.CREATED, {
+          title: 'Yêu cầu trả hàng',
+          content: `Yêu cầu trả hàng đơn hàng ${order.code}`,
+          reportTypeId: new ObjectId('65f9a926f15b55211188f629'),
+        });
       }
 
       if (input.status === OrderStatus.CONFIRMED_RECEIPT) {

@@ -262,7 +262,7 @@ export class OrderEvent {
               media: updatedProduct.media,
               price: lastestBidding.bidPrice,
               name: updatedProduct.name,
-              quantity: updatedProduct.quantity,
+              quantity: 1,
               slug: updatedProduct.slug,
             },
           ],

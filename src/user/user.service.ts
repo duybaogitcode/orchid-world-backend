@@ -6,7 +6,8 @@ import { Cart } from 'src/cart/definition/cart.definition';
 import { Wallet } from 'src/wallet/wallet.definition';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { Role } from 'src/auth/auth.definition';
+import { MailEventEnum } from 'src/email/email.event';
+import { Role, Session } from 'src/auth/auth.definition';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { EventGateway } from 'src/gateway/event.gateway';
 import { CreateUserDTO } from './dto/create-user.dto';
@@ -31,9 +32,11 @@ export class UserService {
     public cartService: BaseService<Cart, Context>,
     @InjectBaseService(Wallet)
     public walletService: BaseService<Wallet, Context>,
+    private readonly eventEmitter: EventEmitter2,
     @InjectBaseService(Role)
     public roleService: BaseService<Role, Context>,
-    private readonly eventEmitter: EventEmitter2,
+    @InjectBaseService(Session)
+    public sessionService: BaseService<Session, Context>,
     private readonly socketEmitter: EventGateway,
     @InjectFirebaseAdmin() private readonly firebaseService: FirebaseAdmin,
   ) {}
@@ -67,6 +70,13 @@ export class UserService {
     };
   }
 
+  async sendEmailOtp(email: string) {
+    this.eventEmitter.emit(MailEventEnum.SEND_EMAIL_OTP, email, 'OTP', '1234');
+    return {
+      success: true,
+      message: 'OTP sent to your email',
+    };
+  }
   async updateUserRole(
     userId: ObjectId,
     roleId: ObjectId,

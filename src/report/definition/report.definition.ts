@@ -25,9 +25,9 @@ export class Report extends BaseModelHasOwner() {
   content: string;
 
   @Property({ type: () => GraphQLObjectId, nullable: true })
-  reportedId: ObjectId;
+  reportedUserId: ObjectId;
 
-  @BelongsTo(() => User, { from: 'reportedId' })
+  @BelongsTo(() => User, { from: 'reportedUserId' })
   reportedUser: User;
 
   @Property({ type: () => Boolean, defaultValue: false })

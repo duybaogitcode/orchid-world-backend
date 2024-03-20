@@ -66,7 +66,7 @@ export class ProductService {
         description: createProductDto.description,
         media: media,
         name: createProductDto.name,
-        price: createProductDto.price,
+        price: createProductDto.isAuction ? 0 : createProductDto.price,
         slug: `${slugify(createProductDto.name, { lower: true, strict: true })}-${Math.random().toString(36)}`,
         status: 'APPROVED',
         tags: createProductDto.tags,

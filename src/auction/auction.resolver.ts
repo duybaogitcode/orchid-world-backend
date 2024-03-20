@@ -7,6 +7,7 @@ import { SuccessResponse } from 'dryerjs/dist/types';
 import { Context, Ctx } from 'src/auth/ctx';
 import { AuctionInputStop, AuctionRegisterDTO } from './dto/register.dto';
 import {
+  ManagerOnly,
   ManagerOrStaff,
   ShopOnly,
   ShopOrUserOnly,
@@ -59,11 +60,17 @@ export class AuctionResolver {
 
   // @ShopOnly()
   // TODO: validate owner only
+
+  @ManagerOnly()
   @Mutation(() => SuccessResponse, { name: 'approveAuction' })
-  async approveAuction(@Args('input') input: AuctionRegisterDTO) {
+  async approveAuction(
+    @Args('input') input: AuctionRegisterDTO,
+    @Ctx() ctx: Context,
+  ) {
     try {
       const response = await this.auctionService.approveAuction(
         input.auctionId,
+        ctx,
       );
       return {
         success: Boolean(response),
