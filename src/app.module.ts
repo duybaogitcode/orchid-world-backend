@@ -101,6 +101,7 @@ import { TasksHook } from './tasks/tasks.hook';
 import { TaskResolver } from './tasks/task.resolver';
 import { TasksService } from './tasks/task.service';
 import { MailEvent } from './email/email.event';
+import { TasksEvent } from './tasks/task.event';
 
 console.log({ nod: configuration().NODE_ENV });
 
@@ -395,6 +396,7 @@ console.log({ nod: configuration().NODE_ENV });
         TaskResolver,
         TasksService,
         MailEvent,
+        TasksEvent,
       ],
       contextDecorator: Ctx,
     }),

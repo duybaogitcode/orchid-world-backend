@@ -340,90 +340,97 @@ export class AuctionService {
   }
 
   async startAuction(auctionId: ObjectId, auctionStatus?: AuctionStatus) {
-    console.log({ auctionId, auctionStatus });
-    const auction = await this.auctionService.findById({}, { _id: auctionId });
-    const product = await this.productService.findById(
-      {},
-      { _id: auction.productId },
-    );
-
-    if (
-      auction.status !== AuctionStatus.APPROVED &&
-      auctionStatus !== AuctionStatus.APPROVED
-    ) {
-      throw new GraphQLError('Auction is not available for start');
-    }
-
-    const utc = moment(auction.startAt).utcOffset(7).toDate();
-    const duration = auction.duration;
-    const durationUnit = auction.durationUnit;
-
-    const startAt = moment(utc).set({ second: 0 }).toDate();
-    const expireAt = moment(utc)
-      .add(duration, durationUnit)
-      .set({ second: 0 })
-      .toDate();
-
-    const formatedStartAt = moment(startAt).format('YYYY-MM-DD HH:mm:ss');
-    const formatedExpireAt = moment(expireAt).format('YYYY-MM-DD HH:mm:ss');
-
-    console.log({
-      formatedStartAt,
-      duration,
-      durationUnit,
-      formatedExpireAt,
-      expireAt,
-    });
-
-    // If auction start automatically, setup agenda job for auction start
-    if (auction.startAutomatically && startAt) {
-      // Update auction status to running
-      const started = await this.auctionService.update(
+    try {
+      console.log({ auctionId, auctionStatus });
+      const auction = await this.auctionService.findById(
         {},
+        { _id: auctionId },
+      );
+      const product = await this.productService.findById(
+        {},
+        { _id: auction.productId },
+      );
+
+      if (
+        auction.status !== AuctionStatus.APPROVED &&
+        auctionStatus !== AuctionStatus.APPROVED
+      ) {
+        throw new GraphQLError('Auction is not available for start');
+      }
+
+      const utc = moment(auction.startAt).utcOffset(7).toDate();
+      const duration = auction.duration;
+      const durationUnit = auction.durationUnit;
+
+      const startAt = moment(utc).set({ second: 0 }).toDate();
+      const expireAt = moment(utc)
+        .add(duration, durationUnit)
+        .set({ second: 0 })
+        .toDate();
+
+      const formatedStartAt = moment(startAt).format('YYYY-MM-DD HH:mm:ss');
+      const formatedExpireAt = moment(expireAt).format('YYYY-MM-DD HH:mm:ss');
+
+      console.log({
+        formatedStartAt,
+        duration,
+        durationUnit,
+        formatedExpireAt,
+        expireAt,
+      });
+
+      // If auction start automatically, setup agenda job for auction start
+      if (auction.startAutomatically && startAt) {
+        // Update auction status to running
+        const started = await this.auctionService.update(
+          {},
+          {
+            id: auctionId,
+            startAt: startAt,
+            expireAt: expireAt,
+          },
+        );
+
+        await this.agendaAutoStartAuction(auctionId, startAt, expireAt);
+        await this.agendaNotifyBeforeStart(auctionId, startAt);
+        return started;
+      }
+
+      // Update auction status to running
+      const started = await this.auctionService.model.findOneAndUpdate(
         {
-          id: auctionId,
+          _id: auctionId,
+        },
+        {
+          status: AuctionStatus.RUNNING,
           startAt: startAt,
           expireAt: expireAt,
         },
       );
 
-      await this.agendaAutoStartAuction(auctionId, startAt, expireAt);
-      await this.agendaNotifyBeforeStart(auctionId, startAt);
-      return started;
+      this.socketEmitter.emitTo(started.id, 'auction:force-refresh', {});
+      // Setup agenda job for auction expiration
+      await this.agendaExpirationJob(auctionId, expireAt);
+
+      // Notify to all participants
+      auction.participantIds
+        .concat([auction.authorId])
+        .forEach((participantId) => {
+          this.eventEmiter.emit(
+            NotificationEvent.SEND,
+            createNotification({
+              href: '/auctions/' + started?.id,
+              message: `Buổi đấu giá *${product?.name}* đã bắt đầu lúc **${formatedStartAt}** và sẽ kết thúc lúc **${formatedExpireAt}**. Hãy chuẩn bị sẵn sàng để tham gia đấu giá nhé.`,
+              receiver: participantId,
+              notificationType: NotificationTypeEnum.AUCTION,
+            }),
+          );
+        });
+
+      return true;
+    } catch (error) {
+      throw error;
     }
-
-    // Update auction status to running
-    const started = await this.auctionService.model.findOneAndUpdate(
-      {
-        _id: auctionId,
-      },
-      {
-        status: AuctionStatus.RUNNING,
-        startAt: startAt,
-        expireAt: expireAt,
-      },
-    );
-
-    this.socketEmitter.emitTo(started.id, 'auction:force-refresh', {});
-    // Setup agenda job for auction expiration
-    await this.agendaExpirationJob(auctionId, expireAt);
-
-    // Notify to all participants
-    auction.participantIds
-      .concat([auction.authorId])
-      .forEach((participantId) => {
-        this.eventEmiter.emit(
-          NotificationEvent.SEND,
-          createNotification({
-            href: '/auctions/' + started?.id,
-            message: `Buổi đấu giá *${product?.name}* đã bắt đầu lúc **${formatedStartAt}** và sẽ kết thúc lúc **${formatedExpireAt}**. Hãy chuẩn bị sẵn sàng để tham gia đấu giá nhé.`,
-            receiver: participantId,
-            notificationType: NotificationTypeEnum.AUCTION,
-          }),
-        );
-      });
-
-    return started;
   }
 
   async agendaAutoStartAuction(
