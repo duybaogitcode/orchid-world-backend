@@ -15,6 +15,7 @@ import {
   PaginatedOutputType,
   SortType,
 } from 'dryerjs';
+import { SuccessResponse } from 'dryerjs/dist/types';
 
 import { CreateProductInput } from './dto/create-product.input';
 import { ProductService } from './product.service';
@@ -160,12 +161,12 @@ export class ProductResolver {
   }
 
   @ShopOnly()
-  @Mutation(() => Boolean, { name: 'removeProduct' })
+  @Mutation(() => SuccessResponse, { name: 'removeProduct' })
   async remove(@Args('id') id: string) {
     try {
       const isRemoved = await this.productService.remove(new ObjectId(id));
 
-      return isRemoved;
+      return { success: isRemoved };
     } catch (error) {
       console.error('Failed create new product:', error);
       throw error;
