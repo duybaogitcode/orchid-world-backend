@@ -43,7 +43,7 @@ jobs:
           username: ${{ secrets.DROPLET_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-             docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GHCR_TOKEN }}
+            docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GHCR_TOKEN }}
             docker pull ghcr.io/${{ github.actor }}/${{ env.APP_NAME }}:${{ github.sha }}
             docker stop $(docker ps -q) || true
             docker run -d -p 80:80 ghcr.io/${{ github.actor }}/${{ env.APP_NAME }}:${{ github.sha }}
