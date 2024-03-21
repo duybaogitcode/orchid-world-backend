@@ -55,7 +55,9 @@ export class AuctionResolver {
   // @ShopOnly()
   @Mutation(() => SuccessResponse, { name: 'startAuction' })
   async startAuction(@Args('input') input: AuctionRegisterDTO) {
-    return this.auctionService.startAuction(input.auctionId);
+    return {
+      success: Boolean(this.auctionService.startAuction(input.auctionId)),
+    };
   }
 
   // @ShopOnly()

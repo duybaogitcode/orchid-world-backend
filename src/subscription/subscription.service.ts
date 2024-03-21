@@ -118,6 +118,8 @@ export class SubscriptionService {
         subscription.registrationPeriodUnit,
       );
 
+      console.log(expireAt);
+
       let userSubscriptionExist = userSubscriptions.find(
         (subscription) =>
           subscription.subscriptionId.toString() === subscription.id.toString(),
