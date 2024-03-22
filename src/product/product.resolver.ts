@@ -166,7 +166,9 @@ export class ProductResolver {
     try {
       const isRemoved = await this.productService.remove(new ObjectId(id));
 
-      return { success: isRemoved };
+      return {
+        success: Boolean(isRemoved),
+      };
     } catch (error) {
       console.error('Failed create new product:', error);
       throw error;

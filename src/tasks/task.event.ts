@@ -54,6 +54,7 @@ export class TasksEvent {
         taskImportance: TaskImportance.MEDIUM,
         taskTags: TaskTags.AUCTION,
         assignedToUserId: new ObjectId(userWithLeastTasks),
+        isRemoved: false,
       });
 
       await task.save({ session });
