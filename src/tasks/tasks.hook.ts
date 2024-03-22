@@ -134,10 +134,10 @@ export class TasksHook {
     if (ctx.roleId.toString() === UserRole.ADMIN.toString()) {
       return filter;
     }
-    // filter.$or = [
-    //   { assignerFromUserId: new ObjectId(ctx.id) },
-    //   { assignedToUserId: new ObjectId(ctx.id) },
-    // ];
-    // return filter;
+    filter.$or = [
+      { assignerFromUserId: new ObjectId(ctx.id) },
+      { assignedToUserId: new ObjectId(ctx.id) },
+    ];
+    return filter;
   }
 }
