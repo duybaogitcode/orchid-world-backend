@@ -17,7 +17,7 @@ export class Categories extends BaseModel() {
   @Property({ db: { unique: true } })
   name: string;
 
-  @Filterable(() => String, { operators: ['eq'] })
+  @Filterable(() => String, { operators: ['eq', 'in'] })
   @Property({ db: { unique: true } })
   slug: string;
 
