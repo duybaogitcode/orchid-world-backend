@@ -5,5 +5,5 @@ import { Types } from 'mongoose';
 @InputType()
 export class SubscribeToSubscriptionDTO {
   @Field(() => String)
-  planId: String;
+  planId: string;
 }
