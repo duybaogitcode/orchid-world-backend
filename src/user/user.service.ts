@@ -1,5 +1,5 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { User } from './user.definition';
+import { AddressWithDefaultPriority, User } from './user.definition';
 import { Context } from 'src/auth/ctx';
 import { BaseService, InjectBaseService, ObjectId } from 'dryerjs';
 import { Cart } from 'src/cart/definition/cart.definition';
@@ -12,6 +12,7 @@ import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { EventGateway } from 'src/gateway/event.gateway';
 import { CreateUserDTO } from './dto/create-user.dto';
 import { FirebaseAdmin, InjectFirebaseAdmin } from 'nestjs-firebase';
+import { GoShipService } from 'src/utils/goship';
 
 export const USER_EVENTS = {
   UPDATE_ROLE: 'user:update.role',
@@ -39,6 +40,7 @@ export class UserService {
     public sessionService: BaseService<Session, Context>,
     private readonly socketEmitter: EventGateway,
     @InjectFirebaseAdmin() private readonly firebaseService: FirebaseAdmin,
+    private readonly goshipService: GoShipService,
   ) {}
 
   async getByGoogleId(googleId: string) {
@@ -247,5 +249,59 @@ export class UserService {
       }
       throw new BadRequestException('Create user failed');
     }
+  }
+
+  async getListAddressString(
+    ctx: Context,
+  ): Promise<{ address: string; isDefault: boolean }[]> {
+    const user = await this.userService.model.findById(new ObjectId(ctx.id));
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+    if (!user.address) {
+      return [];
+    }
+    const addresses = user.address;
+
+    const addressStrings = await Promise.all(
+      addresses.map(async (address) => ({
+        address: await this.getAddress(address),
+        isDefault: address.isDefault,
+      })),
+    );
+    return addressStrings;
+  }
+
+  private async getAddress(address: AddressWithDefaultPriority) {
+    let addressString = '';
+    if (address.city) {
+      const listCity = await this.goshipService.getCities();
+      const city = listCity.data.find((c) => c.id === address.city);
+      const cityName = city?.name || '';
+      addressString += cityName;
+      if (address.district) {
+        const listDistrict = await this.goshipService.getDistricts(
+          address.city,
+        );
+        const district = listDistrict.data.find(
+          (d) => d.id === address.district,
+        );
+        const districtName = district?.name || '';
+        addressString += ' ' + districtName;
+        if (address.ward) {
+          const listWard = await this.goshipService.getWards(address.district);
+          const ward = listWard.data.find(
+            (w) => w.id.toString() === address.ward,
+          );
+          const wardName = ward?.name || '';
+          addressString += ' ' + wardName;
+          if (address.detail) {
+            addressString += ' ' + address.detail;
+          }
+        }
+      }
+    }
+
+    return addressString;
   }
 }
