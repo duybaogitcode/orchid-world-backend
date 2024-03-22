@@ -4,6 +4,7 @@ import { GoShipService } from './utils/goship';
 import { address } from './user/user.definition';
 const paypal = require('@paypal/checkout-server-sdk');
 const paypalout = require('@paypal/payouts-sdk');
+const twillo = require('twilio');
 
 @Injectable()
 export class AppService {
@@ -31,6 +32,7 @@ export class AppService {
   getHello(): string {
     // this.getCapture('94310278VV511143N');
     // this.createPayout();
+    // this.sendSMS();
     return 'Hello World!';
   }
 
@@ -124,5 +126,20 @@ export class AppService {
       console.log(error);
       throw error;
     }
+  }
+
+  async sendSMS() {
+    const accountSid = 'ACaf12ebf351b3e1d193b0a218c31e17df';
+    const authToken = 'eed6de97531f3a93db23f17eeae7fa67';
+    const client = require('twilio')(accountSid, authToken);
+
+    client.messages
+      .create({
+        body: 'This is the ship that made the Kessel Run in fourteen parsecs?',
+        from: '+15642167949', // replace with your Twilio number
+        to: '+84888739149', // replace with the Vietnamese number
+      })
+      .then((message) => console.log(message.sid))
+      .catch((error) => console.error(error));
   }
 }

@@ -27,6 +27,7 @@ import { ManagerOrStaff, ShopOnly, UserOnly } from 'src/guard/roles.guard';
 import { PaginationParameters } from 'dryerjs/dist/js/mongoose-paginate-v2';
 import { PaginateShopProductDTO } from './dto/paginate-shop-product.dto';
 import { Categories } from 'src/orthersDef/categories.definition';
+import { SuccessResponse } from 'dryerjs/dist/types';
 
 @Resolver()
 export class ProductResolver {
@@ -160,12 +161,14 @@ export class ProductResolver {
   }
 
   @ShopOnly()
-  @Mutation(() => Boolean, { name: 'removeProduct' })
+  @Mutation(() => SuccessResponse, { name: 'removeProduct' })
   async remove(@Args('id') id: string) {
     try {
       const isRemoved = await this.productService.remove(new ObjectId(id));
 
-      return isRemoved;
+      return {
+        success: Boolean(isRemoved),
+      };
     } catch (error) {
       console.error('Failed create new product:', error);
       throw error;
