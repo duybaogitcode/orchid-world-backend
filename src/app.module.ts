@@ -41,6 +41,7 @@ import {
   Admin,
   AdminOrManager,
   AdminOrManagerOrStaff,
+  AuthenticatedUser,
   ManagerOnly,
   ManagerOrStaff,
   ShopOnly,
@@ -211,8 +212,8 @@ console.log({ nod: configuration().NODE_ENV });
           definition: Order,
           allowedApis: ['findAll', 'paginate'],
           decorators: {
-            findAll: [ManagerOrStaff()],
-            paginate: [ManagerOrStaff()],
+            findAll: [AuthenticatedUser()],
+            paginate: [AuthenticatedUser()],
           },
         },
         {
