@@ -1,4 +1,11 @@
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import {
+  Args,
+  Field,
+  Mutation,
+  ObjectType,
+  Query,
+  Resolver,
+} from '@nestjs/graphql';
 import { ObjectId, OutputType } from 'dryerjs';
 import { GetByUidInput } from './dto/get-by-uid.dto';
 import { User } from './user.definition';
@@ -14,6 +21,15 @@ import { SuccessResponse } from 'dryerjs/dist/types';
 import { UpdateRoleDTO } from './dto/update-role.dto';
 import { Context, Ctx } from 'src/auth/ctx';
 import { CreateUserDTO } from './dto/create-user.dto';
+
+@ObjectType()
+class AddressResponse {
+  @Field()
+  address: string;
+
+  @Field()
+  isDefault: boolean;
+}
 
 @Resolver()
 export class UserResolver {
@@ -89,6 +105,19 @@ export class UserResolver {
       return {
         success: Boolean(response),
       };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  @AuthenticatedUser()
+  @Query(() => [AddressResponse], {
+    name: 'getListAddressString',
+  })
+  async getListAddressString(@Ctx() ctx: Context) {
+    try {
+      const response = await this.userService.getListAddressString(ctx);
+      return response;
     } catch (error) {
       throw error;
     }
