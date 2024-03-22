@@ -296,21 +296,29 @@ export class SubscriptionService {
     const expireAt = moment(userSubscription.expireAt).utcOffset(7);
     const startAt = moment(userSubscription.startAt).utcOffset(7);
     const now = moment().utcOffset(7);
-
+    console.log({ isAfter: now.isAfter(expireAt), expireAt, startAt, now });
     if (now.isAfter(expireAt)) {
       return 0;
     }
 
     const diff = startAt.diff(now, 'days');
-
+    console.log({ diff });
     // if the diff is lower than 4 days, we will return a half
     if (diff <= 4) {
       const refund = userSubscription.subscription.price / 2;
+      console.log(
+        '🚀 ~ SubscriptionService ~ getRefundBaseOnExpireTime ~ < 4 refund:',
+        refund,
+      );
       return Math.ceil(refund);
     }
 
     const price = userSubscription.subscription.price;
     const refund = price - price * (diff / 30);
+    console.log(
+      '🚀 ~ SubscriptionService ~ getRefundBaseOnExpireTime ~ refund:',
+      refund,
+    );
     return Math.ceil(refund);
   }
 
