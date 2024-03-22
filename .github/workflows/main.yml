@@ -24,14 +24,14 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
+          username: baroxdev
           password: ${{ secrets.GH_TOKEN }}
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ github.actor }}/${{ env.APP_NAME }}:${{ github.sha }}
+          tags: ghcr.io/baroxdev/${{ env.APP_NAME }}:${{ github.sha }}
   deploy:
     runs-on: ubuntu-latest
     needs: build
@@ -43,7 +43,7 @@ jobs:
           username: ${{ secrets.DROPLET_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GH_TOKEN }}
-            docker pull ghcr.io/${{ github.actor }}/${{ env.APP_NAME }}:${{ github.sha }}
+            docker login ghcr.io -u baroxdev -p ${{ secrets.GH_TOKEN }}
+            docker pull ghcr.io/baroxdev/${{ env.APP_NAME }}:${{ github.sha }}
             docker stop $(docker ps -q) || true
-            docker run -d -p 8080:9999 ghcr.io/${{ github.actor }}/${{ env.APP_NAME }}:${{ github.sha }}
+            docker run -d -p 8080:9999 ghcr.io/baroxdev/${{ env.APP_NAME }}:${{ github.sha }}
