@@ -60,23 +60,59 @@ export class GoShipService {
   }
 
   async getCities(): Promise<GoShipResponse<GoShipCity[]>> {
-    const client = await this.getAxiosClient();
-    const response = await client.get('/cities');
-    return response.data as GoShipResponse<GoShipCity[]>;
+    try {
+      const client = await this.getAxiosClient();
+      const response = await client.get('/cities');
+      return response.data as GoShipResponse<GoShipCity[]>;
+    } catch (error) {
+      if (error.response.status === 401 || error.response.status === 500) {
+        this.isLoggedIn = false;
+        this.accessToken = '';
+        const client = await this.getAxiosClient();
+        const response = await client.get('/cities');
+        return response.data as GoShipResponse<GoShipCity[]>;
+      } else {
+        throw error;
+      }
+    }
   }
 
   async getDistricts(
     cityId: string,
   ): Promise<GoShipResponse<GoShipDistrict[]>> {
-    const client = await this.getAxiosClient();
-    const response = await client.get(`/cities/${cityId}/districts`);
-    return response.data as Promise<GoShipResponse<GoShipDistrict[]>>;
+    try {
+      const client = await this.getAxiosClient();
+      const response = await client.get(`/cities/${cityId}/districts`);
+      return response.data as GoShipResponse<GoShipDistrict[]>;
+    } catch (error) {
+      if (error.response.status === 401 || error.response.status === 500) {
+        this.isLoggedIn = false;
+        this.accessToken = '';
+        const client = await this.getAxiosClient();
+        const response = await client.get(`/cities/${cityId}/districts`);
+        return response.data as GoShipResponse<GoShipDistrict[]>;
+      } else {
+        throw error;
+      }
+    }
   }
 
   async getWards(districtId: string): Promise<GoShipResponse<GoShipWard[]>> {
-    const client = await this.getAxiosClient();
-    const response = await client.get(`/districts/${districtId}/wards`);
-    return response.data as Promise<GoShipResponse<GoShipWard[]>>;
+    try {
+      const client = await this.getAxiosClient();
+      const response = await client.get(`/districts/${districtId}/wards`);
+      return response.data as GoShipResponse<GoShipWard[]>;
+    } catch (error) {
+      if (error.response.status === 401 || error.response.status === 500) {
+        this.isLoggedIn = false;
+        this.accessToken = '';
+        const client = await this.getAxiosClient();
+        const response = await client.get(`/districts/${districtId}/wards`);
+        return response.data as GoShipResponse<GoShipWard[]>;
+      } else {
+        throw error;
+      }
+    }
   }
 
   async getShippingFee({
