@@ -46,4 +46,4 @@ jobs:
             docker login ghcr.io -u baroxdev -p ${{ secrets.GH_TOKEN }}
             docker pull ghcr.io/baroxdev/${{ env.APP_NAME }}:${{ github.sha }}
             docker stop $(docker ps -q) || true
-            docker run -d -p 8080:9999 ghcr.io/baroxdev/${{ env.APP_NAME }}:${{ github.sha }}
+            docker run --restart=always -d -p 8080:9999 ghcr.io/baroxdev/${{ env.APP_NAME }}:${{ github.sha }}
