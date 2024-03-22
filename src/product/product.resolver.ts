@@ -15,6 +15,7 @@ import {
   PaginatedOutputType,
   SortType,
 } from 'dryerjs';
+import { SuccessResponse } from 'dryerjs/dist/types';
 
 import { CreateProductInput } from './dto/create-product.input';
 import { ProductService } from './product.service';
@@ -27,7 +28,6 @@ import { ManagerOrStaff, ShopOnly, UserOnly } from 'src/guard/roles.guard';
 import { PaginationParameters } from 'dryerjs/dist/js/mongoose-paginate-v2';
 import { PaginateShopProductDTO } from './dto/paginate-shop-product.dto';
 import { Categories } from 'src/orthersDef/categories.definition';
-import { SuccessResponse } from 'dryerjs/dist/types';
 
 @Resolver()
 export class ProductResolver {
