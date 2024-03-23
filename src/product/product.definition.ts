@@ -65,7 +65,7 @@ registerEnumType(ProductStatus, {
 
 const inputTags = CreateInputType(TagWithValues);
 @InputType()
-export class InputTags extends OmitType(inputTags, ['product_id'] as const) {}
+export class InputTags extends OmitType(inputTags, ['product_id'] as const) { }
 
 @Definition({
   timestamps: true,
@@ -128,8 +128,8 @@ export class Product extends BaseModelHasOwner() {
   })
   tags: TagWithValues[];
 
-  @Filterable(() => String, {
-    operators: ['eq'],
+  @Filterable(() => GraphQLObjectId, {
+    operators: ['eq', 'in'],
   })
   @Property({ type: () => GraphQLObjectId, output: Skip })
   category_id: ObjectId;
