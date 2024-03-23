@@ -26,6 +26,7 @@ import { ProductEventEnum } from './event/product.event';
 import { Categories } from 'src/orthersDef/categories.definition';
 import { filter } from 'rxjs';
 import { MongoQuery } from 'src/utils/mongoquery';
+import { Auction, AuctionStatus } from 'src/auction/auction.definition';
 
 @Injectable()
 export class ProductService {
@@ -37,6 +38,8 @@ export class ProductService {
     private readonly firebaseService: FirebaseService,
     @InjectBaseService(User)
     public userService: BaseService<User, Context>,
+    @InjectBaseService(Auction)
+    public auctionService: BaseService<Auction, Context>,
     private readonly eventEmitter: EventEmitter2,
     @InjectBaseService(Categories)
     public categories: BaseService<Categories, Context>,
@@ -230,6 +233,19 @@ export class ProductService {
         throw new Error('Product not found');
       }
       product.status = ProductStatus.REMOVED;
+
+      if (product.isAuction === true) {
+        const auction = await this.auctionService.model.findOne({
+          productId: product._id,
+        });
+        if (
+          auction.status === AuctionStatus.COMPLETED ||
+          auction.status === AuctionStatus.RUNNING
+        ) {
+          throw new Error('Không thể xóa sản phẩm đang tham gia đấu giá');
+        }
+      }
+
       await product.save();
       this.eventEmitter.emit(ProductEventEnum.PRODUCTUPDATE, {
         productSlug: product.slug,
