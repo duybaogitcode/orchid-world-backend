@@ -65,7 +65,7 @@ registerEnumType(ProductStatus, {
 
 const inputTags = CreateInputType(TagWithValues);
 @InputType()
-export class InputTags extends OmitType(inputTags, ['product_id'] as const) { }
+export class InputTags extends OmitType(inputTags, ['product_id'] as const) {}
 
 @Definition({
   timestamps: true,
