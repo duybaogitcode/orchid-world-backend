@@ -62,7 +62,7 @@ export class DashboardService {
     ]);
 
     const orderSuccess = await this.orderService.model.find({
-      status: OrderStatus.DELIVERED,
+      status: { $in: [OrderStatus.DELIVERED, OrderStatus.CONFIRMED_RECEIPT] },
     });
 
     const systemWallets = await this.systemWalletService.model.find();

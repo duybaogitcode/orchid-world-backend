@@ -25,6 +25,7 @@ export class Feedbacks {
   @Property({ type: () => String, nullable: true })
   feedback: string;
 
+  @Filterable(() => String, { operators: ['eq', 'notEq'] })
   @Property({ type: () => Int, nullable: true })
   rating: number;
 
