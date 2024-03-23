@@ -44,7 +44,7 @@ export class ProductService {
     @InjectBaseService(Categories)
     public categories: BaseService<Categories, Context>,
     private mongoQuery: MongoQuery,
-  ) {}
+  ) { }
 
   async create(createProductDto: CreateProductInput, uid: ObjectId) {
     const session = await this.productService.model.startSession();
@@ -226,12 +226,17 @@ export class ProductService {
     }
   }
 
-  async remove(id: ObjectId): Promise<boolean> {
+  async remove(id: ObjectId, authorId?: ObjectId): Promise<boolean> {
     try {
       const product = await this.productService.model.findById(id);
       if (!product) {
         throw new Error('Product not found');
       }
+
+      if (authorId && authorId.toString() !== product.authorId.toString()) {
+        throw new Error('You are not the owner of this product');
+      }
+
       product.status = ProductStatus.REMOVED;
 
       if (product.isAuction === true) {

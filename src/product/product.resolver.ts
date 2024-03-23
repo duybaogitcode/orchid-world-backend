@@ -1,37 +1,31 @@
 import {
-  Resolver,
-  Query,
-  Mutation,
   Args,
   Int,
-  registerEnumType,
+  Mutation,
+  Query,
+  Resolver
 } from '@nestjs/graphql';
-import { Product } from './product.definition';
 import {
-  FilterOperator,
   FilterType,
   ObjectId,
   OutputType,
   PaginatedOutputType,
-  SortType,
+  SortType
 } from 'dryerjs';
 import { SuccessResponse } from 'dryerjs/dist/types';
+import { Product } from './product.definition';
 
 import { CreateProductInput } from './dto/create-product.input';
-import { ProductService } from './product.service';
 import { UpdateProductInput } from './dto/update-product.input';
-import { UseGuards } from '@nestjs/common';
+import { ProductService } from './product.service';
 
-import { User } from 'src/user/user.definition';
 import { Context, Ctx } from 'src/auth/ctx';
-import { ManagerOrStaff, ShopOnly, UserOnly } from 'src/guard/roles.guard';
-import { PaginationParameters } from 'dryerjs/dist/js/mongoose-paginate-v2';
-import { PaginateShopProductDTO } from './dto/paginate-shop-product.dto';
+import { ManagerOrStaff, ShopOnly } from 'src/guard/roles.guard';
 import { Categories } from 'src/orthersDef/categories.definition';
 
 @Resolver()
 export class ProductResolver {
-  constructor(private readonly productService: ProductService) {}
+  constructor(private readonly productService: ProductService) { }
 
   @Query(() => OutputType(Product), { name: 'product' })
   async findOneBySlug(@Args('slug') slug: string) {
@@ -162,10 +156,9 @@ export class ProductResolver {
 
   @ShopOnly()
   @Mutation(() => SuccessResponse, { name: 'removeProduct' })
-  async remove(@Args('id') id: string) {
+  async remove(@Args('id') id: string, @Ctx() ctx: Context) {
     try {
-      const isRemoved = await this.productService.remove(new ObjectId(id));
-
+      const isRemoved = await this.productService.remove(new ObjectId(id), new ObjectId(ctx.id));
       return {
         success: Boolean(isRemoved),
       };

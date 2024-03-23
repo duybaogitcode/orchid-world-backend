@@ -53,7 +53,7 @@ export class Role extends BaseModel() {
   timestamps: true,
 })
 export class Session extends BaseModel() {
-  @Property({ type: () => GraphQLObjectId, db: { unique: true } })
+  @Property({ type: () => GraphQLObjectId })
   userId: ObjectId;
   @Property({
     type: () => GraphQLObjectId,
@@ -62,10 +62,18 @@ export class Session extends BaseModel() {
   })
   roleId: ObjectId;
 
-  @Property({ type: () => String, db: { unique: true } })
+  @Property({
+    type: () => String, db: {
+      index: false,
+    }
+  })
   refreshToken: string;
 
-  @Property({ type: () => String, db: { unique: true } })
+  @Property({
+    type: () => String, db: {
+      index: false
+    }
+  })
   accessToken: string;
 
   blacklist: string[];
