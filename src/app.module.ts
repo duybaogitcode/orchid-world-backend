@@ -246,10 +246,18 @@ console.log({ nod: configuration().NODE_ENV });
         },
         {
           definition: Report,
-          allowedApis: ['findAll', 'findOne', 'remove', 'create', 'update', 'essentials', 'paginate'],
+          allowedApis: [
+            'findAll',
+            'findOne',
+            'remove',
+            'create',
+            'update',
+            'essentials',
+            'paginate',
+          ],
           decorators: {
             create: [AuthenticatedUser()],
-          }
+          },
         },
         {
           definition: ReportSolved,
@@ -430,4 +438,4 @@ console.log({ nod: configuration().NODE_ENV });
   controllers: [AppController],
   providers: [AppService, GoShipService],
 })
-export class AppModule { }
+export class AppModule {}
