@@ -1,16 +1,10 @@
-import {
-  Args,
-  Int,
-  Mutation,
-  Query,
-  Resolver
-} from '@nestjs/graphql';
+import { Args, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import {
   FilterType,
   ObjectId,
   OutputType,
   PaginatedOutputType,
-  SortType
+  SortType,
 } from 'dryerjs';
 import { SuccessResponse } from 'dryerjs/dist/types';
 import { Product } from './product.definition';
@@ -25,7 +19,7 @@ import { Categories } from 'src/orthersDef/categories.definition';
 
 @Resolver()
 export class ProductResolver {
-  constructor(private readonly productService: ProductService) { }
+  constructor(private readonly productService: ProductService) {}
 
   @Query(() => OutputType(Product), { name: 'product' })
   async findOneBySlug(@Args('slug') slug: string) {
@@ -158,7 +152,10 @@ export class ProductResolver {
   @Mutation(() => SuccessResponse, { name: 'removeProduct' })
   async remove(@Args('id') id: string, @Ctx() ctx: Context) {
     try {
-      const isRemoved = await this.productService.remove(new ObjectId(id), new ObjectId(ctx.id));
+      const isRemoved = await this.productService.remove(
+        new ObjectId(id),
+        new ObjectId(ctx.id),
+      );
       return {
         success: Boolean(isRemoved),
       };

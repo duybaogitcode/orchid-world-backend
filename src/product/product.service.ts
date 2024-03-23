@@ -44,7 +44,7 @@ export class ProductService {
     @InjectBaseService(Categories)
     public categories: BaseService<Categories, Context>,
     private mongoQuery: MongoQuery,
-  ) { }
+  ) {}
 
   async create(createProductDto: CreateProductInput, uid: ObjectId) {
     const session = await this.productService.model.startSession();
