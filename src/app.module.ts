@@ -104,6 +104,12 @@ import { TasksService } from './tasks/task.service';
 import { MailEvent } from './email/email.event';
 import { TasksEvent } from './tasks/task.event';
 import { ReportHook } from './report/hooks/report.hook';
+import { DashboardService } from './wallet/dashboard.service';
+import {
+  AdminResolver,
+  Dashboard,
+  TotalOrderByStatus,
+} from './wallet/dasboard.resolver';
 
 console.log({ nod: configuration().NODE_ENV });
 
@@ -352,6 +358,12 @@ console.log({ nod: configuration().NODE_ENV });
             remove: [AdminOrManager()],
           },
         },
+        // {
+        //   definition: Dashboard,
+        // },
+        // {
+        //   definition: TotalOrderByStatus,
+        // },
       ],
       providers: [
         FirebaseService,
@@ -402,7 +414,9 @@ console.log({ nod: configuration().NODE_ENV });
         TasksService,
         MailEvent,
         TasksEvent,
-        ReportHook
+        ReportHook,
+        DashboardService,
+        AdminResolver,
       ],
       contextDecorator: Ctx,
     }),
