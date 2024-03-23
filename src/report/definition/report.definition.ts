@@ -2,13 +2,14 @@ import {
   BelongsTo,
   Definition,
   Embedded,
+  Filterable,
   GraphQLObjectId,
   HasOne,
   ObjectId,
   Property,
   Ref,
 } from 'dryerjs';
-import { BaseModelHasOwner } from 'src/product/product.definition';
+import { BaseModelHasOwner, Product } from 'src/product/product.definition';
 import { ShopOwner, User } from 'src/user/user.definition';
 import { ReportTypes } from './reportTypes.definition';
 import { ReportSolved } from './reportSolved.definition';
@@ -24,11 +25,14 @@ export class Report extends BaseModelHasOwner() {
   @Property({ type: () => String })
   content: string;
 
+  @Filterable(() => GraphQLObjectId, {
+    operators: ['eq']
+  })
   @Property({ type: () => GraphQLObjectId, nullable: true })
-  reportedUserId: ObjectId;
+  reportTargetId: ObjectId;
 
-  @BelongsTo(() => User, { from: 'reportedUserId' })
-  reportedUser: User;
+  @BelongsTo(() => Product, { from: 'reportTargetId' })
+  reportTarget: Product;
 
   @Property({ type: () => Boolean, defaultValue: false })
   isResolved: boolean;
