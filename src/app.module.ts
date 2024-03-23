@@ -103,6 +103,7 @@ import { TaskResolver } from './tasks/task.resolver';
 import { TasksService } from './tasks/task.service';
 import { MailEvent } from './email/email.event';
 import { TasksEvent } from './tasks/task.event';
+import { ReportHook } from './report/hooks/report.hook';
 import { DashboardService } from './wallet/dashboard.service';
 import {
   AdminResolver,
@@ -245,7 +246,10 @@ console.log({ nod: configuration().NODE_ENV });
         },
         {
           definition: Report,
-          allowedApis: ['findAll', 'findOne', 'remove', 'create', 'update'],
+          allowedApis: ['findAll', 'findOne', 'remove', 'create', 'update', 'essentials', 'paginate'],
+          decorators: {
+            create: [AuthenticatedUser()],
+          }
         },
         {
           definition: ReportSolved,
@@ -410,6 +414,7 @@ console.log({ nod: configuration().NODE_ENV });
         TasksService,
         MailEvent,
         TasksEvent,
+        ReportHook,
         DashboardService,
         AdminResolver,
       ],
@@ -425,4 +430,4 @@ console.log({ nod: configuration().NODE_ENV });
   controllers: [AppController],
   providers: [AppService, GoShipService],
 })
-export class AppModule {}
+export class AppModule { }
