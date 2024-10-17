@@ -36,7 +36,7 @@ export class AuthResolver {
     context.res.cookie('refreshToken', session.refreshToken, {
       httpOnly: true,
       domain:
-        configuration().NODE_ENV === 'dev' ? 'localhost' : '.movie-world.store',
+        configuration().NODE_ENV === 'dev' ? 'localhost' : '.gramod.cloud',
       secure: true,
       expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3),
       sameSite: 'none',
@@ -45,7 +45,7 @@ export class AuthResolver {
     context.res.cookie(KEYS.SESSION_ID, session.id, {
       httpOnly: true,
       domain:
-        configuration().NODE_ENV === 'dev' ? 'localhost' : '.movie-world.store',
+        configuration().NODE_ENV === 'dev' ? 'localhost' : '.gramod.cloud',
       secure: true,
       expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3),
       sameSite: 'none',
@@ -54,7 +54,7 @@ export class AuthResolver {
     context.res.cookie(KEYS.SESSION_TOKEN, session.accessToken, {
       httpOnly: true,
       domain:
-        configuration().NODE_ENV === 'dev' ? 'localhost' : '.movie-world.store',
+        configuration().NODE_ENV === 'dev' ? 'localhost' : '.gramod.cloud',
       secure: true,
       expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3),
       sameSite: 'none',
