@@ -14,6 +14,7 @@ async function bootstrap() {
       'https://studio.apollographql.com',
       'https://orchid-world-frontend.vercel.app',
       'https://orchid.movie-world.store',
+      'https://orchid.gramod.cloud',
     ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
